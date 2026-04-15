@@ -1,0 +1,2124 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>銀安APP</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --red:#E53E3E;--red-d:#C53030;--red-l:#FFF5F5;
+  --green:#2F855A;--green-m:#38A169;--green-l:#F0FFF4;
+  --yellow:#B7791F;--yellow-l:#FFFFF0;
+  --blue:#2B6CB0;--blue-m:#3182CE;--blue-l:#EBF8FF;
+  --purple:#6B46C1;--purple-l:#FAF5FF;
+  --orange:#C05621;--orange-l:#FFFAF0;
+  --g50:#F7FAFC;--g100:#EDF2F7;--g200:#E2E8F0;--g300:#CBD5E0;
+  --g400:#A0AEC0;--g500:#718096;--g700:#2D3748;--g900:#1A202C;
+  --white:#FFFFFF;
+  --font:'Noto Sans TC',sans-serif;
+  --sh:0 2px 12px rgba(0,0,0,0.08);
+  --sh-lg:0 8px 32px rgba(0,0,0,0.14);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;width:100%;font-family:var(--font);background:#0f1117;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+
+/* Phone */
+.phone{width:390px;height:844px;background:var(--g50);border-radius:44px;overflow:hidden;
+  box-shadow:0 0 0 10px #1c1c1e,0 0 0 12px #3a3a3c,0 32px 80px rgba(0,0,0,0.7);
+  display:flex;flex-direction:column;position:relative;}
+
+/* Status bar */
+.sbar{flex-shrink:0;height:48px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 28px;font-size:13px;font-weight:700;position:relative;z-index:10;
+  color:white;transition:color 0.3s;}
+.sbar.dark{color:var(--g700);}
+.sbar .notch{position:absolute;left:50%;top:8px;transform:translateX(-50%);
+  width:120px;height:32px;background:#0f1117;border-radius:20px;}
+
+/* Screens */
+.screens{flex:1;position:relative;overflow:hidden;}
+.page{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;
+  display:flex;flex-direction:column;transform:translateX(100%);
+  transition:transform 0.38s cubic-bezier(0.25,0.46,0.45,0.94);will-change:transform;
+  background:#ffffff;}
+.page::-webkit-scrollbar{display:none;}
+.page.active{transform:translateX(0);}
+.page.slide-left{transform:translateX(-100%);}
+
+/* Bottom nav */
+.bnav{flex-shrink:0;height:82px;background:rgba(255,255,255,0.96);backdrop-filter:blur(20px);
+  border-top:1px solid var(--g200);display:flex;align-items:flex-start;padding-top:8px;position:relative;z-index:50;}
+.nbtn{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;
+  border:none;background:none;cursor:pointer;font-family:var(--font);padding:8px 4px;position:relative;}
+.nbtn .ni{font-size:23px;transition:transform 0.2s;}
+.nbtn .nl{font-size:10px;font-weight:600;color:var(--g400);transition:color 0.2s;}
+.nbtn.on .nl{color:var(--blue-m);}
+.nbtn.on .ni{transform:scale(1.12);}
+.nbtn::after{content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);
+  width:0;height:3px;border-radius:2px;background:var(--blue-m);transition:width 0.25s;}
+.nbtn.on::after{width:24px;}
+
+/* Shared hero */
+.hero-block{padding:18px 22px 26px;color:white;position:relative;overflow:hidden;min-height:168px;}
+.hero-block::before{content:'';position:absolute;top:-50px;right:-50px;width:200px;height:200px;
+  border-radius:50%;background:rgba(255,255,255,0.06);}
+.hb-row{display:flex;align-items:center;gap:10px;}
+.back-btn{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.22);
+  border:none;cursor:pointer;font-size:17px;display:flex;align-items:center;justify-content:center;
+  color:white;flex-shrink:0;transition:background 0.15s;}
+.back-btn:active{background:rgba(255,255,255,0.35);}
+.hb-title{font-size:21px;font-weight:900;}
+.hb-sub{font-size:13px;opacity:0.8;margin-top:2px;}
+.hb-badge{display:inline-block;background:rgba(255,255,255,0.2);padding:5px 14px;
+  border-radius:20px;font-size:13px;font-weight:600;margin-top:12px;}
+
+/* Cards/rows common */
+.card{background:var(--white);border-radius:16px;box-shadow:var(--sh);}
+.sec-t{font-size:14px;font-weight:800;color:var(--g700);padding:14px 22px 8px;}
+
+/* Toast */
+.toast{position:absolute;bottom:96px;left:50%;transform:translateX(-50%) translateY(12px);
+  background:var(--g900);color:white;padding:10px 20px;border-radius:20px;
+  font-size:13px;font-weight:600;white-space:nowrap;opacity:0;
+  transition:opacity 0.28s,transform 0.28s;pointer-events:none;z-index:400;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* Modal */
+.modal-bg{position:absolute;inset:0;background:rgba(0,0,0,0.45);backdrop-filter:blur(5px);
+  display:none;align-items:flex-end;z-index:300;}
+.modal-bg.on{display:flex;}
+.modal-sheet{background:var(--white);border-radius:24px 24px 0 0;width:100%;padding:22px 22px 36px;
+  animation:slideUp 0.3s cubic-bezier(0.25,0.46,0.45,0.94);}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.m-handle{width:40px;height:4px;background:var(--g200);border-radius:2px;margin:0 auto 18px;}
+.m-title{font-size:19px;font-weight:900;color:var(--g700);}
+.m-sub{font-size:13px;color:var(--g500);margin-top:3px;margin-bottom:16px;}
+
+/* ════ HOME ════ */
+#p-home .hero-block{background:linear-gradient(140deg,#1a365d 0%,#2b6cb0 60%,#4299e1 100%);min-height:168px;}
+#p-report .hero-block{background:linear-gradient(135deg,#1a365d,#2C5282 60%,#3182CE);min-height:168px;}
+#p-med .hero-block{background:linear-gradient(135deg,#1C4532,#276749 60%,#38A169);min-height:168px;}
+#p-stress .hero-block{background:linear-gradient(135deg,#322659,#553C9A 60%,#805AD5);min-height:168px;}
+#p-respite .hero-block{background:linear-gradient(135deg,#652B19,#9C4221 60%,#C05621);min-height:168px;}
+#p-sos .hero-block{min-height:unset;background:transparent !important;}
+#p-profile .hero-block{min-height:168px;}
+.home-greet{font-size:14px;opacity:0.75;margin-bottom:2px;}
+.home-name{font-size:28px;font-weight:900;margin-bottom:14px;}
+.home-status{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,0.18);
+  backdrop-filter:blur(10px);padding:7px 16px;border-radius:20px;font-size:14px;font-weight:600;}
+.h-dot{width:8px;height:8px;border-radius:50%;background:#68D391;box-shadow:0 0 6px #68D391;}
+.sos-wrap{padding:18px 22px 6px;}
+.sos-big{width:100%;background:linear-gradient(145deg,#FC5C5C,#E53E3E 50%,#C53030);
+  border:none;border-radius:22px;padding:26px 22px;display:flex;align-items:center;justify-content:center;
+  gap:18px;cursor:pointer;font-family:var(--font);color:white;
+  box-shadow:0 8px 28px rgba(229,62,62,0.5),inset 0 1px 0 rgba(255,255,255,0.2);
+  transition:transform 0.12s,box-shadow 0.12s;position:relative;overflow:hidden;}
+.sos-big::before{content:'';position:absolute;inset:0;border-radius:22px;border:2px solid rgba(255,255,255,0.22);}
+.sos-big:active{transform:scale(0.97);box-shadow:0 4px 14px rgba(229,62,62,0.4);}
+.sos-emoji{font-size:42px;animation:sosPulse 2.2s ease-in-out infinite;}
+@keyframes sosPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+.sos-label{font-size:29px;font-weight:900;letter-spacing:3px;}
+.sos-sub{font-size:12px;opacity:0.82;margin-top:3px;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 22px 20px;}
+.fcard{background:var(--white);border-radius:16px;padding:17px 15px;cursor:pointer;border:none;
+  text-align:left;box-shadow:var(--sh);transition:transform 0.15s,box-shadow 0.15s;
+  font-family:var(--font);position:relative;overflow:hidden;}
+.fcard:active{transform:scale(0.96);box-shadow:none;}
+.fc-bar{position:absolute;top:0;left:0;right:0;height:4px;border-radius:16px 16px 0 0;}
+.fc-icon{font-size:29px;margin-bottom:8px;display:block;}
+.fc-t{font-size:14px;font-weight:800;color:var(--g700);}
+.fc-s{font-size:11px;color:var(--g500);margin-top:3px;}
+.badge-r{background:var(--red);color:white;font-size:9px;font-weight:800;padding:2px 5px;border-radius:6px;margin-left:3px;}
+
+/* ── Account switcher ── */
+.acct-btn{display:flex;align-items:center;gap:5px;background:rgba(255,255,255,0.18);
+  border:1.5px solid rgba(255,255,255,0.28);border-radius:20px;padding:5px 10px 5px 6px;
+  cursor:pointer;font-family:var(--font);color:white;font-size:12px;font-weight:700;
+  transition:background 0.15s;flex-shrink:0;}
+.acct-btn:active{background:rgba(255,255,255,0.28);}
+.acct-avatar{font-size:20px;line-height:1;}
+.acct-chevron{font-size:10px;opacity:0.8;}
+/* dropdown */
+.acct-menu{position:absolute;top:54px;right:16px;z-index:200;
+  background:white;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.18);
+  min-width:180px;overflow:hidden;
+  transform:scale(0.92) translateY(-8px);opacity:0;pointer-events:none;
+  transition:all 0.2s cubic-bezier(0.34,1.56,0.64,1);transform-origin:top right;}
+.acct-menu.open{transform:scale(1) translateY(0);opacity:1;pointer-events:all;}
+.acct-menu-title{font-size:10px;font-weight:800;color:var(--g400);padding:12px 14px 6px;text-transform:uppercase;letter-spacing:0.6px;}
+.acct-item{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;transition:background 0.12s;}
+.acct-item:active{background:var(--g100);}
+.acct-item.active-acct{background:var(--blue-l);}
+.acct-item .ai-av{font-size:24px;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--g100);}
+.acct-item .ai-info .ai-name{font-size:14px;font-weight:800;color:var(--g700);}
+.acct-item .ai-info .ai-role{font-size:11px;color:var(--g500);}
+.acct-item .ai-check{margin-left:auto;color:var(--blue-m);font-size:16px;font-weight:800;}
+.acct-divider{height:1px;background:var(--g100);margin:4px 0;}
+.acct-add{display:flex;align-items:center;gap:10px;padding:10px 14px 14px;cursor:pointer;color:var(--blue-m);font-size:13px;font-weight:700;}
+
+/* ════ SOS ════ */
+#p-sos{background:linear-gradient(170deg,#fff5f5 0%,#fed7d7 50%,#fc8181 100%);}
+.sos-center{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:20px 22px;gap:22px;flex:1;}
+.ring-btn{width:190px;height:190px;border-radius:50%;background:var(--red);border:none;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  font-family:var(--font);color:white;
+  box-shadow:0 0 0 20px rgba(229,62,62,0.18),0 0 0 40px rgba(229,62,62,0.09),0 16px 56px rgba(229,62,62,0.55);
+  animation:ringPulse 2s ease-in-out infinite;transition:transform 0.15s;}
+.ring-btn:active{transform:scale(0.93);}
+@keyframes ringPulse{
+  0%,100%{box-shadow:0 0 0 20px rgba(229,62,62,0.18),0 0 0 40px rgba(229,62,62,0.09),0 16px 56px rgba(229,62,62,0.55);}
+  50%{box-shadow:0 0 0 28px rgba(229,62,62,0.22),0 0 0 56px rgba(229,62,62,0.1),0 16px 56px rgba(229,62,62,0.65);}}
+.ring-icon{font-size:52px;}.ring-text{font-size:29px;font-weight:900;letter-spacing:4px;}.ring-sub{font-size:12px;opacity:0.85;}
+.contact-list{width:100%;display:flex;flex-direction:column;gap:8px;}
+.cc{background:rgba(255,255,255,0.65);backdrop-filter:blur(10px);border-radius:14px;
+  padding:13px 15px;display:flex;align-items:center;gap:12px;cursor:pointer;
+  border:2px solid transparent;transition:all 0.18s;}
+.cc:active{transform:scale(0.97);background:rgba(255,255,255,0.85);}
+.cc-av{font-size:28px;}.cc-n{font-size:15px;font-weight:800;color:var(--g700);}.cc-r{font-size:12px;color:var(--g500);}
+.cc-actions{margin-left:auto;display:flex;gap:7px;}
+.cc-act-btn{width:34px;height:34px;border-radius:50%;border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:17px;transition:transform 0.15s;}
+.cc-act-btn:active{transform:scale(0.88);}
+.cc-call{background:#E6FFF2;}.cc-line{background:#E6F7FF;}
+.cc-sent{font-size:11px;font-weight:700;padding:4px 9px;border-radius:20px;display:none;}
+.cc-sent.green{background:#E6FFF2;color:var(--green);display:inline-block;}
+.cc-sent.blue{background:#E6F7FF;color:var(--blue-m);display:inline-block;}
+
+.sos-state{display:none;flex-direction:column;align-items:center;gap:16px;text-align:center;
+  padding:40px 22px;flex:1;}
+.sos-state.on{display:flex;}
+.spin{animation:spin360 1s linear infinite;font-size:52px;display:block;}
+@keyframes spin360{to{transform:rotate(360deg)}}
+.st-t{font-size:19px;font-weight:800;color:var(--g700);}.st-s{font-size:14px;color:var(--g500);line-height:1.8;}
+.done-ico{font-size:62px;}.done-t{font-size:21px;font-weight:900;color:var(--green-m);}
+.row-btns{display:flex;gap:12px;width:100%;}
+.btn-o{flex:1;padding:13px;border-radius:12px;border:2px solid var(--blue-m);color:var(--blue-m);
+  background:white;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);}
+.btn-s{flex:1;padding:13px;border-radius:12px;background:var(--blue-m);color:white;
+  border:none;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);}
+
+/* ── Calling overlay ── */
+.calling-overlay{position:absolute;inset:0;z-index:500;
+  background:linear-gradient(160deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);
+  display:none;flex-direction:column;align-items:center;justify-content:space-between;
+  padding:60px 30px 70px;}
+.calling-overlay.on{display:flex;}
+.call-status{font-size:14px;color:rgba(255,255,255,0.6);font-weight:600;letter-spacing:1px;}
+.call-avatar-wrap{display:flex;flex-direction:column;align-items:center;gap:16px;}
+.call-avatar{width:110px;height:110px;border-radius:50%;
+  background:linear-gradient(135deg,#667eea,#764ba2);
+  display:flex;align-items:center;justify-content:center;font-size:52px;
+  box-shadow:0 0 0 8px rgba(255,255,255,0.08),0 0 0 16px rgba(255,255,255,0.04);
+  animation:callPulse 1.8s ease-in-out infinite;}
+@keyframes callPulse{0%,100%{box-shadow:0 0 0 8px rgba(255,255,255,0.08),0 0 0 16px rgba(255,255,255,0.04);}
+  50%{box-shadow:0 0 0 14px rgba(255,255,255,0.1),0 0 0 28px rgba(255,255,255,0.05);}}
+.call-name{font-size:28px;font-weight:900;color:white;}
+.call-rel{font-size:14px;color:rgba(255,255,255,0.55);}
+.call-timer{font-size:20px;font-weight:600;color:rgba(255,255,255,0.8);
+  font-variant-numeric:tabular-nums;letter-spacing:2px;}
+.call-btns{display:flex;gap:28px;align-items:center;}
+.call-btn-round{width:64px;height:64px;border-radius:50%;border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:26px;
+  transition:transform 0.15s;font-family:var(--font);}
+.call-btn-round:active{transform:scale(0.9);}
+.cb-mute{background:rgba(255,255,255,0.15);color:white;}
+.cb-end{width:72px;height:72px;background:#E53E3E;color:white;font-size:22px;
+  box-shadow:0 4px 20px rgba(229,62,62,0.5);}
+.cb-speaker{background:rgba(255,255,255,0.15);color:white;}
+.call-btn-label{display:flex;flex-direction:column;align-items:center;gap:8px;}
+.call-btn-label span{font-size:11px;color:rgba(255,255,255,0.5);font-weight:600;}
+
+/* ── LINE notify overlay ── */
+.line-overlay{position:absolute;inset:0;z-index:500;
+  background:rgba(0,0,0,0);pointer-events:none;
+  display:flex;flex-direction:column;gap:10px;padding:60px 16px 0;
+  transition:background 0.3s;}
+.line-overlay.on{pointer-events:all;background:rgba(0,0,0,0.35);backdrop-filter:blur(3px);}
+.line-notif{background:white;border-radius:16px;padding:14px 16px;
+  display:flex;gap:12px;align-items:flex-start;
+  transform:translateY(-120px);opacity:0;
+  transition:transform 0.45s cubic-bezier(0.34,1.56,0.64,1),opacity 0.35s;
+  box-shadow:0 8px 32px rgba(0,0,0,0.2);}
+.line-notif.show{transform:translateY(0);opacity:1;}
+.ln-logo{width:36px;height:36px;border-radius:10px;background:#06C755;
+  display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.ln-body{flex:1;}
+.ln-app{font-size:10px;font-weight:700;color:var(--g500);margin-bottom:2px;}
+.ln-name{font-size:13px;font-weight:800;color:var(--g700);}
+.ln-msg{font-size:12px;color:var(--g500);margin-top:2px;line-height:1.4;}
+.ln-time{font-size:10px;color:var(--g400);flex-shrink:0;margin-top:2px;}
+.ln-dismiss{display:block;width:calc(100% - 32px);margin:6px 16px 0;
+  padding:14px;border-radius:14px;background:white;
+  border:2px solid var(--g200);font-size:14px;font-weight:700;color:var(--g700);
+  cursor:pointer;font-family:var(--font);
+  transform:translateY(20px);opacity:0;transition:all 0.35s 0.6s;}
+.line-overlay.on .ln-dismiss{transform:translateY(0);opacity:1;}
+
+/* ════ MED ════ */
+.time-grp{padding:14px 22px 0;}
+.time-lbl{font-size:13px;font-weight:800;color:var(--g700);margin-bottom:8px;
+  display:flex;align-items:center;gap:8px;}
+.time-lbl::after{content:'';flex:1;height:1px;background:var(--g200);}
+.med-row{background:var(--white);border-radius:14px;padding:13px 15px;
+  display:flex;align-items:center;gap:12px;box-shadow:var(--sh);margin-bottom:8px;cursor:pointer;}
+.med-ico{width:44px;height:44px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:21px;flex-shrink:0;}
+.mi-g{background:var(--green-l);}.mi-y{background:#FFFFF0;}.mi-r{background:var(--red-l);}
+.med-n{font-size:14px;font-weight:800;color:var(--g700);}.med-d{font-size:11px;color:var(--g500);margin-top:2px;}
+.med-tag{padding:7px 12px;border-radius:20px;font-size:11px;font-weight:700;border:none;cursor:pointer;font-family:var(--font);white-space:nowrap;}
+.mt-ok{background:var(--green-l);color:var(--green);}
+.mt-act{background:var(--green-m);color:white;}
+.mt-pend{background:#FFFFF0;color:var(--yellow);}
+.warn-box{margin:10px 22px;background:var(--red-l);border-radius:13px;padding:13px 15px;border:2px solid #FC8181;}
+.wb-t{font-size:13px;font-weight:800;color:var(--red-d);margin-bottom:2px;}
+.wb-s{font-size:12px;color:var(--g500);margin-bottom:10px;}
+.wb-btns{display:flex;gap:9px;}
+.wb-y{flex:2;padding:10px;border-radius:9px;background:var(--green-m);color:white;border:none;font-size:13px;font-weight:800;cursor:pointer;font-family:var(--font);}
+.wb-n{flex:1;padding:10px;border-radius:9px;background:var(--g100);color:var(--g700);border:none;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);}
+.m-pill{background:var(--green-l);border-radius:12px;padding:14px;display:flex;align-items:center;gap:12px;margin-bottom:18px;}
+.m-pill-n{font-size:16px;font-weight:800;color:var(--g700);}.m-pill-d{font-size:12px;color:var(--g500);}
+.m-acts{display:flex;gap:10px;}
+.ma-p{flex:2;padding:15px;border-radius:13px;background:var(--green-m);color:white;border:none;font-size:15px;font-weight:900;cursor:pointer;font-family:var(--font);}
+.ma-s{flex:1;padding:15px;border-radius:13px;background:var(--g100);color:var(--g500);border:none;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);}
+
+/* ════ ASSESSMENT ONBOARDING ════ */
+#assessment{position:absolute;inset:0;z-index:1000;background:#ffffff;
+  display:flex;flex-direction:column;overflow:hidden;
+  border-radius:44px;}
+#assessment.done{display:none;pointer-events:none;}
+
+/* Assessment has its own status bar clone */
+.asmnt-sbar{height:48px;flex-shrink:0;display:flex;align-items:center;
+  justify-content:space-between;padding:0 28px;font-size:13px;font-weight:700;
+  color:var(--g700);position:relative;}
+.asmnt-sbar .notch{position:absolute;left:50%;top:8px;transform:translateX(-50%);
+  width:120px;height:32px;background:#0f1117;border-radius:20px;}
+
+/* Progress bar */
+.asmnt-progress{height:4px;background:var(--g200);flex-shrink:0;}
+.asmnt-progress-fill{height:100%;background:linear-gradient(90deg,#3182CE,#805AD5);
+  border-radius:2px;transition:width 0.4s cubic-bezier(0.34,1.56,0.64,1);}
+
+/* Step container */
+.asmnt-steps{flex:1;position:relative;overflow:hidden;}
+.asmnt-step{position:absolute;inset:0;padding:28px 24px 20px;
+  display:flex;flex-direction:column;
+  transform:translateX(100%);transition:transform 0.38s cubic-bezier(0.25,0.46,0.45,0.94);
+  overflow-y:auto;background:#ffffff;}
+.asmnt-step::-webkit-scrollbar{display:none;}
+.asmnt-step.active{transform:translateX(0);}
+.asmnt-step.exit{transform:translateX(-100%);}
+
+/* Welcome step */
+.asmnt-welcome-icon{font-size:64px;text-align:center;margin:20px 0 16px;}
+.asmnt-welcome-title{font-size:24px;font-weight:900;color:var(--g700);text-align:center;line-height:1.3;}
+.asmnt-welcome-sub{font-size:14px;color:var(--g500);text-align:center;line-height:1.7;margin:12px 0 32px;}
+.asmnt-start-btn{width:100%;padding:17px;border-radius:16px;
+  background:linear-gradient(135deg,#2B6CB0,#3182CE);color:white;
+  border:none;font-size:17px;font-weight:900;cursor:pointer;font-family:var(--font);
+  box-shadow:0 6px 20px rgba(49,130,206,0.4);}
+
+/* Step header */
+.asmnt-step-no{font-size:12px;font-weight:700;color:var(--g400);letter-spacing:1px;margin-bottom:6px;}
+.asmnt-q{font-size:20px;font-weight:900;color:var(--g700);line-height:1.4;margin-bottom:6px;}
+.asmnt-q-sub{font-size:13px;color:var(--g500);margin-bottom:22px;line-height:1.6;}
+
+/* Option cards */
+.asmnt-opts{display:flex;flex-direction:column;gap:10px;margin-bottom:24px;}
+.asmnt-opt{background:white;border:2px solid var(--g200);border-radius:14px;
+  padding:14px 16px;display:flex;align-items:center;gap:14px;
+  cursor:pointer;font-family:var(--font);text-align:left;
+  transition:all 0.18s;box-shadow:var(--sh);}
+.asmnt-opt:active{transform:scale(0.98);}
+.asmnt-opt.sel{border-color:var(--blue-m);background:var(--blue-l);}
+.asmnt-opt.sel .ao-radio{background:var(--blue-m);border-color:var(--blue-m);}
+.asmnt-opt.sel .ao-radio::after{opacity:1;}
+.ao-radio{width:22px;height:22px;border-radius:50%;border:2px solid var(--g300);
+  flex-shrink:0;position:relative;transition:all 0.15s;}
+.ao-radio::after{content:'';position:absolute;inset:3px;border-radius:50%;
+  background:white;opacity:0;transition:opacity 0.15s;}
+.ao-check{width:22px;height:22px;border-radius:6px;border:2px solid var(--g300);
+  flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:900;color:white;background:transparent;transition:all 0.15s;}
+.asmnt-opt.sel .ao-check{background:var(--blue-m);border-color:var(--blue-m);}
+.asmnt-opt.sel .ao-check::after{content:'✓';}
+.ao-icon{font-size:26px;flex-shrink:0;}
+.ao-text{flex:1;}
+.ao-label{font-size:15px;font-weight:700;color:var(--g700);}
+.ao-desc{font-size:12px;color:var(--g500);margin-top:2px;}
+
+/* Name input step */
+.asmnt-input{width:100%;padding:14px 16px;border-radius:14px;
+  border:2px solid var(--g200);font-size:18px;font-family:var(--font);
+  color:var(--g700);background:white;outline:none;margin-bottom:12px;
+  transition:border-color 0.2s;}
+.asmnt-input:focus{border-color:var(--blue-m);}
+.asmnt-input-hint{font-size:12px;color:var(--g400);margin-bottom:24px;}
+
+/* Result step */
+.risk-badge{border-radius:20px;padding:6px 16px;font-size:13px;font-weight:800;display:inline-block;margin-bottom:16px;}
+.risk-low{background:#E6FFFA;color:#276749;}
+.risk-mid{background:#FFFBEB;color:#744210;}
+.risk-high{background:#FFF5F5;color:#742A2A;}
+.result-profile{background:white;border-radius:18px;padding:18px;box-shadow:var(--sh);margin-bottom:16px;}
+.rp-name{font-size:20px;font-weight:900;color:var(--g700);margin-bottom:14px;}
+.rp-tags{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
+.rp-tag{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700;}
+.tag-blue{background:var(--blue-l);color:var(--blue-m);}
+.tag-orange{background:#FFFAF0;color:var(--orange);}
+.tag-red{background:var(--red-l);color:var(--red-d);}
+.tag-green{background:var(--green-l);color:var(--green);}
+.rp-suggests{display:flex;flex-direction:column;gap:8px;}
+.rp-suggest-item{display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--g700);
+  background:var(--g50);border-radius:10px;padding:10px 12px;}
+.rsi-icon{font-size:18px;flex-shrink:0;}
+
+/* Bottom nav of assessment */
+.asmnt-footer{padding:16px 24px 28px;flex-shrink:0;display:flex;gap:10px;}
+.asmnt-back{flex:1;padding:14px;border-radius:14px;background:var(--g100);
+  color:var(--g500);border:none;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);}
+.asmnt-next{flex:2;padding:14px;border-radius:14px;background:var(--blue-m);
+  color:white;border:none;font-size:15px;font-weight:800;cursor:pointer;font-family:var(--font);
+  box-shadow:0 4px 16px rgba(49,130,206,0.35);transition:opacity 0.2s;}
+.asmnt-next:disabled{opacity:0.4;cursor:not-allowed;box-shadow:none;}
+.asmnt-enter-btn{width:100%;padding:16px;border-radius:16px;
+  background:linear-gradient(135deg,#276749,var(--green-m));color:white;
+  border:none;font-size:16px;font-weight:900;cursor:pointer;font-family:var(--font);
+  box-shadow:0 6px 20px rgba(56,161,105,0.4);}
+.rpt-stats{display:flex;gap:9px;margin-top:12px;}
+.rpt-st{flex:1;background:rgba(255,255,255,0.18);border-radius:11px;padding:9px 7px;text-align:center;}
+.rpt-v{font-size:19px;font-weight:900;}.rpt-l{font-size:9px;opacity:0.75;margin-top:1px;}
+.chart-card{background:var(--white);border-radius:16px;margin:12px 22px;padding:16px;box-shadow:var(--sh);}
+.cc-t{font-size:14px;font-weight:800;color:var(--g700);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;}
+.cc-t span{font-size:10px;font-weight:500;color:var(--g400);}
+.bar-chart{display:flex;align-items:flex-end;gap:4px;height:96px;position:relative;padding-left:28px;}
+.y-ax{position:absolute;left:0;top:0;bottom:16px;display:flex;flex-direction:column;justify-content:space-between;font-size:9px;color:var(--g400);}
+.bar-grp{flex:1;display:flex;flex-direction:column;align-items:center;gap:0;}
+.bar-pair{display:flex;align-items:flex-end;gap:2px;width:100%;height:80px;}
+.bar-sys{flex:1;border-radius:3px 3px 0 0;background:linear-gradient(to top,#E53E3E,#FC8181);align-self:flex-end;}
+.bar-sys.ok{background:linear-gradient(to top,#3182CE,#63B3ED);}
+.bar-dia{flex:1;border-radius:3px 3px 0 0;background:linear-gradient(to top,#90CDF4,#BEE3F8);align-self:flex-end;}
+.bar-d{font-size:9px;color:var(--g400);margin-top:4px;}
+.legend{display:flex;gap:12px;margin-top:10px;font-size:10px;color:var(--g500);}
+.ld{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:3px;}
+.status-alert{margin:0 22px 10px;background:var(--red-l);border-radius:13px;padding:13px 15px;
+  display:flex;align-items:center;gap:11px;border-left:4px solid var(--red);}
+.sa-t{font-size:13px;font-weight:800;color:var(--red-d);}.sa-s{font-size:11px;color:var(--g500);margin-top:2px;}
+.rpt-acts{display:flex;gap:12px;padding:0 22px 20px;}
+.rpt-btn{flex:1;padding:12px;border-radius:11px;border:2px solid var(--blue-m);color:var(--blue-m);
+  background:white;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);
+  display:flex;align-items:center;justify-content:center;gap:5px;}
+
+/* ════ STRESS ════ */
+.emo-row{display:flex;justify-content:space-between;padding:0 22px;}
+.emo-btn{display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 5px;
+  border-radius:14px;cursor:pointer;border:none;background:none;font-family:var(--font);transition:background 0.15s;}
+.emo-btn .ef{font-size:33px;transition:transform 0.2s;}.emo-btn .el{font-size:10px;color:var(--g500);font-weight:600;}
+.emo-btn.sel{background:var(--purple-l);}.emo-btn.sel .ef{transform:scale(1.18);}.emo-btn.sel .el{color:var(--purple);}
+.sub-btn{display:block;width:calc(100% - 44px);margin:12px 22px;padding:15px;
+  background:linear-gradient(135deg,#553C9A,#805AD5);color:white;border:none;border-radius:13px;
+  font-size:15px;font-weight:900;cursor:pointer;font-family:var(--font);
+  box-shadow:0 6px 18px rgba(128,90,213,0.4);transition:transform 0.12s;}
+.sub-btn:active{transform:scale(0.97);}
+@keyframes shake{0%{transform:translateX(0) scale(1)}15%{transform:translateX(-7px) scale(1.05)}35%{transform:translateX(7px) scale(1.05)}55%{transform:translateX(-5px) scale(1)}75%{transform:translateX(4px) scale(1)}100%{transform:translateX(0) scale(1)}}
+.trend-card{background:var(--white);border-radius:16px;margin:0 22px 10px;padding:15px;box-shadow:var(--sh);}
+.tc-t{font-size:13px;font-weight:800;color:var(--g700);margin-bottom:11px;}
+.td-row{display:flex;gap:5px;}
+.td-g2{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;}
+.td-b{width:33px;height:33px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;}
+.td-bg{background:var(--green-l);}.td-by{background:#FFFFF0;}.td-br{background:var(--red-l);}
+.td-l{font-size:9px;color:var(--g400);font-weight:600;}
+.alert-strip{margin:0 22px 20px;background:var(--red-l);border-left:4px solid var(--red);
+  border-radius:0 12px 12px 0;padding:12px 15px;display:flex;gap:10px;align-items:center;}
+.as-t{font-size:13px;font-weight:800;color:var(--red-d);}.as-s{font-size:11px;color:var(--g500);margin-top:2px;}
+
+/* ════ RESPITE ════ */
+.week-scroll{display:flex;gap:6px;padding:12px 22px 6px;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.week-scroll::-webkit-scrollbar{display:none;}
+.w-d{flex-shrink:0;width:44px;background:var(--white);border-radius:11px;padding:9px 3px;text-align:center;box-shadow:var(--sh);}
+.w-d.has{border-top:3px solid var(--orange);}
+.w-d.selected-day{background:var(--orange);border-top:3px solid var(--orange);}
+.w-d.selected-day .wd-l{color:rgba(255,255,255,0.8);}
+.w-d.selected-day .wd-t{color:white;}
+.w-d.selected-day .wd-e{filter:none;}
+.wd-badge-count{position:absolute;top:-4px;right:-4px;width:16px;height:16px;
+  background:var(--red);border-radius:50%;font-size:9px;font-weight:900;color:white;
+  display:flex;align-items:center;justify-content:center;}
+.pi-del{width:28px;height:28px;border-radius:50%;background:var(--red-l);border:none;
+  color:var(--red);font-size:12px;font-weight:800;cursor:pointer;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;transition:background 0.15s;}
+.pi-del:active{background:var(--red);color:white;}
+.wd-l{font-size:10px;font-weight:800;color:var(--g500);margin-bottom:5px;}
+.wd-e{width:28px;height:28px;border-radius:50%;margin:0 auto 4px;display:flex;align-items:center;justify-content:center;font-size:13px;}
+.we-o{background:#FEF3C7;}.we-e{background:var(--g100);}
+.wd-t{font-size:8px;color:var(--g700);font-weight:600;line-height:1.3;}
+.plan-sec{padding:10px 22px 0;}
+.plan-t{font-size:13px;font-weight:800;color:var(--g700);margin-bottom:9px;}
+.plan-item{background:var(--white);border-radius:13px;padding:13px 15px;
+  display:flex;align-items:center;gap:11px;box-shadow:var(--sh);margin-bottom:7px;cursor:pointer;}
+.pi-ico{width:44px;height:44px;border-radius:11px;background:#FFF3E0;display:flex;align-items:center;justify-content:center;font-size:21px;flex-shrink:0;}
+.pi-n{font-size:14px;font-weight:800;color:var(--g700);}.pi-d{font-size:11px;color:var(--g500);margin-top:2px;}
+.pi-arr{font-size:17px;color:var(--g300);margin-left:auto;}
+.add-btn{display:flex;align-items:center;justify-content:center;gap:7px;
+  width:calc(100% - 44px);margin:4px 22px;padding:14px;
+  background:white;border:2px dashed var(--g300);border-radius:13px;
+  font-size:14px;font-weight:700;color:var(--g500);cursor:pointer;font-family:var(--font);}
+.remind-banner{margin:10px 22px 22px;background:linear-gradient(135deg,#FFFBEB,#FEF3C7);
+  border-radius:13px;padding:13px 15px;display:flex;gap:11px;align-items:center;}
+.rb-ico{font-size:24px;}
+.rb-t{font-size:12px;font-weight:800;color:#744210;}.rb-s{font-size:11px;color:#92400E;margin-top:2px;}
+.form-field{margin-bottom:14px;}
+.ff-label{font-size:12px;font-weight:700;color:var(--g500);margin-bottom:6px;}
+.ff-input{width:100%;padding:12px 14px;border-radius:12px;border:2px solid var(--g200);
+  font-size:15px;font-family:var(--font);color:var(--g700);outline:none;
+  transition:border-color 0.2s;background:var(--g50);}
+.ff-input:focus{border-color:var(--orange);}
+.icon-picker{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px;}
+.icon-opt{width:44px;height:44px;border-radius:12px;border:2px solid var(--g200);
+  background:var(--g50);font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:all 0.15s;font-family:var(--font);}
+.icon-opt.sel{border-color:var(--orange);background:#FFF7ED;transform:scale(1.1);}
+.day-picker{display:flex;gap:6px;margin-bottom:4px;}
+.day-opt{flex:1;padding:8px 0;border-radius:10px;border:2px solid var(--g200);
+  background:var(--g50);font-size:13px;font-weight:800;color:var(--g500);
+  cursor:pointer;font-family:var(--font);transition:all 0.15s;}
+.day-opt.sel{border-color:var(--orange);background:var(--orange);color:white;transform:scale(1.05);}
+.day-picker{display:flex;gap:6px;}
+.day-opt{flex:1;padding:8px 2px;border-radius:10px;border:2px solid var(--g200);
+  background:var(--g50);font-size:13px;font-weight:700;color:var(--g500);
+  cursor:pointer;font-family:var(--font);transition:all 0.15s;}
+.day-opt.sel{border-color:var(--orange);background:#FFF7ED;color:var(--orange);transform:scale(1.05);}
+.profile-opt{padding:8px 12px;border-radius:10px;border:2px solid var(--g200);
+  background:var(--g50);font-size:12px;font-weight:700;color:var(--g500);
+  cursor:pointer;font-family:var(--font);transition:all 0.15s;}
+.profile-opt.sel{border-color:var(--blue-m);background:var(--blue-l);color:var(--blue-m);}
+.med-row.taken-state{opacity:0.55;}
+.med-row.taken-state .med-tag{background:var(--green-l);color:var(--green);}
+.w-d.sel-day{border:2px solid var(--orange);background:#FFF7ED;}
+</style>
+</head>
+<body>
+<div class="phone">
+
+  <div class="sbar" id="sbar">
+    <span>9:41</span>
+    <div class="notch"></div>
+    <span>📶 🔋</span>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       ASSESSMENT ONBOARDING
+  ══════════════════════════════════════ -->
+  <div id="assessment">
+    <div class="asmnt-sbar">
+      <span>9:41</span>
+      <div class="notch"></div>
+      <span>📶 🔋</span>
+    </div>
+    <div class="asmnt-progress"><div class="asmnt-progress-fill" id="asmnt-bar" style="width:0%"></div></div>
+    <div class="asmnt-steps">
+
+      <!-- Step 0: Welcome -->
+      <div class="asmnt-step active" id="step-0">
+        <div class="asmnt-welcome-icon">🏥</div>
+        <div class="asmnt-welcome-title">歡迎使用<br>銀安APP</div>
+        <div class="asmnt-welcome-sub">
+          在開始之前，我們需要了解照護對象的基本狀況。<br>
+          這份簡短評估只需 1 分鐘，幫助系統<strong>自動調整</strong>最適合的照護模式與提醒強度。
+        </div>
+        <button class="asmnt-start-btn" onclick="asmntNext()">開始評估 →</button>
+      </div>
+
+      <!-- Step 1: Name -->
+      <div class="asmnt-step" id="step-1">
+        <div class="asmnt-step-no">第 1 題 · 共 4 題</div>
+        <div class="asmnt-q">照護對象叫什麼名字？</div>
+        <div class="asmnt-q-sub">系統會用這個名字稱呼，讓 APP 更有溫度。</div>
+        <input class="asmnt-input" id="input-name" type="text" placeholder="例：阿嬤、王爸爸…" oninput="asmntCheckNext()">
+        <div class="asmnt-input-hint">💡 暱稱或姓名皆可</div>
+      </div>
+
+      <!-- Step 2: Age -->
+      <div class="asmnt-step" id="step-2">
+        <div class="asmnt-step-no">第 2 題 · 共 4 題</div>
+        <div class="asmnt-q">年齡範圍？</div>
+        <div class="asmnt-q-sub">年齡會影響生理風險基準值的設定。</div>
+        <div class="asmnt-opts" id="opts-age">
+          <button class="asmnt-opt" data-val="60-69" onclick="pickOpt(this,'opts-age')">
+            <div class="ao-radio"></div><span class="ao-icon">🧑</span>
+            <div class="ao-text"><div class="ao-label">60–69 歲</div><div class="ao-desc">初老期，多數自理能力完整</div></div>
+          </button>
+          <button class="asmnt-opt" data-val="70-79" onclick="pickOpt(this,'opts-age')">
+            <div class="ao-radio"></div><span class="ao-icon">👴</span>
+            <div class="ao-text"><div class="ao-label">70–79 歲</div><div class="ao-desc">中老期，部分功能開始退化</div></div>
+          </button>
+          <button class="asmnt-opt" data-val="80+" onclick="pickOpt(this,'opts-age')">
+            <div class="ao-radio"></div><span class="ao-icon">👵</span>
+            <div class="ao-text"><div class="ao-label">80 歲以上</div><div class="ao-desc">高齡，建議加強監測頻率</div></div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 3: Mobility -->
+      <div class="asmnt-step" id="step-3">
+        <div class="asmnt-step-no">第 3 題 · 共 4 題</div>
+        <div class="asmnt-q">行動能力？</div>
+        <div class="asmnt-q-sub">影響 SOS 可用性與外出計畫的提醒方式。</div>
+        <div class="asmnt-opts" id="opts-mobility">
+          <button class="asmnt-opt" data-val="independent" onclick="pickOpt(this,'opts-mobility')">
+            <div class="ao-radio"></div><span class="ao-icon">🚶</span>
+            <div class="ao-text"><div class="ao-label">可獨立行動</div><div class="ao-desc">不需輔具，可自行外出</div></div>
+          </button>
+          <button class="asmnt-opt" data-val="assisted" onclick="pickOpt(this,'opts-mobility')">
+            <div class="ao-radio"></div><span class="ao-icon">🦯</span>
+            <div class="ao-text"><div class="ao-label">需輔具或協助</div><div class="ao-desc">拐杖、助行器或需人攙扶</div></div>
+          </button>
+          <button class="asmnt-opt" data-val="bedridden" onclick="pickOpt(this,'opts-mobility')">
+            <div class="ao-radio"></div><span class="ao-icon">🛏️</span>
+            <div class="ao-text"><div class="ao-label">臥床或輪椅</div><div class="ao-desc">大部分時間需他人照護</div></div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 4: Cognitive + Living -->
+      <div class="asmnt-step" id="step-4">
+        <div class="asmnt-step-no">第 4 題 · 共 4 題</div>
+        <div class="asmnt-q">認知狀態與居住方式？</div>
+        <div class="asmnt-q-sub">可複選，這是系統判斷風險權重的關鍵資訊。</div>
+        <div class="asmnt-opts" id="opts-conditions" style="gap:8px;">
+          <button class="asmnt-opt multi" data-val="alone" onclick="toggleMultiOpt(this)">
+            <div class="ao-check">□</div><span class="ao-icon">🏠</span>
+            <div class="ao-text"><div class="ao-label">獨居</div><div class="ao-desc">無家人同住，高度風險因子</div></div>
+          </button>
+          <button class="asmnt-opt multi" data-val="dementia" onclick="toggleMultiOpt(this)">
+            <div class="ao-check">□</div><span class="ao-icon">🧩</span>
+            <div class="ao-text"><div class="ao-label">失智症（確診或疑似）</div><div class="ao-desc">記憶、認知功能受損</div></div>
+          </button>
+          <button class="asmnt-opt multi" data-val="needs-care" onclick="toggleMultiOpt(this)">
+            <div class="ao-check">□</div><span class="ao-icon">🤲</span>
+            <div class="ao-text"><div class="ao-label">日常需要協助</div><div class="ao-desc">洗澡、飲食、服藥等需人協助</div></div>
+          </button>
+          <button class="asmnt-opt multi" data-val="chronic" onclick="toggleMultiOpt(this)">
+            <div class="ao-check">□</div><span class="ao-icon">💊</span>
+            <div class="ao-text"><div class="ao-label">有慢性病（需定期用藥）</div><div class="ao-desc">高血壓、糖尿病、心臟病等</div></div>
+          </button>
+          <button class="asmnt-opt multi" data-val="none" onclick="toggleMultiOpt(this,'exclusive')">
+            <div class="ao-check">□</div><span class="ao-icon">✅</span>
+            <div class="ao-text"><div class="ao-label">以上皆無</div><div class="ao-desc">目前狀況良好</div></div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 5: Result -->
+      <div class="asmnt-step" id="step-5">
+        <div class="asmnt-step-no">評估完成</div>
+        <div class="asmnt-q">📋 初始建議設定</div>
+        <div class="asmnt-q-sub">系統已根據評估結果產出個人化照護建議，可隨時在設定中調整。</div>
+        <div id="result-area"></div>
+        <button class="asmnt-enter-btn" onclick="enterApp()">✅ 進入銀安APP</button>
+      </div>
+
+    </div><!-- /asmnt-steps -->
+
+    <div class="asmnt-footer" id="asmnt-footer">
+      <button class="asmnt-back" id="asmnt-back-btn" onclick="asmntBack()" style="display:none">← 上一步</button>
+      <button class="asmnt-next" id="asmnt-next-btn" onclick="asmntNext()" disabled>繼續 →</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       MAIN APP SCREENS
+  ══════════════════════════════════════ -->
+  <div class="screens">
+
+    <!-- HOME -->
+    <div class="page active" id="p-home">
+      <div class="hero-block" style="position:relative;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div>
+            <div class="home-greet" id="home-greet">☀️ 早安</div>
+            <div class="home-name" id="home-name">阿嬤</div>
+          </div>
+          <!-- Account switcher -->
+          <button class="acct-btn" id="acct-btn" onclick="openAcctMenu()">
+            <span class="acct-avatar" id="acct-avatar">👵</span>
+            <span class="acct-chevron">▾</span>
+          </button>
+        </div>
+        <div class="home-status" id="home-status-bar"><div class="h-dot"></div><span id="home-status-txt">今日狀態：正常</span></div>
+        <!-- Account dropdown -->
+        <div class="acct-menu" id="acct-menu">
+          <div class="acct-menu-title">切換帳號</div>
+          <div class="acct-item active-acct" onclick="switchAcct(0)">
+            <div class="ai-av">👵</div>
+            <div class="ai-info"><div class="ai-name" id="acct-name-0">阿嬤</div><div class="ai-role">照護對象</div></div>
+            <span class="ai-check">✓</span>
+          </div>
+          <div class="acct-item" onclick="switchAcct(1)">
+            <div class="ai-av">👩</div>
+            <div class="ai-info"><div class="ai-name">小芳（女兒）</div><div class="ai-role">照顧者</div></div>
+          </div>
+          <div class="acct-item" onclick="switchAcct(2)">
+            <div class="ai-av">👨</div>
+            <div class="ai-info"><div class="ai-name">阿明（兒子）</div><div class="ai-role">照顧者</div></div>
+          </div>
+          <div class="acct-divider"></div>
+          <div class="acct-add" onclick="showToast('➕ 新增帳號功能即將上線')">
+            <span style="font-size:18px;">＋</span> 新增帳號
+          </div>
+        </div>
+      </div>
+
+      <!-- ① 評估資料卡片 -->
+      <div id="profile-card" style="display:none;margin:10px 22px 0;background:white;border-radius:14px;padding:13px 15px;box-shadow:var(--sh);border-left:4px solid var(--blue-m);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <div style="font-size:12px;font-weight:800;color:var(--g500);">📋 初始評估資料</div>
+          <button onclick="navTo('p-profile','fwd')" style="font-size:11px;font-weight:700;color:var(--blue-m);background:none;border:none;cursor:pointer;padding:2px 8px;border-radius:8px;background:var(--blue-l);">編輯 ›</button>
+        </div>
+        <div id="profile-tags" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+        <div id="profile-risk-row" style="margin-top:8px;font-size:12px;color:var(--g500);font-weight:600;"></div>
+      </div>
+
+      <div class="sos-wrap">
+        <button class="sos-big" onclick="navTo('p-sos','fwd')">
+          <span class="sos-emoji">🆘</span>
+          <div><div class="sos-label">SOS</div><div class="sos-sub">緊急求助</div></div>
+        </button>
+      </div>
+      <div class="sec-t">快捷功能</div>
+      <div class="grid2">
+        <button class="fcard" onclick="navTo('p-med','fwd')">
+          <div class="fc-bar" style="background:var(--green-m)"></div>
+          <span class="fc-icon">💊</span><div class="fc-t">用藥提醒</div>
+          <div class="fc-s" id="home-med-sub">今日 3 次</div>
+        </button>
+        <button class="fcard" onclick="navTo('p-report','fwd')">
+          <div class="fc-bar" style="background:var(--blue-m)"></div>
+          <span class="fc-icon">📊</span><div class="fc-t">健康報表</div>
+          <div class="fc-s">血壓<span class="badge-r">偏高</span></div>
+        </button>
+        <button class="fcard" onclick="navTo('p-stress','fwd')">
+          <div class="fc-bar" style="background:var(--purple)"></div>
+          <span class="fc-icon">🧠</span><div class="fc-t">壓力燈號</div>
+          <div class="fc-s" id="home-stress-sub">今日未填</div>
+        </button>
+        <button class="fcard" onclick="navTo('p-respite','fwd')">
+          <div class="fc-bar" style="background:var(--orange)"></div>
+          <span class="fc-icon">📅</span><div class="fc-t">喘息計畫</div><div class="fc-s">明日：日照</div>
+        </button>
+      </div>
+    </div>
+
+    <!-- SOS -->
+    <div class="page" id="p-sos" style="background:linear-gradient(170deg,#fff5f5,#fed7d7 50%,#fc8181 100%)">
+      <div class="hero-block" style="background:transparent;padding-bottom:12px;">
+        <div class="hb-row">
+          <button class="back-btn" style="background:rgba(229,62,62,0.18);color:var(--red-d);" onclick="goBack()">←</button>
+          <div><div class="hb-title" style="color:var(--red-d);">緊急求助</div></div>
+        </div>
+      </div>
+      <div class="sos-center" id="sos-idle">
+        <button class="ring-btn" onclick="triggerSOS()">
+          <span class="ring-icon">🆘</span>
+          <span class="ring-text">SOS</span>
+          <span class="ring-sub">按下求助</span>
+        </button>
+        <div class="contact-list">
+          <div style="font-size:12px;font-weight:800;color:#742A2A;margin-bottom:4px;">📋 點擊聯絡人直接聯繫</div>
+          <!-- Contact 1: daughter - call + LINE -->
+          <div class="cc" id="cc1">
+            <span class="cc-av">👩</span>
+            <div style="flex:1">
+              <div class="cc-n">女兒（小芳）</div>
+              <div class="cc-r" id="cc1-status">LINE + 電話</div>
+            </div>
+            <div class="cc-actions">
+              <button class="cc-act-btn cc-line" onclick="sendLine('cc1','小芳')" title="傳 LINE">💬</button>
+              <button class="cc-act-btn cc-call" onclick="startCall('女兒（小芳）','👩','0912-345-678')" title="撥打電話">📞</button>
+            </div>
+          </div>
+          <!-- Contact 2: son - LINE + 電話 -->
+          <div class="cc" id="cc2">
+            <span class="cc-av">👨</span>
+            <div style="flex:1">
+              <div class="cc-n">兒子（阿明）</div>
+              <div class="cc-r" id="cc2-status">LINE 通知</div>
+            </div>
+            <div class="cc-actions">
+              <button class="cc-act-btn cc-line" onclick="sendLine('cc2','阿明')" title="傳 LINE">💬</button>
+              <button class="cc-act-btn cc-call" onclick="startCall('兒子（阿明）','👨','0923-456-789')" title="撥打電話">📞</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="sos-state" id="sos-sending">
+        <span class="spin">⏳</span>
+        <div class="st-t">發送中…</div>
+        <div class="st-s">📍 正在取得您的位置<br>📲 傳送 LINE 通知給家人</div>
+      </div>
+      <div class="sos-state" id="sos-done">
+        <span class="done-ico">✅</span>
+        <div class="done-t">已通知家人！</div>
+        <div class="st-s">👨‍👩‍👧 LINE 已送出<br>📍 位置已分享</div>
+        <div class="row-btns">
+          <button class="btn-o">查看位置</button>
+          <button class="btn-s" onclick="resetSOS();goBack()">返回首頁</button>
+        </div>
+      </div>
+
+      <!-- Calling overlay -->
+      <div class="calling-overlay" id="calling-overlay">
+        <div class="call-status" id="call-status-txt">正在撥號…</div>
+        <div class="call-avatar-wrap">
+          <div class="call-avatar" id="call-avatar">👩</div>
+          <div class="call-name" id="call-name">女兒（小芳）</div>
+          <div class="call-rel" id="call-number">0912-345-678</div>
+        </div>
+        <div class="call-timer" id="call-timer" style="visibility:hidden;">00:00</div>
+        <div class="call-btns">
+          <div class="call-btn-label">
+            <button class="call-btn-round cb-mute" id="btn-mute" onclick="toggleMute()">🎙️</button>
+            <span>靜音</span>
+          </div>
+          <div class="call-btn-label">
+            <button class="call-btn-round cb-end" onclick="endCall()">📵</button>
+            <span style="color:rgba(255,255,255,0.5);font-size:11px;font-weight:600;">掛斷</span>
+          </div>
+          <div class="call-btn-label">
+            <button class="call-btn-round cb-speaker" id="btn-speaker" onclick="toggleSpeaker()">🔊</button>
+            <span>擴音</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- LINE overlay -->
+      <div class="line-overlay" id="line-overlay" onclick="dismissLine()">
+        <div class="line-notif" id="line-notif-1">
+          <div class="ln-logo">💬</div>
+          <div class="ln-body">
+            <div class="ln-app">LINE · 剛剛</div>
+            <div class="ln-name" id="ln-name-1">小芳</div>
+            <div class="ln-msg" id="ln-msg-1">阿嬤發送了緊急求助通知！📍 位置已分享，請盡快確認。</div>
+          </div>
+          <div class="ln-time">現在</div>
+        </div>
+        <div class="line-notif" id="line-notif-2" style="transition-delay:0.25s;">
+          <div class="ln-logo" style="background:#06C755;">💬</div>
+          <div class="ln-body">
+            <div class="ln-app">LINE · 剛剛</div>
+            <div class="ln-name" id="ln-name-2">銀安APP Bot</div>
+            <div class="ln-msg">✅ 通知已送達聯絡人。如需協助請回覆此訊息。</div>
+          </div>
+          <div class="ln-time">現在</div>
+        </div>
+        <button class="ln-dismiss" onclick="dismissLine()">✓ 知道了，關閉通知</button>
+      </div>
+
+    </div>
+
+    <!-- MED -->
+    <div class="page" id="p-med">
+      <div class="hero-block">
+        <div class="hb-row">
+          <button class="back-btn" onclick="goBack()">←</button>
+          <div><div class="hb-title">💊 用藥提醒</div><div class="hb-sub">今天記得按時服藥！</div></div>
+        </div>
+        <div class="hb-badge" id="med-date-badge">📅 今天 載入中…</div>
+      </div>
+      <div class="time-grp">
+        <div class="time-lbl">⏰ 08:00</div>
+        <div class="med-row">
+          <div class="med-ico mi-g">💊</div>
+          <div style="flex:1"><div class="med-n">高血壓藥</div><div class="med-d">1顆｜飯後</div></div>
+          <button class="med-tag mt-ok">✅ 已服用</button>
+        </div>
+      </div>
+      <div class="time-grp">
+        <div class="time-lbl">⏰ 12:00</div>
+        <div class="med-row" onclick="openMedModal()">
+          <div class="med-ico mi-y">💊</div>
+          <div style="flex:1"><div class="med-n">胃藥</div><div class="med-d">2顆｜飯後 30 分鐘</div></div>
+          <button class="med-tag mt-act" onclick="event.stopPropagation();openMedModal()">確認服藥</button>
+        </div>
+      </div>
+      <div class="time-grp">
+        <div class="time-lbl">⏰ 18:00</div>
+        <div class="med-row">
+          <div class="med-ico mi-y">💊</div>
+          <div style="flex:1"><div class="med-n">降血糖藥</div><div class="med-d">1顆｜飯前</div></div>
+          <button class="med-tag mt-pend">⏳ 未到時間</button>
+        </div>
+      </div>
+      <div class="warn-box" id="warn-box" style="display:none">
+        <div class="wb-t">⚠️ 已過 30 分鐘未確認</div>
+        <div class="wb-s">胃藥是否已服藥？</div>
+        <div class="wb-btns">
+          <button class="wb-y" onclick="confirmMedTaken()">✅ 是，已服藥</button>
+          <button class="wb-n" onclick="dismissWarnBox()">❌ 否</button>
+        </div>
+      </div>
+      <div style="height:16px"></div>
+      <!-- Med modal -->
+      <div class="modal-bg" id="med-modal" onclick="closeMedModal(event)">
+        <div class="modal-sheet">
+          <div class="m-handle"></div>
+          <div class="m-title">🔔 該吃藥了！</div>
+          <div class="m-sub">12:00 的用藥提醒</div>
+          <div class="m-pill">
+            <span style="font-size:30px;">💊</span>
+            <div><div class="m-pill-n">胃藥</div><div class="m-pill-d">2顆｜飯後 30 分鐘服用</div></div>
+          </div>
+          <div class="m-acts">
+            <button class="ma-p" onclick="confirmMedTaken()">✅ 我已吃藥</button>
+            <button class="ma-s" onclick="closeMedModal();showToast('⏰ 30分鐘後再提醒')">⏳ 稍後</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REPORT -->
+    <div class="page" id="p-report">
+      <div class="hero-block">
+        <div class="hb-row">
+          <button class="back-btn" onclick="goBack()">←</button>
+          <div><div class="hb-title">📊 健康報表</div><div class="hb-sub">過去 7 天記錄</div></div>
+        </div>
+        <div class="rpt-stats">
+          <div class="rpt-st"><div class="rpt-v">148/92</div><div class="rpt-l">今日血壓</div></div>
+          <div class="rpt-st"><div class="rpt-v">72</div><div class="rpt-l">心跳 bpm</div></div>
+          <div class="rpt-st"><div class="rpt-v">98%</div><div class="rpt-l">血氧</div></div>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="cc-t">📈 血壓趨勢（7天）<span>mmHg</span></div>
+        <div class="bar-chart">
+          <div class="y-ax"><span>160</span><span>130</span><span>100</span></div>
+          <div class="bar-grp"><div class="bar-pair"><div class="bar-sys ok" style="height:50px"></div><div class="bar-dia" style="height:26px"></div></div><div class="bar-d">一</div></div>
+          <div class="bar-grp"><div class="bar-pair"><div class="bar-sys ok" style="height:44px"></div><div class="bar-dia" style="height:23px"></div></div><div class="bar-d">二</div></div>
+          <div class="bar-grp"><div class="bar-pair"><div class="bar-sys" style="height:60px"></div><div class="bar-dia" style="height:31px"></div></div><div class="bar-d">三</div></div>
+          <div class="bar-grp"><div class="bar-pair"><div class="bar-sys" style="height:56px"></div><div class="bar-dia" style="height:29px"></div></div><div class="bar-d">四</div></div>
+          <div class="bar-grp"><div class="bar-pair"><div class="bar-sys ok" style="height:46px"></div><div class="bar-dia" style="height:24px"></div></div><div class="bar-d">五</div></div>
+          <div class="bar-grp"><div class="bar-pair"><div class="bar-sys ok" style="height:42px"></div><div class="bar-dia" style="height:21px"></div></div><div class="bar-d">六</div></div>
+          <div class="bar-grp"><div class="bar-pair"><div class="bar-sys" style="height:63px"></div><div class="bar-dia" style="height:33px"></div></div><div class="bar-d" style="color:var(--blue-m);font-weight:800;">今</div></div>
+        </div>
+        <div class="legend">
+          <span><span class="ld" style="background:var(--red)"></span>偏高</span>
+          <span><span class="ld" style="background:var(--blue-m)"></span>正常</span>
+          <span><span class="ld" style="background:#90CDF4"></span>舒張壓</span>
+        </div>
+      </div>
+      <div class="status-alert">
+        <span style="font-size:24px;">⚠️</span>
+        <div><div class="sa-t">今日血壓偏高（148/92）</div><div class="sa-s">建議與醫師討論調整用藥</div></div>
+      </div>
+      <div class="rpt-acts">
+        <button class="rpt-btn" onclick="showToast('📄 PDF 匯出中…')">📄 匯出 PDF</button>
+        <button class="rpt-btn" onclick="showToast('💬 分享至 LINE')">💬 分享 LINE</button>
+      </div>
+    </div>
+
+    <!-- STRESS -->
+    <div class="page" id="p-stress">
+      <div class="hero-block">
+        <div class="hb-row">
+          <button class="back-btn" onclick="goBack()">←</button>
+          <div><div class="hb-title">🧠 壓力燈號</div><div class="hb-sub">今天感覺如何？</div></div>
+        </div>
+      </div>
+      <div class="sec-t" style="padding-top:14px;">今天壓力幾分？</div>
+      <div class="emo-row">
+        <button class="emo-btn" data-emoji="😄" data-level="green" onclick="pickStress(this)"><span class="ef">😄</span><span class="el">很好</span></button>
+        <button class="emo-btn" data-emoji="😐" data-level="yellow" onclick="pickStress(this)"><span class="ef">😐</span><span class="el">還好</span></button>
+        <button class="emo-btn" data-emoji="😣" data-level="yellow" onclick="pickStress(this)"><span class="ef">😣</span><span class="el">有壓力</span></button>
+        <button class="emo-btn" data-emoji="😫" data-level="red" onclick="pickStress(this)"><span class="ef">😫</span><span class="el">很累</span></button>
+        <button class="emo-btn" data-emoji="😵" data-level="red" onclick="pickStress(this)"><span class="ef">😵</span><span class="el">崩潰</span></button>
+      </div>
+      <button class="sub-btn" onclick="submitStress()">提交今日狀態</button>
+      <div class="trend-card">
+        <div class="tc-t">📊 本週趨勢</div>
+        <div class="td-row">
+          <div class="td-g2"><div class="td-b td-bg">😄</div><div class="td-l">一</div></div>
+          <div class="td-g2"><div class="td-b td-by">😐</div><div class="td-l">二</div></div>
+          <div class="td-g2"><div class="td-b td-br">😫</div><div class="td-l">三</div></div>
+          <div class="td-g2"><div class="td-b td-br">😵</div><div class="td-l">四</div></div>
+          <div class="td-g2"><div class="td-b td-by">😣</div><div class="td-l">五</div></div>
+          <div class="td-g2"><div class="td-b td-bg">😄</div><div class="td-l">六</div></div>
+          <div class="td-g2" id="today-trend-col"><div class="td-b" id="today-trend-dot" style="background:var(--g100);font-size:10px;color:var(--g400)">？</div><div class="td-l">今</div></div>
+        </div>
+      </div>
+      <div class="alert-strip" id="stress-alert-strip">
+        <span style="font-size:20px;">⚠️</span>
+        <div><div class="as-t">最近壓力偏高</div><div class="as-s">👉 建議休息或尋求協助</div></div>
+      </div>
+    </div>
+
+    <!-- RESPITE -->
+    <div class="page" id="p-respite">
+      <div class="hero-block">
+        <div class="hb-row">
+          <button class="back-btn" onclick="goBack()">←</button>
+          <div><div class="hb-title">📅 喘息計畫</div><div class="hb-sub" id="respite-sub">本週照護安排</div></div>
+        </div>
+      </div>
+      <!-- Week strip: rendered by JS -->
+      <div class="week-scroll" id="week-strip"></div>
+      <!-- Day label + plan list -->
+      <div class="plan-sec">
+        <div class="plan-t" id="plan-day-title">📌 本週計畫</div>
+        <div id="plan-list"></div>
+        <div id="plan-empty" style="display:none;text-align:center;padding:28px 0;color:var(--g400);font-size:13px;font-weight:600;">
+          這天目前沒有安排<br>
+          <span style="font-size:26px;display:block;margin-top:8px;">🌿</span>
+        </div>
+      </div>
+      <button class="add-btn" onclick="openAddPlan()">＋ 新增計畫</button>
+      <div class="remind-banner" id="remind-banner">
+        <span class="rb-ico">⏰</span>
+        <div><div class="rb-t">明日提醒</div><div class="rb-s" id="remind-text">送往日照中心（週一 09:00）</div></div>
+      </div>
+    </div>
+
+    <!-- PROFILE EDIT -->
+    <div class="page" id="p-profile">
+      <div class="hero-block" style="background:linear-gradient(135deg,#1a365d,#2b6cb0 60%,#4299e1);">
+        <div class="hb-row">
+          <button class="back-btn" onclick="goBack()">←</button>
+          <div><div class="hb-title">👤 個人評估資料</div><div class="hb-sub">可隨時更新照護資訊</div></div>
+        </div>
+      </div>
+      <div style="padding:16px 22px 24px;">
+        <!-- Risk badge -->
+        <div id="profile-page-risk" style="margin-bottom:16px;"></div>
+
+        <!-- Name -->
+        <div class="form-field">
+          <div class="ff-label">照護對象名稱</div>
+          <input class="ff-input" id="profile-edit-name" type="text" placeholder="姓名或暱稱">
+        </div>
+
+        <!-- Age -->
+        <div class="form-field">
+          <div class="ff-label">年齡範圍</div>
+          <div style="display:flex;gap:8px;">
+            <button class="profile-opt" data-group="age" data-val="60-69" onclick="pickProfileOpt(this)">60–69 歲</button>
+            <button class="profile-opt" data-group="age" data-val="70-79" onclick="pickProfileOpt(this)">70–79 歲</button>
+            <button class="profile-opt" data-group="age" data-val="80+" onclick="pickProfileOpt(this)">80 歲以上</button>
+          </div>
+        </div>
+
+        <!-- Mobility -->
+        <div class="form-field">
+          <div class="ff-label">行動能力</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="profile-opt" data-group="mobility" data-val="independent" onclick="pickProfileOpt(this)">可獨立行動</button>
+            <button class="profile-opt" data-group="mobility" data-val="assisted" onclick="pickProfileOpt(this)">需輔具協助</button>
+            <button class="profile-opt" data-group="mobility" data-val="bedridden" onclick="pickProfileOpt(this)">臥床 / 輪椅</button>
+          </div>
+        </div>
+
+        <!-- Conditions -->
+        <div class="form-field">
+          <div class="ff-label">特殊狀況（可複選）</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="profile-opt multi" data-val="alone" onclick="toggleProfileCond(this)">獨居</button>
+            <button class="profile-opt multi" data-val="dementia" onclick="toggleProfileCond(this)">失智症</button>
+            <button class="profile-opt multi" data-val="needs-care" onclick="toggleProfileCond(this)">需日常協助</button>
+            <button class="profile-opt multi" data-val="chronic" onclick="toggleProfileCond(this)">慢性病用藥</button>
+          </div>
+        </div>
+
+        <button onclick="saveProfile()" style="width:100%;padding:15px;border-radius:14px;background:linear-gradient(135deg,#2b6cb0,#3182CE);color:white;border:none;font-size:16px;font-weight:900;cursor:pointer;font-family:var(--font);box-shadow:0 4px 16px rgba(49,130,206,0.35);">✅ 儲存更新</button>
+      </div>
+    </div>
+
+    <!-- DB VIEWER -->
+    <div class="page" id="p-db">
+      <div class="hero-block" style="background:linear-gradient(135deg,#1a202c,#2d3748 60%,#4a5568);min-height:168px;">
+        <div class="hb-row">
+          <button class="back-btn" onclick="goBack()">←</button>
+          <div><div class="hb-title">🗄️ 資料庫檢視</div><div class="hb-sub">Demo 資料總覽</div></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center;">
+          <span id="server-badge" style="padding:4px 12px;border-radius:12px;font-size:11px;font-weight:700;background:rgba(229,62,62,0.15);color:#FC8181;">🔴 偵測伺服器中…</span>
+          <button onclick="checkServer().then(renderDB)" style="padding:4px 10px;border-radius:10px;background:rgba(255,255,255,0.15);border:none;color:white;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);">↻ 重新連線</button>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;" id="db-summary-badges"></div>
+      </div>
+      <div style="padding:12px 22px 24px;" id="db-content"></div>
+    </div>
+
+  </div><!-- /screens -->
+
+  <!-- Add Plan Modal -->
+  <div class="modal-bg" id="add-plan-modal" onclick="closeAddPlan(event)">
+    <div class="modal-sheet">
+      <div class="m-handle"></div>
+      <div class="m-title">➕ 新增喘息計畫</div>
+      <div class="m-sub">填寫計畫內容</div>
+      <div class="form-field">
+        <div class="ff-label">活動名稱</div>
+        <input class="ff-input" id="plan-name" type="text" placeholder="例：日照中心、女兒照顧…">
+      </div>
+      <div class="form-field">
+        <div class="ff-label">選擇星期</div>
+        <div class="day-picker" id="day-picker">
+          <button class="day-opt" data-day="0" onclick="pickDay(this)">一</button>
+          <button class="day-opt" data-day="1" onclick="pickDay(this)">二</button>
+          <button class="day-opt" data-day="2" onclick="pickDay(this)">三</button>
+          <button class="day-opt" data-day="3" onclick="pickDay(this)">四</button>
+          <button class="day-opt" data-day="4" onclick="pickDay(this)">五</button>
+          <button class="day-opt" data-day="5" onclick="pickDay(this)">六</button>
+          <button class="day-opt" data-day="6" onclick="pickDay(this)">日</button>
+        </div>
+      </div>
+      <div class="form-field">
+        <div class="ff-label">時間描述</div>
+        <input class="ff-input" id="plan-time" type="text" placeholder="例：09:00 – 16:00 或 全天">
+      </div>
+      <div class="ff-label" style="margin-bottom:8px;">選擇圖示</div>
+      <div class="icon-picker" id="icon-picker">
+        <button class="icon-opt sel" data-ico="🏢" onclick="pickIcon(this)">🏢</button>
+        <button class="icon-opt" data-ico="👩" onclick="pickIcon(this)">👩</button>
+        <button class="icon-opt" data-ico="👨" onclick="pickIcon(this)">👨</button>
+        <button class="icon-opt" data-ico="💤" onclick="pickIcon(this)">💤</button>
+        <button class="icon-opt" data-ico="🏥" onclick="pickIcon(this)">🏥</button>
+        <button class="icon-opt" data-ico="🌿" onclick="pickIcon(this)">🌿</button>
+        <button class="icon-opt" data-ico="☕" onclick="pickIcon(this)">☕</button>
+        <button class="icon-opt" data-ico="🎵" onclick="pickIcon(this)">🎵</button>
+      </div>
+      <button class="ma-p" style="width:100%;margin-top:18px;" onclick="addPlan()">✅ 確認新增</button>
+    </div>
+  </div>
+
+  <!-- Bottom nav -->
+  <nav class="bnav">
+    <button class="nbtn on" data-pg="p-home" onclick="navTo('p-home')"><span class="ni">🏠</span><span class="nl">首頁</span></button>
+    <button class="nbtn" data-pg="p-med" onclick="navTo('p-med')"><span class="ni">💊</span><span class="nl">用藥</span></button>
+    <button class="nbtn" data-pg="p-report" onclick="navTo('p-report')"><span class="ni">📊</span><span class="nl">報表</span></button>
+    <button class="nbtn" data-pg="p-stress" onclick="navTo('p-stress')"><span class="ni">🧠</span><span class="nl">壓力</span></button>
+    <button class="nbtn" data-pg="p-respite" onclick="navTo('p-respite')"><span class="ni">📅</span><span class="nl">喘息</span></button>
+    <button class="nbtn" data-pg="p-db" onclick="navTo('p-db');renderDB()"><span class="ni">🗄️</span><span class="nl">資料庫</span></button>
+  </nav>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+const TAB_ORDER = ['p-home','p-med','p-report','p-stress','p-respite','p-profile','p-db'];
+let curPage = 'p-home';
+let navStack = ['p-home'];
+
+// Init: push all off-screen right
+document.querySelectorAll('.page:not(.active)').forEach(p => p.style.transform = 'translateX(100%)');
+
+function resetSOSContacts() {
+  lineSentSet.clear();
+  const s1 = document.getElementById('cc1-status');
+  const s2 = document.getElementById('cc2-status');
+  if (s1) s1.innerHTML = 'LINE + 電話';
+  if (s2) s2.innerHTML = 'LINE 通知';
+}
+
+function navTo(id, hint) {
+  if (id === curPage) return;
+  // Reset SOS state when leaving SOS page
+  if (curPage === 'p-sos') resetSOS();
+  // Reset SOS contacts every time we enter SOS fresh
+  if (id === 'p-sos') resetSOSContacts();
+  const prev = document.getElementById(curPage);
+  const next = document.getElementById(id);
+  const prevIdx = TAB_ORDER.indexOf(curPage);
+  const nextIdx = TAB_ORDER.indexOf(id);
+  let fwd;
+  if (hint === 'fwd') fwd = true;
+  else if (hint === 'back') fwd = false;
+  else fwd = nextIdx >= prevIdx || prevIdx === -1;
+  prev.classList.remove('active');
+  prev.style.transition = 'transform 0.38s cubic-bezier(0.25,0.46,0.45,0.94)';
+  prev.style.transform = fwd ? 'translateX(-100%)' : 'translateX(100%)';
+  next.style.transition = 'none';
+  next.style.transform = fwd ? 'translateX(100%)' : 'translateX(-100%)';
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    next.style.transition = 'transform 0.38s cubic-bezier(0.25,0.46,0.45,0.94)';
+    next.style.transform = 'translateX(0)';
+    next.classList.add('active');
+  }));
+  const stackIdx = navStack.indexOf(id);
+  if (stackIdx !== -1) navStack.splice(stackIdx);
+  navStack.push(id);
+  curPage = id;
+  next.scrollTop = 0;
+  document.querySelectorAll('.nbtn').forEach(b => b.classList.toggle('on', b.dataset.pg === id));
+  onPageEnter(id);
+}
+
+function goBack() {
+  if (navStack.length <= 1) return;
+  navStack.pop();
+  const prev = navStack[navStack.length - 1];
+  const wasPage = curPage;
+  curPage = prev;
+  // Reset SOS state when leaving
+  if (wasPage === 'p-sos') resetSOS();
+  // Reset contacts if going back to SOS
+  if (prev === 'p-sos') resetSOSContacts();
+  const prevEl = document.getElementById(wasPage);
+  const nextEl = document.getElementById(prev);
+  prevEl.classList.remove('active');
+  prevEl.style.transition = 'transform 0.38s cubic-bezier(0.25,0.46,0.45,0.94)';
+  prevEl.style.transform = 'translateX(100%)';
+  nextEl.style.transition = 'none';
+  nextEl.style.transform = 'translateX(-100%)';
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    nextEl.style.transition = 'transform 0.38s cubic-bezier(0.25,0.46,0.45,0.94)';
+    nextEl.style.transform = 'translateX(0)';
+    nextEl.classList.add('active');
+  }));
+  nextEl.scrollTop = 0;
+  document.querySelectorAll('.nbtn').forEach(b => b.classList.toggle('on', b.dataset.pg === prev));
+  onPageEnter(prev);
+}
+
+// Called every time a page becomes visible
+function onPageEnter(id) {
+  if (id === 'p-sos') {
+    resetSOS();
+    resetSOSContacts();
+  }
+}
+
+// ── SOS main ─────────────────────────────────────
+function triggerSOS() {
+  document.getElementById('sos-idle').style.display = 'none';
+  const s = document.getElementById('sos-sending');
+  s.classList.add('on');
+  setTimeout(() => { s.classList.remove('on'); document.getElementById('sos-done').classList.add('on'); }, 2400);
+}
+function resetSOS() {
+  document.getElementById('sos-idle').style.display = '';
+  document.getElementById('sos-sending').classList.remove('on');
+  document.getElementById('sos-done').classList.remove('on');
+  // 不清除 LINE 狀態，讓聯絡人狀態保留
+}
+
+// ── Calling overlay ───────────────────────────────
+let callInterval = null;
+let callSeconds = 0;
+let muted = false;
+let speakerOn = false;
+let callConnected = false;
+
+function startCall(name, avatar, number) {
+  document.getElementById('call-name').textContent = name;
+  document.getElementById('call-avatar').textContent = avatar;
+  document.getElementById('call-number').textContent = number;
+  document.getElementById('call-status-txt').textContent = '正在撥號…';
+  document.getElementById('call-timer').style.visibility = 'hidden';
+  muted = false; speakerOn = false; callConnected = false;
+  document.getElementById('btn-mute').textContent = '🎙️';
+  document.getElementById('btn-speaker').textContent = '🔊';
+  document.getElementById('calling-overlay').classList.add('on');
+
+  // Simulate pick up after 3s
+  setTimeout(() => {
+    if (!document.getElementById('calling-overlay').classList.contains('on')) return;
+    callConnected = true;
+    document.getElementById('call-status-txt').textContent = '通話中';
+    document.getElementById('call-timer').style.visibility = 'visible';
+    callSeconds = 0;
+    updateTimer();
+    callInterval = setInterval(updateTimer, 1000);
+  }, 3000);
+}
+
+function updateTimer() {
+  callSeconds++;
+  const m = String(Math.floor(callSeconds / 60)).padStart(2,'0');
+  const s = String(callSeconds % 60).padStart(2,'0');
+  document.getElementById('call-timer').textContent = `${m}:${s}`;
+}
+
+function endCall() {
+  clearInterval(callInterval);
+  callInterval = null;
+  document.getElementById('calling-overlay').classList.remove('on');
+  if (callConnected) showToast('📞 通話結束');
+  else showToast('📵 已取消撥號');
+}
+
+function toggleMute() {
+  muted = !muted;
+  document.getElementById('btn-mute').textContent = muted ? '🔇' : '🎙️';
+  document.getElementById('btn-mute').style.background = muted ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.15)';
+}
+
+function toggleSpeaker() {
+  speakerOn = !speakerOn;
+  document.getElementById('btn-speaker').textContent = speakerOn ? '📢' : '🔊';
+  document.getElementById('btn-speaker').style.background = speakerOn ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.15)';
+}
+
+// ── LINE notify overlay ───────────────────────────
+const lineSentSet = new Set();
+
+function sendLine(contactId, name) {
+  if (lineSentSet.has(contactId)) { showToast('💬 訊息已送出'); return; }
+  lineSentSet.add(contactId);
+
+  // Update status text on contact row
+  document.getElementById(contactId + '-status').innerHTML = '<span style="color:var(--green);font-weight:700;">✅ LINE 已送出</span>';
+
+  // Set notification name
+  document.getElementById('ln-name-1').textContent = name;
+  document.getElementById('ln-msg-1').textContent = `阿嬤發送了緊急求助通知！📍 位置已分享，請盡快確認。`;
+
+  // Show overlay
+  const overlay = document.getElementById('line-overlay');
+  overlay.classList.add('on');
+
+  // Stagger notifications in
+  setTimeout(() => document.getElementById('line-notif-1').classList.add('show'), 80);
+  setTimeout(() => document.getElementById('line-notif-2').classList.add('show'), 350);
+}
+
+function dismissLine() {
+  const overlay = document.getElementById('line-overlay');
+  overlay.classList.remove('on');
+  document.getElementById('line-notif-1').classList.remove('show');
+  document.getElementById('line-notif-2').classList.remove('show');
+}
+
+// ── Med modal ────────────────────────────────────
+function openMedModal() { document.getElementById('med-modal').classList.add('on'); }
+function closeMedModal(e) {
+  if (!e || e.target === document.getElementById('med-modal'))
+    document.getElementById('med-modal').classList.remove('on');
+}
+
+// ── Warn box: show after 30 real seconds (demo: 30s) ─────────
+// For demo purposes we use 10 seconds so you can see it in action
+let warnTimer = setTimeout(() => {
+  const wb = document.getElementById('warn-box');
+  wb.style.display = 'block';
+  wb.style.animation = 'slideUp 0.35s cubic-bezier(0.25,0.46,0.45,0.94)';
+}, 10000); // 10 seconds for demo (real app: 30*60*1000)
+
+// ── Stress ───────────────────────────────────────
+let selectedStress = null;
+
+function pickStress(el) {
+  document.querySelectorAll('.emo-btn').forEach(b => b.classList.remove('sel'));
+  el.classList.add('sel');
+  selectedStress = { emoji: el.dataset.emoji, level: el.dataset.level };
+
+  // Live-update today's trend dot preview
+  const dot = document.getElementById('today-trend-dot');
+  const levelMap = { green: 'var(--green-l)', yellow: '#FFFFF0', red: 'var(--red-l)' };
+  dot.style.background = levelMap[selectedStress.level];
+  dot.style.fontSize = '15px';
+  dot.style.color = '';
+  dot.textContent = selectedStress.emoji;
+}
+
+function submitStress() {
+  if (!selectedStress) {
+    showToast('⚠️ 請先選擇今天的狀態！');
+    // 每個 emoji 依序震動
+    document.querySelectorAll('.emo-btn').forEach((btn, i) => {
+      btn.style.animation = 'none';
+      btn.offsetHeight;
+      btn.style.animationDelay = (i * 60) + 'ms';
+      btn.style.animation = `shake 0.45s ease ${i * 60}ms`;
+      btn.addEventListener('animationend', () => {
+        btn.style.animation = '';
+        btn.style.animationDelay = '';
+      }, { once: true });
+    });
+    return;
+  }
+  // Confirm the trend dot
+  const dot = document.getElementById('today-trend-dot');
+  const levelMap = { green: 'var(--green-l)', yellow: '#FFFFF0', red: 'var(--red-l)' };
+  dot.style.background = levelMap[selectedStress.level];
+  dot.style.fontSize = '15px';
+  dot.textContent = selectedStress.emoji;
+
+  // Show/hide alert based on level
+  const alertStrip = document.getElementById('stress-alert-strip');
+  alertStrip.style.display = selectedStress.level === 'red' ? 'flex' : 'none';
+
+  // ③ Update home card
+  const homeSub = document.getElementById('home-stress-sub');
+  if (homeSub) homeSub.innerHTML = `<span style="color:var(--green);font-weight:700;">✅ 今日已完成 ${selectedStress.emoji}</span>`;
+
+  // Disable submit button and show completed state
+  const btn = document.querySelector('.sub-btn');
+  if (btn) { btn.textContent = '✅ 今日狀態已記錄'; btn.disabled = true; btn.style.opacity = '0.6'; }
+
+  showToast('✅ 今日壓力狀態已記錄！');
+}
+
+// ── Respite plan data & rendering ────────────────
+const DAY_LABELS = ['一','二','三','四','五','六','日'];
+let plans = [
+  { id:1, day:0, name:'日照中心',  time:'09:00 – 16:00', icon:'🏢' },
+  { id:2, day:2, name:'女兒照顧',  time:'全天',           icon:'👩' },
+  { id:3, day:4, name:'居家休息',  time:'全天',           icon:'💤' },
+];
+let nextPlanId = 4;
+let selectedDay = null; // null = show all
+
+function renderRespite() {
+  renderWeekStrip();
+  renderPlanList();
+  renderReminder();
+}
+
+function renderWeekStrip() {
+  const strip = document.getElementById('week-strip');
+  strip.innerHTML = '';
+  DAY_LABELS.forEach((label, idx) => {
+    const dayPlans = plans.filter(p => p.day === idx);
+    const hasPlan = dayPlans.length > 0;
+    const isSelected = selectedDay === idx;
+    const cell = document.createElement('div');
+    cell.className = 'w-d' + (hasPlan ? ' has' : '') + (isSelected ? ' selected-day' : '');
+    cell.onclick = () => selectDay(idx);
+
+    // icon: first plan's icon, or dash
+    const ico = hasPlan ? dayPlans[0].icon : '—';
+    const icoClass = hasPlan ? 'we-o' : 'we-e';
+    const icoStyle = hasPlan ? '' : 'font-size:10px;color:var(--g400)';
+
+    // badge count if multiple plans
+    const badge = hasPlan && dayPlans.length > 1
+      ? `<div class="wd-badge-count">${dayPlans.length}</div>` : '';
+
+    cell.innerHTML = `
+      <div class="wd-l">${label}</div>
+      <div style="position:relative;display:flex;justify-content:center;">
+        <div class="wd-e ${icoClass}" style="${icoStyle}">${ico}</div>
+        ${badge}
+      </div>
+      <div class="wd-t" style="${hasPlan?'':'color:var(--g400)'}">${hasPlan ? dayPlans[0].name : '空閒'}</div>`;
+    strip.appendChild(cell);
+  });
+}
+
+function selectDay(idx) {
+  // Toggle off if already selected
+  if (selectedDay === idx) {
+    selectedDay = null;
+  } else {
+    selectedDay = idx;
+  }
+  renderWeekStrip();
+  renderPlanList();
+}
+
+function renderPlanList() {
+  const list = document.getElementById('plan-list');
+  const empty = document.getElementById('plan-empty');
+  const title = document.getElementById('plan-day-title');
+
+  const filtered = selectedDay === null
+    ? plans
+    : plans.filter(p => p.day === selectedDay);
+
+  if (selectedDay === null) {
+    title.textContent = '📌 本週所有計畫';
+  } else {
+    title.textContent = `📌 週${DAY_LABELS[selectedDay]}的計畫`;
+  }
+
+  list.innerHTML = '';
+  if (filtered.length === 0) {
+    empty.style.display = 'block';
+  } else {
+    empty.style.display = 'none';
+    filtered.forEach(p => {
+      const el = document.createElement('div');
+      el.className = 'plan-item';
+      el.dataset.id = p.id;
+      el.innerHTML = `
+        <div class="pi-ico">${p.icon}</div>
+        <div style="flex:1">
+          <div class="pi-n">${p.name}</div>
+          <div class="pi-d">週${DAY_LABELS[p.day]}　${p.time}</div>
+        </div>
+        <button class="pi-del" onclick="deletePlan(${p.id},event)" title="刪除">✕</button>`;
+      list.appendChild(el);
+    });
+  }
+}
+
+function deletePlan(id, e) {
+  e.stopPropagation();
+  plans = plans.filter(p => p.id !== id);
+  renderRespite();
+  showToast('🗑️ 已刪除計畫');
+}
+
+function renderReminder() {
+  // Show next day's plans if any
+  const tomorrow = (new Date().getDay() + 6) % 7; // Mon=0
+  const tmrPlans = plans.filter(p => p.day === tomorrow);
+  const banner = document.getElementById('remind-banner');
+  const txt = document.getElementById('remind-text');
+  if (tmrPlans.length > 0) {
+    banner.style.display = 'flex';
+    txt.textContent = `${tmrPlans.map(p=>`${p.name}（週${DAY_LABELS[p.day]} ${p.time}）`).join('、')}`;
+  } else {
+    banner.style.display = 'none';
+  }
+}
+
+// ── Add plan modal ────────────────────────────────
+let selectedIcon = '🏢';
+let selectedPlanDay = null;
+
+function openAddPlan() {
+  // Pre-select the currently viewed day if any
+  selectedPlanDay = selectedDay;
+  document.getElementById('plan-name').value = '';
+  document.getElementById('plan-time').value = '';
+  selectedIcon = '🏢';
+  document.querySelectorAll('.icon-opt').forEach(b => b.classList.toggle('sel', b.dataset.ico === '🏢'));
+  // Pre-highlight day in picker
+  document.querySelectorAll('.day-opt').forEach(b => {
+    b.classList.toggle('sel', parseInt(b.dataset.day) === selectedPlanDay);
+  });
+  document.getElementById('add-plan-modal').classList.add('on');
+}
+function closeAddPlan(e) {
+  if (!e || e.target === document.getElementById('add-plan-modal'))
+    document.getElementById('add-plan-modal').classList.remove('on');
+}
+function pickDay(el) {
+  document.querySelectorAll('.day-opt').forEach(b => b.classList.remove('sel'));
+  el.classList.add('sel');
+  selectedPlanDay = parseInt(el.dataset.day);
+}
+function pickIcon(el) {
+  document.querySelectorAll('.icon-opt').forEach(b => b.classList.remove('sel'));
+  el.classList.add('sel');
+  selectedIcon = el.dataset.ico;
+}
+function addPlan() {
+  const name = document.getElementById('plan-name').value.trim();
+  const time = document.getElementById('plan-time').value.trim();
+  if (!name) { showToast('⚠️ 請輸入活動名稱'); return; }
+  if (selectedPlanDay === null) { showToast('⚠️ 請選擇星期'); return; }
+  plans.push({ id: nextPlanId++, day: selectedPlanDay, name, time: time || '全天', icon: selectedIcon });
+  document.getElementById('add-plan-modal').classList.remove('on');
+  // Jump to that day
+  selectedDay = selectedPlanDay;
+  renderRespite();
+  showToast(`✅ 已新增「${name}」到週${DAY_LABELS[selectedPlanDay]}`);
+}
+
+// Init respite on load
+renderRespite();
+
+// ════════════════════════════════════════
+// ASSESSMENT ONBOARDING
+// ════════════════════════════════════════
+const TOTAL_STEPS = 5; // 0=welcome,1=name,2=age,3=mobility,4=conditions,5=result
+let asmntCurrent = 0;
+const asmntAnswers = { name:'', age:'', mobility:'', conditions:[] };
+
+function asmntSetProgress(step) {
+  const pct = step === 0 ? 0 : Math.round((step / (TOTAL_STEPS - 1)) * 100);
+  document.getElementById('asmnt-bar').style.width = pct + '%';
+}
+
+function asmntUpdateFooter() {
+  const backBtn = document.getElementById('asmnt-back-btn');
+  const nextBtn = document.getElementById('asmnt-next-btn');
+  const footer = document.getElementById('asmnt-footer');
+
+  // Hide footer on welcome and result steps
+  if (asmntCurrent === 0 || asmntCurrent === 5) {
+    footer.style.display = 'none';
+    return;
+  }
+  footer.style.display = 'flex';
+  backBtn.style.display = asmntCurrent > 1 ? 'block' : 'none';
+  nextBtn.disabled = !asmntCanProceed();
+}
+
+function asmntCanProceed() {
+  if (asmntCurrent === 1) return document.getElementById('input-name').value.trim().length > 0;
+  if (asmntCurrent === 2) return asmntAnswers.age !== '';
+  if (asmntCurrent === 3) return asmntAnswers.mobility !== '';
+  if (asmntCurrent === 4) return true; // conditions optional
+  return true;
+}
+
+function asmntCheckNext() {
+  document.getElementById('asmnt-next-btn').disabled = !asmntCanProceed();
+}
+
+function asmntNext() {
+  if (asmntCurrent === 1) {
+    asmntAnswers.name = document.getElementById('input-name').value.trim() || '長輩';
+  }
+  if (asmntCurrent === 4) {
+    buildResult();
+  }
+  const from = document.getElementById('step-' + asmntCurrent);
+  asmntCurrent++;
+  const to = document.getElementById('step-' + asmntCurrent);
+  from.classList.remove('active');
+  from.classList.add('exit');
+  to.style.transform = 'translateX(100%)';
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    to.style.transition = 'transform 0.38s cubic-bezier(0.25,0.46,0.45,0.94)';
+    to.classList.add('active');
+    to.style.transform = 'translateX(0)';
+  }));
+  asmntSetProgress(asmntCurrent);
+  asmntUpdateFooter();
+}
+
+function asmntBack() {
+  const from = document.getElementById('step-' + asmntCurrent);
+  asmntCurrent--;
+  const to = document.getElementById('step-' + asmntCurrent);
+
+  // Slide current step out to the RIGHT
+  from.classList.remove('active');
+  from.style.transition = 'transform 0.38s cubic-bezier(0.25,0.46,0.45,0.94)';
+  from.style.transform = 'translateX(100%)';
+
+  // Bring previous step in from the LEFT
+  to.classList.remove('exit');
+  to.style.transition = 'none';
+  to.style.transform = 'translateX(-100%)';
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    to.style.transition = 'transform 0.38s cubic-bezier(0.25,0.46,0.45,0.94)';
+    to.style.transform = 'translateX(0)';
+    to.classList.add('active');
+  }));
+
+  // Clean up from after animation
+  setTimeout(() => {
+    from.style.transition = '';
+    from.style.transform = 'translateX(100%)';
+  }, 400);
+
+  asmntSetProgress(asmntCurrent);
+  asmntUpdateFooter();
+}
+
+// Single-select options
+function pickOpt(el, groupId) {
+  document.querySelectorAll('#' + groupId + ' .asmnt-opt').forEach(b => b.classList.remove('sel'));
+  el.classList.add('sel');
+  if (groupId === 'opts-age') asmntAnswers.age = el.dataset.val;
+  if (groupId === 'opts-mobility') asmntAnswers.mobility = el.dataset.val;
+  document.getElementById('asmnt-next-btn').disabled = !asmntCanProceed();
+}
+
+// Multi-select options
+function toggleMultiOpt(el, mode) {
+  if (mode === 'exclusive') {
+    // "以上皆無" — clear all others
+    document.querySelectorAll('#opts-conditions .asmnt-opt').forEach(b => b.classList.remove('sel'));
+    el.classList.add('sel');
+    asmntAnswers.conditions = ['none'];
+  } else {
+    // Remove "以上皆無" if selecting something else
+    const noneBtn = document.querySelector('#opts-conditions [data-val="none"]');
+    if (noneBtn) noneBtn.classList.remove('sel');
+    asmntAnswers.conditions = asmntAnswers.conditions.filter(v => v !== 'none');
+    el.classList.toggle('sel');
+    const val = el.dataset.val;
+    if (el.classList.contains('sel')) {
+      asmntAnswers.conditions.push(val);
+    } else {
+      asmntAnswers.conditions = asmntAnswers.conditions.filter(v => v !== val);
+    }
+  }
+  // Update checkbox display
+  document.querySelectorAll('#opts-conditions .asmnt-opt').forEach(b => {
+    const chk = b.querySelector('.ao-check');
+    if (chk) chk.textContent = b.classList.contains('sel') ? '✓' : '';
+  });
+}
+
+// ── Risk scoring ──────────────────────────────────
+function calcRisk() {
+  let score = 0;
+  // Age
+  if (asmntAnswers.age === '70-79') score += 1;
+  if (asmntAnswers.age === '80+')   score += 2;
+  // Mobility
+  if (asmntAnswers.mobility === 'assisted')  score += 1;
+  if (asmntAnswers.mobility === 'bedridden') score += 3;
+  // Conditions
+  const c = asmntAnswers.conditions;
+  if (c.includes('alone'))      score += 3;
+  if (c.includes('dementia'))   score += 3;
+  if (c.includes('needs-care')) score += 2;
+  if (c.includes('chronic'))    score += 1;
+  return score;
+}
+
+function getRiskLevel(score) {
+  if (score <= 2) return { level:'low',  label:'一般關注', color:'risk-low',  icon:'🟢' };
+  if (score <= 5) return { level:'mid',  label:'中度關注', color:'risk-mid',  icon:'🟡' };
+  return            { level:'high', label:'高度關注', color:'risk-high', icon:'🔴' };
+}
+
+function buildResult() {
+  const score = calcRisk();
+  const risk = getRiskLevel(score);
+  const c = asmntAnswers.conditions;
+  const name = asmntAnswers.name;
+
+  // Build tags
+  const tags = [];
+  const ageMap = {'60-69':'60–69 歲','70-79':'70–79 歲','80+':'80 歲以上'};
+  const mobMap = {'independent':'可獨立行動','assisted':'需輔具協助','bedridden':'臥床 / 輪椅'};
+  if (asmntAnswers.age)      tags.push({t: ageMap[asmntAnswers.age], cls:'tag-blue'});
+  if (asmntAnswers.mobility) tags.push({t: mobMap[asmntAnswers.mobility], cls:'tag-blue'});
+  if (c.includes('alone'))      tags.push({t:'獨居', cls:'tag-red'});
+  if (c.includes('dementia'))   tags.push({t:'失智症', cls:'tag-red'});
+  if (c.includes('needs-care')) tags.push({t:'需日常協助', cls:'tag-orange'});
+  if (c.includes('chronic'))    tags.push({t:'慢性病用藥', cls:'tag-orange'});
+
+  // Build suggestions based on risk
+  const suggestions = [];
+  if (c.includes('alone') || risk.level === 'high') {
+    suggestions.push({icon:'🔕', text:'異常沉默偵測：超過 4 小時無 APP 互動自動通知家屬'});
+  }
+  if (c.includes('dementia')) {
+    suggestions.push({icon:'💊', text:'用藥提醒頻率加強，確認前每 15 分鐘重複提醒'});
+    suggestions.push({icon:'🔢', text:'介面文字放大，減少操作步驟'});
+  }
+  if (asmntAnswers.mobility === 'bedridden') {
+    suggestions.push({icon:'🆘', text:'SOS 按鈕固定顯示於首頁最上方，字體加大'});
+  }
+  if (c.includes('chronic')) {
+    suggestions.push({icon:'📊', text:'健康報表啟用血壓 / 血糖異常閾值警示'});
+  }
+  if (risk.level === 'low') {
+    suggestions.push({icon:'📅', text:'基本用藥提醒與每週喘息計畫'});
+    suggestions.push({icon:'🧠', text:'壓力燈號每日記錄，月度趨勢分析'});
+  }
+  if (c.includes('alone') && !c.includes('dementia')) {
+    suggestions.push({icon:'👨‍👩‍👧', text:'家屬儀表板：每日活動摘要每晚自動傳送至 LINE'});
+  }
+
+  const tagsHtml = tags.map(t => `<span class="rp-tag ${t.cls}">${t.t}</span>`).join('');
+  const sugHtml = suggestions.map(s =>
+    `<div class="rp-suggest-item"><span class="rsi-icon">${s.icon}</span><span>${s.text}</span></div>`
+  ).join('');
+
+  document.getElementById('result-area').innerHTML = `
+    <span class="risk-badge ${risk.color}">${risk.icon} 風險等級：${risk.label}（${score} 分）</span>
+    <div class="result-profile">
+      <div class="rp-name">👤 ${name}</div>
+      <div class="rp-tags">${tagsHtml || '<span class="rp-tag tag-green">一般長者</span>'}</div>
+      <div style="font-size:12px;font-weight:700;color:var(--g500);margin-bottom:8px;">📌 系統建議開啟的功能</div>
+      <div class="rp-suggests">${sugHtml}</div>
+    </div>`;
+
+  // Store user profile globally for app use
+  window.userProfile = { name, score, risk: risk.level, conditions: c,
+    age: asmntAnswers.age, mobility: asmntAnswers.mobility };
+}
+
+function enterApp() {
+  if (window.userProfile) {
+    applyProfile(window.userProfile);
+  }
+  document.getElementById('assessment').classList.add('done');
+}
+
+// ── Apply profile to UI everywhere ───────────────
+function applyProfile(p) {
+  // Home name
+  const nameEl = document.getElementById('home-name');
+  if (nameEl) nameEl.textContent = p.name;
+  const acctName0 = document.getElementById('acct-name-0');
+  if (acctName0) acctName0.textContent = p.name;
+
+  // Home status based on risk
+  const statusTxt = document.getElementById('home-status-txt');
+  const statusBar = document.getElementById('home-status-bar');
+  if (statusTxt && statusBar) {
+    const map = { low:'今日狀態：正常', mid:'今日狀態：需留意', high:'今日狀態：高風險' };
+    const dotColors = { low:'#68D391', mid:'#F6E05E', high:'#FC8181' };
+    statusTxt.textContent = map[p.risk] || '今日狀態：正常';
+    const dot = statusBar.querySelector('.h-dot');
+    if (dot) dot.style.background = dotColors[p.risk] || '#68D391';
+  }
+
+  // Profile card on home
+  const card = document.getElementById('profile-card');
+  if (card) {
+    const ageMap = {'60-69':'60–69 歲','70-79':'70–79 歲','80+':'80 歲以上'};
+    const mobMap = {'independent':'獨立行動','assisted':'需輔具','bedridden':'臥床'};
+    const condMap = {'alone':'獨居','dementia':'失智症','needs-care':'需協助','chronic':'慢性病'};
+    const riskMap = { low:{ label:'一般關注', bg:'#E6FFFA', color:'#276749' },
+                      mid:{ label:'中度關注', bg:'#FFFBEB', color:'#744210' },
+                      high:{ label:'高度關注', bg:'#FFF5F5', color:'#742A2A' } };
+    const r = riskMap[p.risk] || riskMap.low;
+
+    const tags = [];
+    if (p.age) tags.push({t: ageMap[p.age]||p.age, c:'#EBF8FF', tc:'#2B6CB0'});
+    if (p.mobility) tags.push({t: mobMap[p.mobility]||p.mobility, c:'#EBF8FF', tc:'#2B6CB0'});
+    (p.conditions||[]).filter(v=>v!=='none').forEach(v => {
+      tags.push({t: condMap[v]||v, c:'#FFF5F5', tc:'#C53030'});
+    });
+
+    document.getElementById('profile-tags').innerHTML = tags.map(t =>
+      `<span style="padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;background:${t.c};color:${t.tc}">${t.t}</span>`
+    ).join('');
+    document.getElementById('profile-risk-row').innerHTML =
+      `<span style="background:${r.bg};color:${r.color};padding:3px 10px;border-radius:12px;font-size:11px;font-weight:800;">風險：${r.label}</span>
+       <span style="margin-left:8px;font-size:11px;color:var(--g400);">點「編輯」可更新</span>`;
+    card.style.display = 'block';
+  }
+
+  // Med reminders: high/dementia → adjust warn timing
+  if (p.risk === 'high' || (p.conditions||[]).includes('dementia')) {
+    clearTimeout(warnTimer);
+    warnTimer = setTimeout(() => {
+      const wb = document.getElementById('warn-box');
+      if (wb) { wb.style.display = 'block'; wb.style.animation = 'slideUp 0.35s ease'; }
+    }, 5000); // 5s for high-risk demo
+  }
+
+  // Update profile edit page fields
+  const editName = document.getElementById('profile-edit-name');
+  if (editName) editName.value = p.name;
+  document.querySelectorAll('.profile-opt[data-group="age"]').forEach(b =>
+    b.classList.toggle('sel', b.dataset.val === p.age));
+  document.querySelectorAll('.profile-opt[data-group="mobility"]').forEach(b =>
+    b.classList.toggle('sel', b.dataset.val === p.mobility));
+  document.querySelectorAll('.profile-opt.multi').forEach(b =>
+    b.classList.toggle('sel', (p.conditions||[]).includes(b.dataset.val)));
+
+  // Update risk on profile page
+  const rr = { low:{ label:'一般關注 🟢', bg:'#E6FFFA', c:'#276749' },
+               mid:{ label:'中度關注 🟡', bg:'#FFFBEB', c:'#744210' },
+               high:{ label:'高度關注 🔴', bg:'#FFF5F5', c:'#742A2A' } }[p.risk] || {};
+  const profileRisk = document.getElementById('profile-page-risk');
+  if (profileRisk) profileRisk.innerHTML =
+    `<span style="background:${rr.bg};color:${rr.c};padding:5px 14px;border-radius:20px;font-size:13px;font-weight:800;">風險等級：${rr.label}</span>`;
+}
+
+// ── Profile edit page functions ───────────────────
+function pickProfileOpt(el) {
+  const group = el.dataset.group;
+  document.querySelectorAll(`.profile-opt[data-group="${group}"]`).forEach(b => b.classList.remove('sel'));
+  el.classList.add('sel');
+}
+function toggleProfileCond(el) {
+  el.classList.toggle('sel');
+}
+function saveProfile() {
+  const name = document.getElementById('profile-edit-name').value.trim() || window.userProfile?.name || '長輩';
+  const age = document.querySelector('.profile-opt[data-group="age"].sel')?.dataset.val || window.userProfile?.age || '';
+  const mobility = document.querySelector('.profile-opt[data-group="mobility"].sel')?.dataset.val || window.userProfile?.mobility || '';
+  const conditions = [...document.querySelectorAll('.profile-opt.multi.sel')].map(b => b.dataset.val);
+
+  // Recalc risk
+  let score = 0;
+  if (age === '70-79') score += 1;
+  if (age === '80+')   score += 2;
+  if (mobility === 'assisted')  score += 1;
+  if (mobility === 'bedridden') score += 3;
+  if (conditions.includes('alone'))      score += 3;
+  if (conditions.includes('dementia'))   score += 3;
+  if (conditions.includes('needs-care')) score += 2;
+  if (conditions.includes('chronic'))    score += 1;
+  const risk = score <= 2 ? 'low' : score <= 5 ? 'mid' : 'high';
+
+  window.userProfile = { name, age, mobility, conditions, score, risk };
+  applyProfile(window.userProfile);
+  showToast('✅ 評估資料已更新！');
+  goBack();
+}
+
+// ── Med taken actions ─────────────────────────────
+function confirmMedTaken() {
+  closeMedModal();
+  dismissWarnBox();
+  // Mark 胃藥 row as taken
+  const row = document.querySelector('#p-med .time-grp:nth-child(2) .med-row');
+  if (row) {
+    row.classList.add('taken-state');
+    const tag = row.querySelector('.med-tag');
+    if (tag) { tag.textContent = '✅ 已服用'; tag.className = 'med-tag mt-ok'; }
+  }
+  // Update home med card
+  document.getElementById('home-med-sub').textContent = '今日 2/3 完成';
+  showToast('✅ 胃藥已記錄服用！');
+}
+function dismissWarnBox() {
+  const wb = document.getElementById('warn-box');
+  if (!wb) return;
+  wb.style.transition = 'opacity 0.3s';
+  wb.style.opacity = '0';
+  setTimeout(() => { wb.style.display = 'none'; wb.style.opacity = '1'; }, 300);
+}
+
+// Init assessment footer
+asmntUpdateFooter();
+
+
+// ════════════════════════════════════════
+// 📦 資料層：localStorage（備份）+ Node.js Server（主要）
+// ════════════════════════════════════════
+
+const DB_KEY     = 'yinan_db';
+const SERVER_URL = 'http://localhost:3000'; // Node.js 本機伺服器
+let   serverOnline = false;
+
+// 偵測伺服器是否在線
+async function checkServer() {
+  try {
+    const r = await fetch(SERVER_URL + '/data', { signal: AbortSignal.timeout(1500) });
+    if (r.ok) {
+      serverOnline = true;
+      updateServerBadge(true);
+      // 從 server 同步最新資料
+      const json = await r.json();
+      if (json.data) {
+        localStorage.setItem(DB_KEY, JSON.stringify(json.data));
+        console.log('✅ 已從伺服器同步資料');
+      }
+    }
+  } catch(e) {
+    serverOnline = false;
+    updateServerBadge(false);
+  }
+}
+
+function updateServerBadge(online) {
+  const badge = document.getElementById('server-badge');
+  if (!badge) return;
+  badge.textContent = online ? '🟢 伺服器連線中' : '🔴 離線模式';
+  badge.style.background = online ? 'rgba(56,161,105,0.2)' : 'rgba(229,62,62,0.15)';
+  badge.style.color = online ? '#276749' : '#742A2A';
+}
+
+// 傳送資料到 server（失敗不影響 APP）
+async function postToServer(endpoint, data) {
+  if (!serverOnline) return;
+  try {
+    await fetch(SERVER_URL + endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+      signal: AbortSignal.timeout(3000)
+    });
+  } catch(e) {
+    console.warn('Server post failed, data saved locally:', endpoint);
+  }
+}
+
+// ── localStorage 輔助 ─────────────────────────────
+function dbLoad() {
+  try { return JSON.parse(localStorage.getItem(DB_KEY)) || {}; }
+  catch(e) { return {}; }
+}
+function dbSave(data) {
+  try { localStorage.setItem(DB_KEY, JSON.stringify(data)); }
+  catch(e) { console.warn('localStorage save failed', e); }
+}
+function dbGet(table) { return dbLoad()[table] || []; }
+function dbPush(table, record) {
+  const db = dbLoad();
+  if (!db[table]) db[table] = [];
+  db[table].push({ ...record, _id: Date.now(), _ts: new Date().toISOString() });
+  dbSave(db);
+}
+function dbSet(table, value) {
+  const db = dbLoad();
+  db[table] = value;
+  dbSave(db);
+}
+
+// ── 初始化：從 localStorage 還原資料 ─────────────
+function dbInit() {
+  // Demo 模式：每次開啟都清空，從頭開始
+  localStorage.removeItem(DB_KEY);
+
+  // 喘息計畫預設資料
+  renderRespite();
+
+  // 啟動時偵測伺服器
+  checkServer();
+  setInterval(checkServer, 30000);
+}
+
+// ── 各功能串接 ────────────────────────────────────
+
+function enterApp() {
+  if (window.userProfile) {
+    dbSet('profile', window.userProfile);
+    dbPush('assessment_logs', { ...window.userProfile, event: 'completed' });
+    postToServer('/profile', { ...window.userProfile, event: 'completed' });
+    applyProfile(window.userProfile);
+  }
+  document.getElementById('assessment').classList.add('done');
+  const sbar = document.getElementById('sbar');
+  if (sbar) sbar.classList.remove('dark');
+}
+
+function saveProfile() {
+  const name = document.getElementById('profile-edit-name').value.trim() || window.userProfile?.name || '長輩';
+  const age = document.querySelector('.profile-opt[data-group="age"].sel')?.dataset.val || window.userProfile?.age || '';
+  const mobility = document.querySelector('.profile-opt[data-group="mobility"].sel')?.dataset.val || window.userProfile?.mobility || '';
+  const conditions = [...document.querySelectorAll('.profile-opt.multi.sel')].map(b => b.dataset.val);
+  let score = 0;
+  if (age === '70-79') score += 1; if (age === '80+') score += 2;
+  if (mobility === 'assisted') score += 1; if (mobility === 'bedridden') score += 3;
+  if (conditions.includes('alone')) score += 3; if (conditions.includes('dementia')) score += 3;
+  if (conditions.includes('needs-care')) score += 2; if (conditions.includes('chronic')) score += 1;
+  const risk = score <= 2 ? 'low' : score <= 5 ? 'mid' : 'high';
+  window.userProfile = { name, age, mobility, conditions, score, risk };
+  dbSet('profile', window.userProfile);
+  dbPush('assessment_logs', { ...window.userProfile, event: 'updated' });
+  postToServer('/profile', { ...window.userProfile, event: 'updated' });
+  applyProfile(window.userProfile);
+  showToast('✅ 評估資料已更新並儲存！');
+  goBack();
+}
+
+function triggerSOS() {
+  const payload = { user: window.userProfile?.name || '未知', location: '台北市信義區（模擬）', contacts_notified: ['女兒（小芳）', '兒子（阿明）'] };
+  dbPush('sos_logs', payload);
+  postToServer('/sos', payload);
+  document.getElementById('sos-idle').style.display = 'none';
+  const s = document.getElementById('sos-sending');
+  s.classList.add('on');
+  setTimeout(() => { s.classList.remove('on'); document.getElementById('sos-done').classList.add('on'); }, 2400);
+}
+
+function confirmMedTaken() {
+  closeMedModal();
+  dismissWarnBox();
+  const payload = { name: '胃藥', dose: '2顆', timing: '飯後30分鐘', scheduled: '12:00', user: window.userProfile?.name || '未知' };
+  dbPush('med_logs', payload);
+  postToServer('/med', payload);
+  const row = document.querySelector('#p-med .time-grp:nth-child(2) .med-row');
+  if (row) { row.classList.add('taken-state'); const tag = row.querySelector('.med-tag'); if (tag) { tag.textContent = '✅ 已服用'; tag.className = 'med-tag mt-ok'; } }
+  document.getElementById('home-med-sub').textContent = '今日 2/3 完成';
+  showToast('✅ 胃藥已記錄服用！');
+}
+
+function submitStress() {
+  if (!selectedStress) {
+    showToast('⚠️ 請先選擇今天的狀態！');
+    document.querySelectorAll('.emo-btn').forEach((btn, i) => {
+      btn.style.animation = 'none'; btn.offsetHeight;
+      btn.style.animation = `shake 0.45s ease ${i * 60}ms`;
+      btn.addEventListener('animationend', () => { btn.style.animation = ''; }, { once: true });
+    });
+    return;
+  }
+  const payload = { emoji: selectedStress.emoji, level: selectedStress.level, user: window.userProfile?.name || '未知' };
+  dbPush('stress_logs', payload);
+  postToServer('/stress', payload);
+  const dot = document.getElementById('today-trend-dot');
+  const levelMap = { green: 'var(--green-l)', yellow: '#FFFFF0', red: 'var(--red-l)' };
+  dot.style.background = levelMap[selectedStress.level]; dot.style.fontSize = '15px'; dot.textContent = selectedStress.emoji;
+  const alertStrip = document.getElementById('stress-alert-strip');
+  alertStrip.style.display = selectedStress.level === 'red' ? 'flex' : 'none';
+  const homeSub = document.getElementById('home-stress-sub');
+  if (homeSub) homeSub.innerHTML = `<span style="color:var(--green);font-weight:700;">✅ 今日已完成 ${selectedStress.emoji}</span>`;
+  const btn = document.querySelector('.sub-btn');
+  if (btn) { btn.textContent = '✅ 今日狀態已記錄'; btn.disabled = true; btn.style.opacity = '0.6'; }
+  showToast('✅ 今日壓力狀態已記錄！');
+}
+
+function addPlan() {
+  const name = document.getElementById('plan-name').value.trim();
+  const time = document.getElementById('plan-time').value.trim();
+  if (!name) { showToast('⚠️ 請輸入活動名稱'); return; }
+  if (selectedPlanDay === null) { showToast('⚠️ 請選擇星期'); return; }
+  plans.push({ id: nextPlanId++, day: selectedPlanDay, name, time: time || '全天', icon: selectedIcon });
+  dbSet('plans', plans);
+  postToServer('/plans', { plans });
+  document.getElementById('add-plan-modal').classList.remove('on');
+  selectedDay = selectedPlanDay;
+  renderRespite();
+  showToast(`✅ 已新增「${name}」到週${DAY_LABELS[selectedPlanDay]}`);
+}
+
+function deletePlan(id, e) {
+  e.stopPropagation();
+  plans = plans.filter(p => p.id !== id);
+  dbSet('plans', plans);
+  postToServer('/plans', { plans });
+  renderRespite();
+  showToast('🗑️ 已刪除計畫');
+}
+
+// ════════════════════════════════════════
+// 🗄️ 資料庫檢視器
+// ════════════════════════════════════════
+function renderDB() {
+  const db = dbLoad();
+  const content = document.getElementById('db-content');
+  const badges = document.getElementById('db-summary-badges');
+  const tables = ['profile','sos_logs','med_logs','stress_logs','plans','assessment_logs'];
+  const icons  = { profile:'👤', sos_logs:'🆘', med_logs:'💊', stress_logs:'🧠', plans:'📅', assessment_logs:'📋' };
+  badges.innerHTML = tables.map(t => {
+    const count = Array.isArray(db[t]) ? db[t].length : (db[t] ? 1 : 0);
+    return `<span style="background:rgba(255,255,255,0.18);padding:4px 10px;border-radius:12px;font-size:11px;font-weight:700;color:white;">${icons[t]} ${count}</span>`;
+  }).join('');
+  if (Object.keys(db).length === 0) {
+    content.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--g400);"><div style="font-size:48px;margin-bottom:12px;">📭</div><div style="font-weight:700;">尚無資料</div><div style="font-size:12px;margin-top:6px;">使用各功能後，資料會出現在這裡</div></div>`;
+    return;
+  }
+  const tableLabels = { profile:'👤 個人評估', sos_logs:'🆘 SOS 紀錄', med_logs:'💊 用藥紀錄', stress_logs:'🧠 壓力燈號', plans:'📅 喘息計畫', assessment_logs:'📋 問卷歷程' };
+  const riskLabel = { low:'🟢 一般', mid:'🟡 中度', high:'🔴 高度' };
+  content.innerHTML = tables.filter(t => db[t]).map(table => {
+    const rows = Array.isArray(db[table]) ? db[table] : [db[table]];
+    if (!rows.length) return '';
+    const rowsHtml = rows.slice(-5).reverse().map(row => {
+      const ts = row._ts ? `<span style="font-size:10px;color:var(--g400);float:right;">${new Date(row._ts).toLocaleString('zh-TW',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})}</span>` : '';
+      let detail = '';
+      if (table==='profile') detail=`<b>${row.name}</b> · ${row.age||''} · ${riskLabel[row.risk]||row.risk} · ${row.score}分`;
+      else if (table==='sos_logs') detail=`${row.user} 求助 · 📍${row.location}`;
+      else if (table==='med_logs') detail=`💊 ${row.name} ${row.dose} · ${row.timing}`;
+      else if (table==='stress_logs') detail=`${row.emoji} ${row.level==='green'?'良好':row.level==='yellow'?'普通':'偏高'}`;
+      else if (table==='plans') detail=`${row.icon} ${row.name} · 週${DAY_LABELS[row.day]} ${row.time}`;
+      else if (table==='assessment_logs') detail=`${row.event==='completed'?'初次':' 更新'} · ${row.name} · ${riskLabel[row.risk]||''}`;
+      return `<div style="padding:10px 12px;border-radius:10px;background:var(--g50);margin-bottom:6px;font-size:12px;color:var(--g700);">${ts}${detail}</div>`;
+    }).join('');
+    return `<div style="margin-bottom:20px;"><div style="font-size:13px;font-weight:800;color:var(--g700);margin-bottom:8px;display:flex;justify-content:space-between;"><span>${tableLabels[table]||table}</span><span style="font-size:11px;font-weight:600;color:var(--g400);">${rows.length} 筆</span></div>${rowsHtml}</div>`;
+  }).join('') + `<button onclick="clearDB()" style="width:100%;padding:12px;border-radius:12px;background:var(--red-l);border:2px solid #FC8181;color:var(--red-d);font-size:13px;font-weight:800;cursor:pointer;font-family:var(--font);margin-top:4px;">🗑️ 清除所有資料（重置 Demo）</button>`;
+}
+
+function clearDB() {
+  localStorage.removeItem(DB_KEY);
+  postToServer('/clear', {});
+  showToast('🗑️ 資料已清除');
+  renderDB();
+}
+
+// 啟動
+dbInit();
+
+
+// ── Toast ────────────────────────────────────────
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>
