@@ -105,7 +105,37 @@ html,body{height:100%;width:100%;font-family:var(--font);background:#0f1117;disp
 #p-sos .hero-block{min-height:unset;background:transparent !important;}
 #p-profile .hero-block{min-height:168px;}
 
-/* ════ DARK MODE ════ */
+/* ════ LOGIN SCREEN ════ */
+.login-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:24px 28px;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.login-body::-webkit-scrollbar{display:none;}
+.login-logo{width:72px;height:72px;border-radius:22px;
+  background:linear-gradient(135deg,#2b6cb0,#3182CE);
+  display:flex;align-items:center;justify-content:center;
+  font-size:36px;margin-bottom:16px;
+  box-shadow:0 8px 24px rgba(49,130,206,0.3);flex-shrink:0;}
+.login-app-name{font-size:24px;font-weight:900;color:var(--g700);margin-bottom:4px;}
+.login-tagline{font-size:13px;color:var(--g500);margin-bottom:32px;}
+.login-field{width:100%;margin-bottom:14px;}
+.login-label{font-size:12px;font-weight:700;color:var(--g500);margin-bottom:7px;}
+.login-phone-row{display:flex;gap:8px;align-items:stretch;}
+.login-prefix{padding:12px 14px;border-radius:12px;border:2px solid var(--g200);
+  background:var(--g50);font-size:15px;font-weight:700;color:var(--g700);
+  white-space:nowrap;display:flex;align-items:center;flex-shrink:0;}
+.login-input{flex:1;min-width:0;padding:12px 14px;border-radius:12px;
+  border:2px solid var(--g200);font-size:16px;font-family:var(--font);
+  color:var(--g700);outline:none;width:100%;box-sizing:border-box;}
+.login-otp-input{width:100%;padding:14px;border-radius:12px;
+  border:2px solid var(--g200);font-size:28px;font-family:var(--font);
+  color:var(--g700);outline:none;text-align:center;letter-spacing:10px;
+  font-weight:900;box-sizing:border-box;}
+.login-error{color:var(--red);font-size:12px;font-weight:700;text-align:center;margin-top:6px;}
+.login-submit-btn{width:100%;padding:15px;border-radius:14px;
+  background:linear-gradient(135deg,#2b6cb0,#3182CE);color:white;border:none;
+  font-size:16px;font-weight:900;cursor:pointer;font-family:var(--font);
+  box-shadow:0 6px 20px rgba(49,130,206,0.35);margin-bottom:14px;
+  transition:opacity 0.2s;}
+.login-hint{font-size:12px;color:var(--g400);text-align:center;line-height:1.8;}
 body.dark{background:#0a0a12;}
 body.dark .phone{background:#111118;}
 body.dark .page{background:#111118 !important;}
@@ -621,46 +651,43 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
       <div class="notch"></div>
       <span>📶 🔋</span>
     </div>
-    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 28px;">
+    <div class="login-body">
       <!-- Logo -->
-      <div style="width:80px;height:80px;border-radius:24px;background:linear-gradient(135deg,#2b6cb0,#3182CE);display:flex;align-items:center;justify-content:center;font-size:40px;margin-bottom:20px;box-shadow:0 8px 24px rgba(49,130,206,0.3);">🏥</div>
-      <div style="font-size:26px;font-weight:900;color:var(--g700);margin-bottom:6px;">銀安APP</div>
-      <div style="font-size:14px;color:var(--g500);margin-bottom:40px;">讓照護更安心</div>
+      <div class="login-logo">🏥</div>
+      <div class="login-app-name">銀安APP</div>
+      <div class="login-tagline">讓照護更安心</div>
 
       <!-- 電話輸入 -->
-      <div style="width:100%;margin-bottom:14px;">
-        <div style="font-size:12px;font-weight:700;color:var(--g500);margin-bottom:6px;">📱 手機號碼</div>
-        <div style="display:flex;gap:8px;">
-          <div style="padding:12px 14px;border-radius:12px;border:2px solid var(--g200);background:var(--g50);font-size:15px;font-weight:700;color:var(--g700);white-space:nowrap;">+886</div>
+      <div class="login-field">
+        <div class="login-label">📱 手機號碼</div>
+        <div class="login-phone-row">
+          <div class="login-prefix">+886</div>
           <input id="login-phone" type="tel" placeholder="912 345 678" maxlength="10"
-            style="flex:1;padding:12px 14px;border-radius:12px;border:2px solid var(--g200);font-size:16px;font-family:var(--font);color:var(--g700);outline:none;letter-spacing:1px;"
+            class="login-input"
             oninput="loginPhoneInput(this)"
             onfocus="this.style.borderColor='var(--blue-m)'"
             onblur="this.style.borderColor='var(--g200)'">
         </div>
       </div>
 
-      <!-- OTP 輸入（隱藏，輸入電話後顯示）-->
-      <div id="otp-section" style="width:100%;margin-bottom:14px;display:none;">
-        <div style="font-size:12px;font-weight:700;color:var(--g500);margin-bottom:6px;">🔐 驗證碼（Demo：輸入 <b>0000</b>）</div>
-        <div style="display:flex;gap:10px;justify-content:center;">
-          <input id="otp-input" type="number" placeholder="0000" maxlength="4"
-            style="width:100%;padding:14px;border-radius:12px;border:2px solid var(--g200);font-size:24px;font-family:var(--font);color:var(--g700);outline:none;text-align:center;letter-spacing:8px;font-weight:900;"
-            oninput="otpInput(this)"
-            onfocus="this.style.borderColor='var(--blue-m)'"
-            onblur="this.style.borderColor='var(--g200)'">
-        </div>
-        <div id="otp-error" style="color:var(--red);font-size:12px;font-weight:700;text-align:center;margin-top:6px;display:none;">❌ 驗證碼錯誤，請重新輸入</div>
+      <!-- OTP -->
+      <div id="otp-section" class="login-field" style="display:none;">
+        <div class="login-label">🔐 驗證碼（Demo 請輸入 <b>0000</b>）</div>
+        <input id="otp-input" type="tel" placeholder="0000" maxlength="4"
+          class="login-otp-input"
+          oninput="otpInput(this)"
+          onfocus="this.style.borderColor='var(--blue-m)'"
+          onblur="this.style.borderColor='var(--g200)'">
+        <div id="otp-error" class="login-error" style="display:none;">❌ 驗證碼錯誤，請重新輸入</div>
       </div>
 
-      <!-- 送出按鈕 -->
-      <button id="login-btn" onclick="loginAction()"
-        style="width:100%;padding:16px;border-radius:14px;background:linear-gradient(135deg,#2b6cb0,#3182CE);color:white;border:none;font-size:16px;font-weight:900;cursor:pointer;font-family:var(--font);box-shadow:0 6px 20px rgba(49,130,206,0.35);margin-bottom:16px;opacity:0.4;pointer-events:none;">
+      <!-- 按鈕 -->
+      <button id="login-btn" onclick="loginAction()" class="login-submit-btn" style="opacity:0.4;pointer-events:none;">
         發送驗證碼
       </button>
 
-      <div style="font-size:12px;color:var(--g400);text-align:center;line-height:1.7;">
-        Demo 模式：任意手機號碼 + 驗證碼 <b>0000</b><br>即可登入體驗
+      <div class="login-hint">
+        Demo 模式：任意手機號碼 + 驗證碼 <b>0000</b> 即可登入
       </div>
     </div>
   </div>
