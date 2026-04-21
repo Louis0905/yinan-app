@@ -136,7 +136,19 @@ html,body{height:100%;width:100%;font-family:var(--font);background:#0f1117;disp
   box-shadow:0 6px 20px rgba(49,130,206,0.35);margin-bottom:14px;
   transition:opacity 0.2s;}
 .login-hint{font-size:12px;color:var(--g400);text-align:center;line-height:1.8;}
-body.dark{background:#0a0a12;}
+/* ════ LONG-TERM CARE ════ */
+.ltc-tab{padding:7px 16px;border-radius:20px;border:none;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);background:rgba(255,255,255,0.2);color:rgba(255,255,255,0.8);transition:all 0.15s;}
+.ltc-tab-active{background:white !important;color:var(--green) !important;}
+.ltc-card{background:white;border-radius:14px;padding:14px 15px;box-shadow:var(--sh);margin-bottom:10px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:transform 0.12s;}
+.ltc-card:active{transform:scale(0.98);}
+.ltc-card-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.ltc-card-body{flex:1;}
+.ltc-card-title{font-size:14px;font-weight:800;color:var(--g700);}
+.ltc-card-sub{font-size:12px;color:var(--g500);margin-top:2px;}
+.ltc-card-tag{display:inline-block;margin-top:5px;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:700;background:var(--green-l);color:var(--green);}
+.ltc-arrow{font-size:18px;color:var(--g300);flex-shrink:0;}
+
+/* ════ DARK MODE ════ */
 body.dark .phone{background:#111118;}
 body.dark .page{background:#111118 !important;}
 body.dark .fcard,body.dark .med-row,body.dark .chart-card,body.dark .trend-card,
@@ -1406,9 +1418,133 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
           <span style="font-size:18px;color:var(--g300);">›</span>
         </div>
 
+        <!-- 長照資源 -->
+        <div style="background:white;border-radius:14px;padding:16px;box-shadow:var(--sh);display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="navTo('p-ltc','fwd')">
+          <div>
+            <div style="font-size:15px;font-weight:800;color:var(--g700);">🏥 長照資源</div>
+            <div style="font-size:12px;color:var(--g500);margin-top:2px;">申請連結 + 附近機構搜尋</div>
+          </div>
+          <span style="font-size:18px;color:var(--g300);">›</span>
+        </div>
+
         <!-- 版本 -->
         <div style="text-align:center;padding:16px 0;color:var(--g400);font-size:12px;">
           銀安APP v1.0 · 讓照護更安心
+        </div>
+      </div>
+    </div>
+
+    <!-- LONG-TERM CARE RESOURCES -->
+    <div class="page" id="p-ltc">
+      <div class="hero-block" style="background:linear-gradient(135deg,#1C4532,#276749 60%,#38A169);min-height:168px;">
+        <div class="hb-row">
+          <button class="back-btn" onclick="goBack()">←</button>
+          <div><div class="hb-title">🏥 長照資源</div><div class="hb-sub">申請連結 + 附近機構</div></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px;">
+          <button onclick="showLTCTab('apply')" id="ltc-tab-apply" class="ltc-tab ltc-tab-active">📋 申請資源</button>
+          <button onclick="showLTCTab('nearby')" id="ltc-tab-nearby" class="ltc-tab">📍 附近機構</button>
+        </div>
+      </div>
+
+      <!-- 申請資源 Tab -->
+      <div id="ltc-apply-panel" style="padding:14px 22px 24px;">
+        <div style="font-size:13px;font-weight:800;color:var(--g500);margin-bottom:12px;letter-spacing:0.5px;">🇹🇼 台灣長照申請管道</div>
+
+        <!-- 長照 3.0 申請 -->
+        <div class="ltc-card" onclick="openLink('https://1966.gov.tw/LTC/cp-6533-70777-207.html')">
+          <div class="ltc-card-icon" style="background:#E6FFF2;">🏛️</div>
+          <div class="ltc-card-body">
+            <div class="ltc-card-title">長照服務申請說明</div>
+            <div class="ltc-card-sub">衛福部 1966 長照專區</div>
+            <div class="ltc-card-tag">官方申請入口</div>
+          </div>
+          <span class="ltc-arrow">›</span>
+        </div>
+
+        <!-- 1966 -->
+        <div class="ltc-card" onclick="showToast('📞 請撥打 1966 長照服務專線')">
+          <div class="ltc-card-icon" style="background:#EBF8FF;">📞</div>
+          <div class="ltc-card-body">
+            <div class="ltc-card-title">長照服務專線 1966</div>
+            <div class="ltc-card-sub">免付費、全年無休諮詢</div>
+            <div class="ltc-card-tag" style="background:#EBF8FF;color:var(--blue-m);">電話諮詢</div>
+          </div>
+          <span class="ltc-arrow">›</span>
+        </div>
+
+        <!-- 長照 3.0 說明 -->
+        <div class="ltc-card" onclick="openLink('https://1966.gov.tw/LTC/cp-6572-85008-207.html')">
+          <div class="ltc-card-icon" style="background:#FFFBEB;">📋</div>
+          <div class="ltc-card-body">
+            <div class="ltc-card-title">長照 3.0 計畫說明</div>
+            <div class="ltc-card-sub">2026 年起正式實施</div>
+            <div class="ltc-card-tag" style="background:#FFFBEB;color:#B7791F;">最新政策</div>
+          </div>
+          <span class="ltc-arrow">›</span>
+        </div>
+
+        <!-- 補助說明 -->
+        <div class="ltc-card" onclick="openLink('https://1966.gov.tw/LTC/cp-3636-42415-201.html')">
+          <div class="ltc-card-icon" style="background:#FAF5FF;">💰</div>
+          <div class="ltc-card-body">
+            <div class="ltc-card-title">長照補助說明</div>
+            <div class="ltc-card-sub">各類補助額度與條件</div>
+            <div class="ltc-card-tag" style="background:#FAF5FF;color:#6B46C1;">補助資訊</div>
+          </div>
+          <span class="ltc-arrow">›</span>
+        </div>
+
+        <!-- 喘息服務 -->
+        <div class="ltc-card" onclick="openLink('https://1966.gov.tw/LTC/cp-4798-53690-201.html')">
+          <div class="ltc-card-icon" style="background:#FFF5F5;">🌿</div>
+          <div class="ltc-card-body">
+            <div class="ltc-card-title">照顧者喘息服務</div>
+            <div class="ltc-card-sub">讓照顧者也能休息</div>
+            <div class="ltc-card-tag" style="background:#FFF5F5;color:var(--red-d);">喘息服務</div>
+          </div>
+          <span class="ltc-arrow">›</span>
+        </div>
+
+        <!-- 長照地理資訊 -->
+        <div class="ltc-card" onclick="openLink('https://ltcpap.mohw.gov.tw/public/index.html')">
+          <div class="ltc-card-icon" style="background:#E6FFF2;">🗺️</div>
+          <div class="ltc-card-body">
+            <div class="ltc-card-title">附近長照服務查詢</div>
+            <div class="ltc-card-sub">衛福部官方機構搜尋地圖</div>
+            <div class="ltc-card-tag">地圖查詢</div>
+          </div>
+          <span class="ltc-arrow">›</span>
+        </div>
+
+        <div style="margin-top:16px;padding:12px 14px;background:var(--g50);border-radius:12px;font-size:12px;color:var(--g500);line-height:1.7;border-left:3px solid var(--green-m);">
+          💡 申請流程由政府主管，銀安APP 僅提供連結導向，實際申請請依各官方網站說明辦理。
+        </div>
+      </div>
+
+      <!-- 附近機構 Tab -->
+      <div id="ltc-nearby-panel" style="padding:14px 22px 24px;display:none;">
+        <button onclick="findNearbyLTC()" id="ltc-locate-btn" style="width:100%;padding:13px;border-radius:13px;background:var(--green-m);color:white;border:none;font-size:15px;font-weight:800;cursor:pointer;font-family:var(--font);margin-bottom:14px;display:flex;align-items:center;justify-content:center;gap:8px;">
+          📍 搜尋我附近的長照機構
+        </button>
+
+        <div id="ltc-locating" style="display:none;text-align:center;padding:20px;color:var(--g500);font-size:13px;">
+          <div style="font-size:32px;margin-bottom:8px;animation:spin360 1s linear infinite;display:inline-block;">⏳</div><br>
+          正在取得您的位置…
+        </div>
+
+        <div id="ltc-map-wrap" style="display:none;">
+          <div id="ltc-coords-bar" style="font-size:11px;color:var(--g500);font-weight:600;margin-bottom:8px;"></div>
+          <iframe id="ltc-map" style="width:100%;height:260px;border:none;border-radius:14px;box-shadow:var(--sh);" loading="lazy"></iframe>
+          <div style="margin-top:12px;font-size:12px;color:var(--g400);text-align:center;">
+            地圖由 Google Maps 提供，顯示附近長照 / 護理之家 / 日照中心
+          </div>
+        </div>
+
+        <div id="ltc-nearby-list" style="margin-top:12px;"></div>
+
+        <div style="margin-top:14px;padding:12px 14px;background:var(--g50);border-radius:12px;font-size:12px;color:var(--g500);line-height:1.7;border-left:3px solid var(--blue-m);">
+          💡 機構資訊來自 Google Maps，建議致電確認服務內容與費用後再前往。
         </div>
       </div>
     </div>
@@ -1470,7 +1606,7 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
 </div>
 
 <script>
-const TAB_ORDER = ['p-home','p-med','p-report','p-stress','p-respite','p-settings','p-family','p-profile','p-db'];
+const TAB_ORDER = ['p-home','p-med','p-report','p-stress','p-respite','p-settings','p-family','p-profile','p-ltc','p-db'];
 let curPage = 'p-home';
 let navStack = ['p-home'];
 
@@ -2931,6 +3067,80 @@ function openSOSMap() {
     iframe.src = `https://maps.google.com/maps?q=${lat},${lng}&z=16&output=embed`;
   }
 }
+
+// ════════════════════════════════════════
+// 🏥 長照資源
+// ════════════════════════════════════════
+function showLTCTab(tab) {
+  const applyPanel  = document.getElementById('ltc-apply-panel');
+  const nearbyPanel = document.getElementById('ltc-nearby-panel');
+  const tabApply    = document.getElementById('ltc-tab-apply');
+  const tabNearby   = document.getElementById('ltc-tab-nearby');
+  if (!applyPanel) return;
+  if (tab === 'apply') {
+    applyPanel.style.display  = 'block';
+    nearbyPanel.style.display = 'none';
+    tabApply.classList.add('ltc-tab-active');
+    tabNearby.classList.remove('ltc-tab-active');
+  } else {
+    applyPanel.style.display  = 'none';
+    nearbyPanel.style.display = 'block';
+    tabApply.classList.remove('ltc-tab-active');
+    tabNearby.classList.add('ltc-tab-active');
+  }
+}
+
+function openLink(url) {
+  window.open(url, '_blank');
+}
+
+function findNearbyLTC() {
+  const btn       = document.getElementById('ltc-locate-btn');
+  const locating  = document.getElementById('ltc-locating');
+  const mapWrap   = document.getElementById('ltc-map-wrap');
+  const coordBar  = document.getElementById('ltc-coords-bar');
+  const mapIframe = document.getElementById('ltc-map');
+  const list      = document.getElementById('ltc-nearby-list');
+  if (!btn) return;
+
+  btn.style.display      = 'none';
+  locating.style.display = 'block';
+
+  const showMap = (lat, lng, isMock) => {
+    locating.style.display = 'none';
+    mapWrap.style.display  = 'block';
+    coordBar.textContent   = isMock ? `📍 ${lat}, ${lng}（模擬位置）` : `📍 ${lat}, ${lng}`;
+    const q = encodeURIComponent('長照中心 日照中心 護理之家');
+    mapIframe.src = `https://maps.google.com/maps?q=${q}&near=${lat},${lng}&z=14&output=embed`;
+    const centers = [
+      { name:'日照中心（中山）',   dist:'0.8 km', type:'日照中心',   area:'中山區' },
+      { name:'護理之家（大安）',   dist:'1.2 km', type:'護理之家',   area:'大安區' },
+      { name:'長照服務站（信義）', dist:'1.5 km', type:'長照服務站', area:'信義區' },
+      { name:'居家服務（松山）',   dist:'2.1 km', type:'居家服務',   area:'松山區' },
+    ];
+    list.innerHTML = `<div style="font-size:13px;font-weight:800;color:var(--g500);margin-bottom:10px;">📋 附近機構（點選前往地圖）</div>` +
+      centers.map(f => `<div class="ltc-card" onclick="openLink('https://maps.google.com/maps?q=${encodeURIComponent(f.name)}&near=${lat},${lng}')">
+        <div class="ltc-card-icon" style="background:var(--green-l);">🏥</div>
+        <div class="ltc-card-body">
+          <div class="ltc-card-title">${f.name}</div>
+          <div class="ltc-card-sub">${f.area} · ${f.dist}</div>
+          <div class="ltc-card-tag">${f.type}</div>
+        </div><span class="ltc-arrow">›</span></div>`).join('') +
+      `<div style="margin-top:8px;font-size:11px;color:var(--g400);text-align:center;">機構資料為示意，實際資訊請查閱 Google Maps 或致電確認</div>`;
+    btn.style.display = 'block';
+    btn.textContent   = '🔄 重新搜尋';
+  };
+
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      p => showMap(p.coords.latitude.toFixed(5), p.coords.longitude.toFixed(5), false),
+      () => showMap('25.04776', '121.53185', true)
+    );
+  } else {
+    showMap('25.04776', '121.53185', true);
+  }
+}
+
 let darkMode = false;
 function toggleDarkMode() {
   darkMode = !darkMode;
