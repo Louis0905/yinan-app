@@ -28,11 +28,12 @@ html,body{height:100%;width:100%;font-family:var(--font);background:#0f1117;disp
   box-shadow:0 0 0 10px #1c1c1e,0 0 0 12px #3a3a3c,0 32px 80px rgba(0,0,0,0.7);
   display:flex;flex-direction:column;position:relative;}
 
-/* Status bar */
+/* Status bar - 顏色跟隨頁面 hero 背景自動調整 */
 .sbar{flex-shrink:0;height:48px;display:flex;align-items:center;justify-content:space-between;
   padding:0 28px;font-size:13px;font-weight:700;position:relative;z-index:10;
-  color:white;transition:color 0.3s;}
-.sbar.dark{color:var(--g700);}
+  color:white;transition:color 0.3s;background:transparent;
+  text-shadow:0 1px 3px rgba(0,0,0,0.4);}
+.sbar.light{color:var(--g700);text-shadow:none;}
 .sbar .notch{position:absolute;left:50%;top:8px;transform:translateX(-50%);
   width:120px;height:32px;background:#0f1117;border-radius:20px;}
 
@@ -68,8 +69,8 @@ html,body{height:100%;width:100%;font-family:var(--font);background:#0f1117;disp
   border:none;cursor:pointer;font-size:17px;display:flex;align-items:center;justify-content:center;
   color:white;flex-shrink:0;transition:background 0.15s;}
 .back-btn:active{background:rgba(255,255,255,0.35);}
-.hb-title{font-size:21px;font-weight:900;}
-.hb-sub{font-size:13px;opacity:0.8;margin-top:2px;}
+.hb-title{font-size:21px;font-weight:900;color:white;}
+.hb-sub{font-size:13px;color:rgba(255,255,255,0.8);margin-top:2px;}
 .hb-badge{display:inline-block;background:rgba(255,255,255,0.2);padding:5px 14px;
   border-radius:20px;font-size:13px;font-weight:600;margin-top:12px;}
 
@@ -149,27 +150,50 @@ html,body{height:100%;width:100%;font-family:var(--font);background:#0f1117;disp
 .ltc-arrow{font-size:18px;color:var(--g300);flex-shrink:0;}
 
 /* ════ DARK MODE ════ */
-body.dark .phone{background:#111118;}
-body.dark .page{background:#111118 !important;}
-body.dark .fcard,body.dark .med-row,body.dark .chart-card,body.dark .trend-card,
-body.dark .plan-item,body.dark .w-d,body.dark .modal-sheet,body.dark .warn-box{background:#1e1e2a !important;}
-body.dark .sec-t,body.dark .med-n,body.dark .pi-n,body.dark .plan-t,body.dark .fc-t,
-body.dark .hb-title,body.dark .m-title,body.dark .tc-t,body.dark .cc-t,
-body.dark .fam-event-d{color:#e2e8f0 !important;}
-body.dark .med-d,body.dark .fc-s,body.dark .pi-d,body.dark .hb-sub,body.dark .m-sub,
-body.dark .rb-s,body.dark .time-lbl,body.dark .fam-event-t{color:#718096 !important;}
-body.dark .bnav{background:rgba(17,17,24,0.96) !important;border-color:#2d2d3d;}
-body.dark .nbtn .nl{color:#4a5568;}
-body.dark .nbtn.on .nl{color:#63b3ed;}
-body.dark .nbtn::after{background:#63b3ed;}
-body.dark .sbar{color:#e2e8f0;}
-body.dark .ff-input,body.dark textarea,body.dark input[type=number]{background:#1e1e2a !important;color:#e2e8f0 !important;border-color:#2d2d3d !important;}
-body.dark .add-btn{background:#1e1e2a !important;border-color:#2d2d3d !important;color:#718096 !important;}
-body.dark .rpt-btn{background:#1e1e2a !important;}
-body.dark .profile-opt{background:#1e1e2a !important;border-color:#2d2d3d;color:#a0aec0;}
-body.dark .icon-opt{background:#1e1e2a !important;border-color:#2d2d3d;}
-body.dark .time-lbl::after{background:#2d2d3d;}
-body.dark .fam-week-card{background:#1e1e2a;}
+/* 套用 .phone.dark-mode，不影響外框 body 和狀態列 */
+.phone.dark-mode{background:#111118;}
+.phone.dark-mode .screens{background:#111118;}
+.phone.dark-mode .page{background:#111118 !important;}
+.phone.dark-mode .fcard,.phone.dark-mode .med-row,.phone.dark-mode .chart-card,
+.phone.dark-mode .trend-card,.phone.dark-mode .plan-item,.phone.dark-mode .w-d,
+.phone.dark-mode .modal-sheet,.phone.dark-mode .warn-box{background:#1e1e2a !important;}
+.phone.dark-mode .sec-t,.phone.dark-mode .med-n,.phone.dark-mode .pi-n,
+.phone.dark-mode .plan-t,.phone.dark-mode .fc-t,
+.phone.dark-mode .m-title,.phone.dark-mode .tc-t,.phone.dark-mode .cc-t,
+.phone.dark-mode .fam-event-d{color:#e2e8f0 !important;}
+/* hero 標題保持白色（背景是深色漸層） */
+.phone.dark-mode .hb-title{color:white !important;}
+.phone.dark-mode .hb-sub{color:rgba(255,255,255,0.85) !important;}
+.phone.dark-mode .hb-badge{color:rgba(255,255,255,0.9) !important;}
+.phone.dark-mode .med-d,.phone.dark-mode .fc-s,.phone.dark-mode .pi-d,
+.phone.dark-mode .m-sub,.phone.dark-mode .rb-s,
+.phone.dark-mode .fam-event-t{color:#a0aec0 !important;}
+.phone.dark-mode .time-lbl{color:#e2e8f0 !important;}
+.phone.dark-mode .med-n{color:#f7fafc !important;}
+.phone.dark-mode .bnav{background:rgba(17,17,24,0.96) !important;border-color:#2d2d3d;}
+.phone.dark-mode .nbtn .nl{color:#4a5568;}
+.phone.dark-mode .nbtn.on .nl{color:#63b3ed;}
+.phone.dark-mode .nbtn::after{background:#63b3ed;}
+.phone.dark-mode .ff-input,.phone.dark-mode textarea,
+.phone.dark-mode input[type=number]{background:#1e1e2a !important;color:#e2e8f0 !important;border-color:#2d2d3d !important;}
+.phone.dark-mode .add-btn{background:#1e1e2a !important;border-color:#2d2d3d !important;color:#718096 !important;}
+.phone.dark-mode .rpt-btn{background:#1e1e2a !important;}
+.phone.dark-mode .profile-opt{background:#1e1e2a !important;border-color:#2d2d3d;color:#a0aec0;}
+.phone.dark-mode .icon-opt{background:#1e1e2a !important;border-color:#2d2d3d;}
+.phone.dark-mode .time-lbl::after{background:#2d2d3d;}
+.phone.dark-mode .fam-week-card{background:#1e1e2a;}
+.phone.dark-mode .ltc-card{background:#1e1e2a !important;}
+.phone.dark-mode .ltc-card-title{color:#e2e8f0 !important;}
+.phone.dark-mode .ltc-card-sub{color:#718096 !important;}
+/* 設定頁白色卡片深色模式 */
+.phone.dark-mode .dark-card{background:#1e1e2a !important;}
+.phone.dark-mode .dark-card div[style*="color:var(--g700)"]{color:#e2e8f0 !important;}
+.phone.dark-mode .dark-card div[style*="color:var(--g500)"]{color:#718096 !important;}
+.phone.dark-mode .dark-card span[style*="color:var(--g300)"]{color:#4a5568 !important;}
+/* 底部導覽文字 */
+.phone.dark-mode .nbtn .nl{color:#4a5568 !important;}
+.phone.dark-mode .nbtn.on .nl{color:#63b3ed !important;}
+.phone.dark-mode .nbtn.on .ni{filter:brightness(1.3);}
 
 /* Toggle switch */
 .toggle-sw{width:50px;height:28px;border-radius:14px;background:var(--g200);position:relative;cursor:pointer;transition:background 0.25s;flex-shrink:0;}
@@ -674,12 +698,13 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
         <div class="login-label">📱 手機號碼</div>
         <div class="login-phone-row">
           <div class="login-prefix">+886</div>
-          <input id="login-phone" type="tel" placeholder="912 345 678" maxlength="10"
+          <input id="login-phone" type="tel" placeholder="912 345 678" maxlength="9"
             class="login-input"
             oninput="loginPhoneInput(this)"
             onfocus="this.style.borderColor='var(--blue-m)'"
             onblur="this.style.borderColor='var(--g200)'">
         </div>
+        <div id="phone-hint" style="display:none;font-size:11px;color:var(--red);font-weight:700;margin-top:5px;"></div>
       </div>
 
       <!-- OTP -->
@@ -1379,7 +1404,7 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
       <div style="padding:14px 22px 24px;display:flex;flex-direction:column;gap:10px;">
 
         <!-- 深色模式 -->
-        <div style="background:white;border-radius:14px;padding:16px;box-shadow:var(--sh);display:flex;align-items:center;justify-content:space-between;">
+        <div class="dark-card" style="background:white;border-radius:14px;padding:16px;box-shadow:var(--sh);display:flex;align-items:center;justify-content:space-between;">
           <div>
             <div style="font-size:15px;font-weight:800;color:var(--g700);">🌙 深色模式</div>
             <div style="font-size:12px;color:var(--g500);margin-top:2px;">切換深色介面</div>
@@ -1390,7 +1415,7 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
         </div>
 
         <!-- 字體大小 -->
-        <div style="background:white;border-radius:14px;padding:16px;box-shadow:var(--sh);">
+        <div class="dark-card" style="background:white;border-radius:14px;padding:16px;box-shadow:var(--sh);">
           <div style="font-size:15px;font-weight:800;color:var(--g700);margin-bottom:12px;">🔤 字體大小</div>
           <div style="display:flex;gap:8px;">
             <button onclick="setFontSize('small')" id="fs-small" class="fs-btn">小</button>
@@ -1401,7 +1426,7 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
         </div>
 
         <!-- 家屬儀表板入口 -->
-        <div style="background:white;border-radius:14px;padding:16px;box-shadow:var(--sh);display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="navTo('p-family','fwd')">
+        <div class="dark-card" style="background:white;border-radius:14px;padding:16px;box-shadow:var(--sh);display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="navTo('p-family','fwd')">
           <div>
             <div style="font-size:15px;font-weight:800;color:var(--g700);">👨‍👩‍👧 家屬儀表板</div>
             <div style="font-size:12px;color:var(--g500);margin-top:2px;">遠距照護總覽</div>
@@ -1410,7 +1435,7 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
         </div>
 
         <!-- 個人評估 -->
-        <div style="background:white;border-radius:14px;padding:16px;box-shadow:var(--sh);display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="navTo('p-profile','fwd')">
+        <div class="dark-card" style="background:white;border-radius:14px;padding:16px;box-shadow:var(--sh);display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="navTo('p-profile','fwd')">
           <div>
             <div style="font-size:15px;font-weight:800;color:var(--g700);">📋 個人評估資料</div>
             <div style="font-size:12px;color:var(--g500);margin-top:2px;">查看或更新照護資訊</div>
@@ -1419,7 +1444,7 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
         </div>
 
         <!-- 長照資源 -->
-        <div style="background:white;border-radius:14px;padding:16px;box-shadow:var(--sh);display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="navTo('p-ltc','fwd')">
+        <div class="dark-card" style="background:white;border-radius:14px;padding:16px;box-shadow:var(--sh);display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="navTo('p-ltc','fwd')">
           <div>
             <div style="font-size:15px;font-weight:800;color:var(--g700);">🏥 長照資源</div>
             <div style="font-size:12px;color:var(--g500);margin-top:2px;">申請連結 + 附近機構搜尋</div>
@@ -2204,8 +2229,9 @@ function buildResult() {
 
   // Build suggestions based on risk
   const suggestions = [];
-  if (c.includes('alone') || risk.level === 'high') {
-    suggestions.push({icon:'🔕', text:'異常沉默偵測：超過 4 小時無 APP 互動自動通知家屬'});
+  if (c.includes('alone') || risk.level === 'high' || risk.level === 'mid') {
+    const silenceHours = risk.level === 'high' ? 2 : risk.level === 'mid' ? 3 : 4;
+    suggestions.push({icon:'🔕', text:`異常沉默偵測：超過 ${silenceHours} 小時無 APP 互動自動通知家屬`});
   }
   if (c.includes('dementia')) {
     suggestions.push({icon:'💊', text:'用藥提醒頻率加強，確認前每 15 分鐘重複提醒'});
@@ -2900,13 +2926,20 @@ function loginPhoneInput(el) {
   const val = el.value.replace(/\D/g,'');
   el.value = val;
   const btn = document.getElementById('login-btn');
-  if (val.length >= 9) {
+  const hint = document.getElementById('phone-hint');
+  // 必須9開頭且9碼
+  const valid = val.length === 9 && val.startsWith('9');
+  if (val.length > 0 && !val.startsWith('9')) {
+    if (hint) { hint.textContent = '⚠️ 台灣手機號碼須以 9 開頭'; hint.style.display = 'block'; }
+  } else {
+    if (hint) hint.style.display = 'none';
+  }
+  if (valid) {
     btn.style.opacity = '1';
     btn.style.pointerEvents = 'auto';
   } else {
     btn.style.opacity = '0.4';
     btn.style.pointerEvents = 'none';
-    // Hide OTP if phone cleared
     document.getElementById('otp-section').style.display = 'none';
     otpSent = false;
     btn.textContent = '發送驗證碼';
@@ -2918,7 +2951,10 @@ function loginAction() {
     // Step 1: send OTP
     const phone = document.getElementById('login-phone').value.trim();
     document.getElementById('otp-section').style.display = 'block';
-    document.getElementById('login-btn').textContent = '確認登入';
+    const btn = document.getElementById('login-btn');
+    btn.textContent = '確認登入';
+    btn.style.opacity = '0.4';
+    btn.style.pointerEvents = 'none';
     document.getElementById('otp-input').focus();
     otpSent = true;
     loggedInPhone = '0' + phone;
@@ -2944,8 +2980,15 @@ function otpInput(el) {
   const err = document.getElementById('otp-error');
   if (err) err.style.display = 'none';
   el.style.borderColor = 'var(--blue-m)';
-  // Auto submit when 4 digits
-  if (el.value.length >= 4) loginAction();
+  // 啟用確認按鈕，不自動送出，讓使用者自己按
+  const btn = document.getElementById('login-btn');
+  if (btn && el.value.length >= 4) {
+    btn.style.opacity = '1';
+    btn.style.pointerEvents = 'auto';
+  } else if (btn) {
+    btn.style.opacity = '0.4';
+    btn.style.pointerEvents = 'none';
+  }
 }
 
 function updateAcctDisplay() {
@@ -3144,7 +3187,8 @@ function findNearbyLTC() {
 let darkMode = false;
 function toggleDarkMode() {
   darkMode = !darkMode;
-  document.body.classList.toggle('dark', darkMode);
+  const phone = document.querySelector('.phone');
+  if (phone) phone.classList.toggle('dark-mode', darkMode);
   document.getElementById('dark-toggle').classList.toggle('on', darkMode);
   showToast(darkMode ? '🌙 深色模式已開啟' : '☀️ 淺色模式已開啟');
 }
@@ -3236,16 +3280,23 @@ function renderFamilyDashboard() {
   const sa=document.getElementById('family-silence-alert');
   const sm=document.getElementById('family-silence-msg');
   if(sa && lastAct){
+    const risk = window.userProfile?.risk || 'low';
+    const threshold = risk === 'high' ? 2 : risk === 'mid' ? 3 : 4;
     const h=(Date.now()-lastAct)/3600000;
-    sa.style.display=h>=4?'block':'none';
-    if(h>=4&&sm) sm.textContent=`已超過 ${Math.floor(h)} 小時無操作，最後活動：${lastAct.toLocaleString('zh-TW',{hour:'2-digit',minute:'2-digit'})}`;
+    sa.style.display=h>=threshold?'block':'none';
+    if(h>=threshold&&sm) sm.textContent=`已超過 ${Math.floor(h)} 小時無操作（${risk==='high'?'高風險':'中風險'}警示門檻：${threshold}小時），最後活動：${lastAct.toLocaleString('zh-TW',{hour:'2-digit',minute:'2-digit'})}`;
   } else if(sa) sa.style.display='none';
 }
 
-// Override onPageEnter
+// Pages with light/white background that need dark sbar text
+const LIGHT_HERO_PAGES = new Set(['p-home']); // home has gradient but sbar floats above
+
 function onPageEnter(id) {
   if (id === 'p-sos') { resetSOS(); resetSOSContacts(); }
   if (id === 'p-family') renderFamilyDashboard();
+  // Sbar colour: all hero pages use dark background → white text
+  // Settings page hero is dark grey → white is fine too
+  // No change needed — text-shadow handles readability
 }
 
 let toastTimer;
