@@ -185,6 +185,57 @@ html,body{height:100%;width:100%;font-family:var(--font);background:#0f1117;disp
 .phone.dark-mode .ltc-card{background:#1e1e2a !important;}
 .phone.dark-mode .ltc-card-title{color:#e2e8f0 !important;}
 .phone.dark-mode .ltc-card-sub{color:#718096 !important;}
+/* 首頁卡片 */
+.phone.dark-mode .fcard{background:#1e1e2a !important;}
+.phone.dark-mode .fc-t{color:#e2e8f0 !important;}
+.phone.dark-mode .fc-s{color:#a0aec0 !important;}
+.phone.dark-mode .quick-card{background:#1e1e2a !important;}
+.phone.dark-mode .qc-t{color:#e2e8f0 !important;}
+.phone.dark-mode .qc-s{color:#a0aec0 !important;}
+/* 健康報表 */
+.phone.dark-mode .chart-card{background:#1e1e2a !important;}
+.phone.dark-mode .cc-t{color:#e2e8f0 !important;}
+.phone.dark-mode .bar-d{color:#718096 !important;}
+.phone.dark-mode .rpt-v{color:#e2e8f0 !important;}
+.phone.dark-mode .rpt-l{color:#a0aec0 !important;}
+.phone.dark-mode .rpt-btn{background:#1e1e2a !important;color:#a0aec0 !important;border-color:#2d2d3d !important;}
+/* 壓力燈號 */
+.phone.dark-mode .trend-card{background:#1e1e2a !important;}
+.phone.dark-mode .tc-t{color:#e2e8f0 !important;}
+.phone.dark-mode .td-l{color:#718096 !important;}
+.phone.dark-mode .emo-btn{background:#1e1e2a !important;border-color:#2d2d3d !important;}
+.phone.dark-mode .emo-btn .el{color:#a0aec0 !important;}
+.phone.dark-mode .emo-btn.sel{border-color:var(--purple) !important;background:#2d2048 !important;}
+.phone.dark-mode #stress-note{background:#1e1e2a !important;color:#e2e8f0 !important;}
+/* 喘息計畫 */
+.phone.dark-mode .plan-item{background:#1e1e2a !important;}
+.phone.dark-mode .plan-t{color:#e2e8f0 !important;}
+.phone.dark-mode .plan-s{color:#a0aec0 !important;}
+.phone.dark-mode .wd-h{color:#a0aec0 !important;}
+/* modal */
+.phone.dark-mode .modal-sheet{background:#1e1e2a !important;}
+.phone.dark-mode .m-title{color:#e2e8f0 !important;}
+.phone.dark-mode .m-sub{color:#a0aec0 !important;}
+.phone.dark-mode .m-pill{background:#111118 !important;}
+.phone.dark-mode .m-pill-n{color:#e2e8f0 !important;}
+.phone.dark-mode .m-pill-d{color:#a0aec0 !important;}
+/* 段落標題 */
+.phone.dark-mode .sec-t{color:#a0aec0 !important;}
+/* 深色模式動畫過渡 */
+.phone,.phone *{transition:background-color 0.3s ease,color 0.3s ease,border-color 0.3s ease;}
+/* 登入歡迎動畫 */
+@keyframes welcome-in{
+  from{opacity:0;transform:translateY(20px);}
+  to{opacity:1;transform:translateY(0);}
+}
+.welcome-anim{animation:welcome-in 0.5s ease forwards;}
+/* 頁面轉場更流暢 */
+.page{transition:transform 0.32s cubic-bezier(0.4,0,0.2,1);}
+/* 首頁 SOS 脈衝增強 */
+@keyframes sos-pulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(229,62,62,0.4);}
+  50%{box-shadow:0 0 0 16px rgba(229,62,62,0);}
+}
 /* 設定頁白色卡片深色模式 */
 .phone.dark-mode .dark-card{background:#1e1e2a !important;}
 .phone.dark-mode .dark-card div[style*="color:var(--g700)"]{color:#e2e8f0 !important;}
@@ -278,7 +329,12 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
 .home-name{font-size:28px;font-weight:900;margin-bottom:14px;}
 .home-status{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,0.18);
   backdrop-filter:blur(10px);padding:7px 16px;border-radius:20px;font-size:14px;font-weight:600;}
-.h-dot{width:8px;height:8px;border-radius:50%;background:#68D391;box-shadow:0 0 6px #68D391;}
+.h-dot{width:10px;height:10px;border-radius:50%;background:#68D391;
+  box-shadow:0 0 6px #68D391;animation:pulse-dot 2s ease-in-out infinite;flex-shrink:0;}
+@keyframes pulse-dot{
+  0%,100%{box-shadow:0 0 4px #68D391;transform:scale(1);}
+  50%{box-shadow:0 0 12px #68D391;transform:scale(1.2);}
+}
 .sos-wrap{padding:18px 22px 6px;}
 .sos-big{width:100%;background:linear-gradient(145deg,#FC5C5C,#E53E3E 50%,#C53030);
   border:none;border-radius:22px;padding:26px 22px;display:flex;align-items:center;justify-content:center;
@@ -679,6 +735,32 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
   </div>
 
   <!-- ══════════════════════════════════════
+       PRIVACY POLICY SCREEN
+  ══════════════════════════════════════ -->
+  <div id="privacy-screen" style="position:absolute;inset:0;z-index:3000;background:#ffffff;display:none;flex-direction:column;border-radius:44px;overflow:hidden;">
+    <div class="asmnt-sbar"><span>9:41</span><div class="notch"></div><span>📶 🔋</span></div>
+    <div style="flex:1;display:flex;flex-direction:column;padding:28px 26px 20px;overflow-y:auto;">
+      <div style="font-size:28px;margin-bottom:12px;">🔒</div>
+      <div style="font-size:20px;font-weight:900;color:var(--g700);margin-bottom:6px;">隱私權政策</div>
+      <div style="font-size:13px;color:var(--g500);margin-bottom:20px;">使用前請閱讀並同意以下條款</div>
+      <div style="background:var(--g50);border-radius:14px;padding:16px;font-size:12px;color:var(--g600);line-height:1.9;margin-bottom:20px;flex:1;overflow-y:auto;">
+        <b>1. 資料收集</b><br>本 APP 收集您的基本照護資訊（姓名、年齡、健康狀況）、用藥紀錄、壓力狀態及位置資訊（僅 SOS 時使用）。<br><br>
+        <b>2. 資料用途</b><br>所有資料僅用於提供個人化照護建議及緊急聯繫服務，不作其他用途。<br><br>
+        <b>3. 資料儲存</b><br>資料加密儲存於您的裝置本地端及本 APP 伺服器，不會分享給第三方廣告商。<br><br>
+        <b>4. 位置資訊</b><br>位置資訊僅在您主動按下 SOS 按鈕時取得，用於通知緊急聯絡人。<br><br>
+        <b>5. 資料刪除</b><br>您可隨時在設定中清除所有個人資料。<br><br>
+        <b>6. 聯絡我們</b><br>如有任何疑問，請聯繫 support@yinan-app.tw
+      </div>
+      <button onclick="agreePrivacy()" style="width:100%;padding:15px;border-radius:14px;background:linear-gradient(135deg,#2b6cb0,#3182CE);color:white;border:none;font-size:15px;font-weight:900;cursor:pointer;font-family:var(--font);margin-bottom:10px;">
+        ✅ 我已閱讀並同意
+      </button>
+      <button onclick="showToast('⚠️ 須同意隱私政策才能使用')" style="width:100%;padding:12px;border-radius:14px;background:var(--g100);color:var(--g500);border:none;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);">
+        不同意
+      </button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
        LOGIN SCREEN
   ══════════════════════════════════════ -->
   <div id="login-screen" style="position:absolute;inset:0;z-index:2000;background:#ffffff;display:flex;flex-direction:column;border-radius:44px;overflow:hidden;">
@@ -738,7 +820,13 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
       <div class="notch"></div>
       <span>📶 🔋</span>
     </div>
-    <div class="asmnt-progress"><div class="asmnt-progress-fill" id="asmnt-bar" style="width:0%"></div></div>
+    <div class="asmnt-progress">
+      <div class="asmnt-progress-fill" id="asmnt-bar" style="width:0%"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 22px 0;font-size:11px;font-weight:700;color:var(--g400);">
+      <span id="asmnt-step-label">步驟 1 / 4</span>
+      <span id="asmnt-pct-label">0%</span>
+    </div>
     <div class="asmnt-steps">
 
       <!-- Step 0: Welcome -->
@@ -838,7 +926,7 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
         <div class="asmnt-q">📋 初始建議設定</div>
         <div class="asmnt-q-sub">系統已根據評估結果產出個人化照護建議，可隨時在設定中調整。</div>
         <div id="result-area"></div>
-        <button class="asmnt-enter-btn" onclick="enterApp()">✅ 進入銀安APP</button>
+        <button class="asmnt-enter-btn" onclick="showPrivacyBeforeEnter()">✅ 進入銀安APP</button>
       </div>
 
     </div><!-- /asmnt-steps -->
@@ -924,12 +1012,13 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
         <button class="fcard" onclick="navTo('p-med','fwd')">
           <div class="fc-bar" style="background:var(--green-m)"></div>
           <span class="fc-icon">💊</span><div class="fc-t">用藥提醒</div>
-          <div class="fc-s" id="home-med-sub">今日 3 次</div>
+          <div class="fc-s" id="home-med-sub">今日 0/3 完成</div>
+          <div id="home-med-bar" style="margin-top:6px;height:4px;border-radius:2px;background:var(--g100);overflow:hidden;"><div id="home-med-bar-fill" style="height:100%;width:0%;background:var(--green-m);transition:width 0.4s;border-radius:2px;"></div></div>
         </button>
         <button class="fcard" onclick="navTo('p-report','fwd')">
           <div class="fc-bar" style="background:var(--blue-m)"></div>
           <span class="fc-icon">📊</span><div class="fc-t">健康報表</div>
-          <div class="fc-s">血壓<span class="badge-r">偏高</span></div>
+          <div class="fc-s" id="home-bp-sub">血壓 <span class="badge-r" id="home-bp-badge">尚未量測</span></div>
         </button>
         <button class="fcard" onclick="navTo('p-stress','fwd')">
           <div class="fc-bar" style="background:var(--purple)"></div>
@@ -938,7 +1027,8 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
         </button>
         <button class="fcard" onclick="navTo('p-respite','fwd')">
           <div class="fc-bar" style="background:var(--orange)"></div>
-          <span class="fc-icon">📅</span><div class="fc-t">喘息計畫</div><div class="fc-s">明日：日照</div>
+          <span class="fc-icon">📅</span><div class="fc-t">喘息計畫</div>
+          <div class="fc-s" id="home-respite-sub">明日：日照</div>
         </button>
       </div>
     </div>
@@ -2064,9 +2154,13 @@ const asmntAnswers = { name:'', age:'', mobility:'', conditions:[] };
 
 function asmntSetProgress(step) {
   const bar = document.getElementById('asmnt-bar');
+  const stepLabel = document.getElementById('asmnt-step-label');
+  const pctLabel  = document.getElementById('asmnt-pct-label');
   if (!bar) return;
   const pct = step === 0 ? 0 : Math.round((step / (TOTAL_STEPS - 1)) * 100);
   bar.style.width = pct + '%';
+  if (stepLabel) stepLabel.textContent = step === 0 ? '開始評估' : step === 5 ? '完成！' : `步驟 ${step} / ${TOTAL_STEPS - 2}`;
+  if (pctLabel)  pctLabel.textContent  = step === 0 ? '' : `${pct}%`;
 }
 
 function asmntUpdateFooter() {
@@ -2103,7 +2197,12 @@ function asmntNext() {
     asmntAnswers.name = document.getElementById('input-name').value.trim() || '長輩';
   }
   if (asmntCurrent === 4) {
+    // 填完問卷 → 先顯示隱私同意，同意後才顯示評估結果
     buildResult();
+    const ps = document.getElementById('privacy-screen');
+    ps.style.display = 'flex';
+    ps.style.animation = 'welcome-in 0.35s ease';
+    return; // 不繼續跳步驟，等同意後再跳
   }
   const from = document.getElementById('step-' + asmntCurrent);
   asmntCurrent++;
@@ -2270,12 +2369,7 @@ function buildResult() {
     age: asmntAnswers.age, mobility: asmntAnswers.mobility };
 }
 
-function enterApp() {
-  if (window.userProfile) {
-    applyProfile(window.userProfile);
-  }
-  document.getElementById('assessment').classList.add('done');
-}
+// enterApp 由 agreePrivacy() 統一呼叫
 
 // ── Apply profile to UI everywhere ───────────────
 function applyProfile(p) {
@@ -2761,9 +2855,38 @@ function toggleMedHistory() {
 
 function updateHomeMedCard() {
   const total = medList.length;
-  const done = medList.filter(m => m.taken).length;
-  const sub = document.getElementById('home-med-sub');
+  const done  = medList.filter(m => m.taken).length;
+  const sub   = document.getElementById('home-med-sub');
+  const fill  = document.getElementById('home-med-bar-fill');
   if (sub) sub.textContent = `今日 ${done}/${total} 完成`;
+  if (fill) fill.style.width = total > 0 ? Math.round((done/total)*100)+'%' : '0%';
+}
+
+function updateHomeCards() {
+  updateHomeMedCard();
+  // BP status
+  const lastBP = bpLogs[bpLogs.length-1];
+  const bpBadge = document.getElementById('home-bp-badge');
+  const bpSub   = document.getElementById('home-bp-sub');
+  if (bpBadge && lastBP && lastBP.date === '今') {
+    const high = lastBP.sys >= 140 || lastBP.dia >= 90;
+    const low  = lastBP.sys < 110;
+    bpBadge.textContent = high ? '偏高' : low ? '偏低' : '正常';
+    bpBadge.style.background = high ? 'var(--red-l)' : low ? '#FFFBEB' : 'var(--green-l)';
+    bpBadge.style.color = high ? 'var(--red-d)' : low ? '#744210' : 'var(--green)';
+    bpBadge.style.padding = '2px 7px';
+    bpBadge.style.borderRadius = '8px';
+    bpBadge.style.fontSize = '11px';
+    bpBadge.style.fontWeight = '700';
+  }
+  // Respite
+  const sub = document.getElementById('home-respite-sub');
+  if (sub && plans.length > 0) {
+    const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1);
+    const tDay = tomorrow.getDay() === 0 ? 6 : tomorrow.getDay()-1;
+    const tmrPlans = plans.filter(p => p.day === tDay);
+    sub.textContent = tmrPlans.length ? `明日：${tmrPlans[0].name}` : '明日無安排';
+  }
 }
 
 // ════════════════════════════════════════
@@ -2815,6 +2938,7 @@ function saveBP() {
   renderBPChart();
   dbPush('bp_logs', { sys, dia, hr });
   postToServer('/bp', { sys, dia, hr, user: window.userProfile?.name });
+  updateHomeCards();
   document.getElementById('input-sys').value='';
   document.getElementById('input-dia').value='';
   document.getElementById('input-hr').value='';
@@ -2870,7 +2994,9 @@ function renderStressCalendar() {
     const isToday = today.getFullYear()===stressCalYear && today.getMonth()===stressCalMonth && today.getDate()===d;
     const bgMap = { green:'var(--green-l)', yellow:'#FFFFF0', red:'var(--red-l)' };
     const bg = log ? bgMap[log.level] : 'var(--g100)';
-    grid.innerHTML += `<div style="aspect-ratio:1;border-radius:8px;background:${bg};display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:${log?'14':'10'}px;font-weight:${isToday?'900':'600'};color:${log?'inherit':'var(--g400)'};border:${isToday?'2px solid var(--purple)':'none'};">
+    const onclick = log && log.note ? `onclick="showToast('${log.emoji} ${log.note.slice(0,20)}')"` : '';
+    const cursor = log && log.note ? 'cursor:pointer;' : '';
+    grid.innerHTML += `<div ${onclick} style="aspect-ratio:1;border-radius:8px;background:${bg};display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:${log?'14':'10'}px;font-weight:${isToday?'900':'600'};color:${log?'inherit':'var(--g400)'};border:${isToday?'2px solid var(--purple)':'none'};${cursor}">
       ${log ? log.emoji : d}
     </div>`;
   }
@@ -2919,7 +3045,32 @@ function submitStress() {
 // ════════════════════════════════════════
 // 🔐 登入 / 登出
 // ════════════════════════════════════════
-let loggedInPhone = '';
+function showPrivacyBeforeEnter() {
+  // 「進入銀安APP」按鈕 → 直接進入
+  enterApp();
+}
+
+function agreePrivacy() {
+  document.getElementById('privacy-screen').style.display = 'none';
+  // 同意後 → 顯示評估結果（step-5）
+  const from = document.getElementById('step-' + asmntCurrent);
+  asmntCurrent++;
+  const to = document.getElementById('step-' + asmntCurrent);
+  if (from) { from.classList.remove('active'); from.classList.add('exit'); }
+  if (to) {
+    to.style.transform = 'translateX(100%)';
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      to.style.transition = 'transform 0.38s cubic-bezier(0.25,0.46,0.45,0.94)';
+      to.classList.add('active');
+      to.style.transform = 'translateX(0)';
+    }));
+  }
+  asmntSetProgress(asmntCurrent);
+  asmntUpdateFooter();
+}
+
+// Check if privacy already agreed (session)
+let privacyAgreed = false;
 let otpSent = false;
 
 function loginPhoneInput(el) {
@@ -2973,6 +3124,8 @@ function loginAction() {
     document.getElementById('login-screen').style.display = 'none';
     // Update account display
     updateAcctDisplay();
+    // Welcome toast
+    setTimeout(() => showToast(`👋 歡迎使用銀安APP！`), 600);
   }
 }
 
@@ -3294,9 +3447,7 @@ const LIGHT_HERO_PAGES = new Set(['p-home']); // home has gradient but sbar floa
 function onPageEnter(id) {
   if (id === 'p-sos') { resetSOS(); resetSOSContacts(); }
   if (id === 'p-family') renderFamilyDashboard();
-  // Sbar colour: all hero pages use dark background → white text
-  // Settings page hero is dark grey → white is fine too
-  // No change needed — text-shadow handles readability
+  if (id === 'p-home') updateHomeCards();
 }
 
 let toastTimer;
