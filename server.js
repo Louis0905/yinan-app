@@ -79,7 +79,10 @@ const server = http.createServer(async (req, res) => {
     const db = loadDB();
     db.sos_logs.push(withTimestamp(body));
     saveDB(db);
-    console.log(`🆘 [${new Date().toLocaleTimeString()}] SOS！使用者: ${body.user} 位置: ${body.location}`);
+    const gpsTag = body.gps_real ? '📍 真實GPS' : '⚠️  預設位置（使用者未開放GPS）';
+    const mapsUrl = body.lat ? ` → https://maps.google.com/?q=${body.lat},${body.lng}` : '';
+    console.log(`🆘 [${new Date().toLocaleTimeString()}] SOS！使用者: ${body.user}`);
+    console.log(`   ${gpsTag}: ${body.location}${mapsUrl}`);
     printSummary(db);
     res.writeHead(200);
     res.end(JSON.stringify({ ok: true, message: 'SOS 已紀錄' }));
