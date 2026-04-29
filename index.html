@@ -1817,7 +1817,36 @@ function triggerSOS() {
   document.getElementById('sos-idle').style.display = 'none';
   const s = document.getElementById('sos-sending');
   s.classList.add('on');
-  setTimeout(() => { s.classList.remove('on'); document.getElementById('sos-done').classList.add('on'); }, 2400);
+
+  const sendSOS = (lat, lng, isReal) => {
+    const locationStr = isReal
+      ? `${lat}, ${lng}`
+      : `${lat}, ${lng}（GPS 未開放，使用預設位置）`;
+    const payload = {
+      user: window.userProfile?.name || '未知',
+      location: locationStr,
+      lat, lng,
+      gps_real: isReal,
+      contacts_notified: ['女兒（小芳）', '兒子（阿明）']
+    };
+    dbPush('sos_logs', payload);
+    postToServer('/sos', payload);
+    // 等資料送出後才顯示完成
+    setTimeout(() => {
+      s.classList.remove('on');
+      document.getElementById('sos-done').classList.add('on');
+    }, 500);
+  };
+
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      pos => sendSOS(pos.coords.latitude.toFixed(6), pos.coords.longitude.toFixed(6), true),
+      ()  => sendSOS('25.03369', '121.56448', false),
+      { timeout: 5000, enableHighAccuracy: true }
+    );
+  } else {
+    setTimeout(() => sendSOS('25.03369', '121.56448', false), 1500);
+  }
 }
 function resetSOS() {
   document.getElementById('sos-idle').style.display = '';
@@ -2625,15 +2654,7 @@ function saveProfile() {
   goBack();
 }
 
-function triggerSOS() {
-  const payload = { user: window.userProfile?.name || '未知', location: '台北市信義區（模擬）', contacts_notified: ['女兒（小芳）', '兒子（阿明）'] };
-  dbPush('sos_logs', payload);
-  postToServer('/sos', payload);
-  document.getElementById('sos-idle').style.display = 'none';
-  const s = document.getElementById('sos-sending');
-  s.classList.add('on');
-  setTimeout(() => { s.classList.remove('on'); document.getElementById('sos-done').classList.add('on'); }, 2400);
-}
+// triggerSOS 已在上方定義（含真實 GPS）
 
 function confirmMedTaken() {
   closeMedModal();
