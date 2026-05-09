@@ -106,7 +106,8 @@ html,body{height:100%;width:100%;font-family:var(--font);background:#0f1117;disp
 #p-sos .hero-block{min-height:unset;background:transparent !important;}
 #p-profile .hero-block{min-height:168px;}
 
-/* ════ LOGIN SCREEN ════ */
+/* BP input placeholder */
+#input-sys::placeholder, #input-dia::placeholder, #input-hr::placeholder { color:var(--g300); font-weight:400; }
 .login-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
   padding:24px 28px;overflow-y:auto;-webkit-overflow-scrolling:touch;}
 .login-body::-webkit-scrollbar{display:none;}
@@ -1273,15 +1274,15 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
         <div style="display:flex;gap:8px;margin-bottom:10px;">
           <div style="flex:1;">
             <div style="font-size:11px;color:var(--g500);font-weight:700;margin-bottom:4px;">收縮壓</div>
-            <input id="input-sys" type="tel" placeholder="120" style="width:100%;padding:10px 12px;border-radius:10px;border:2px solid var(--g200);font-size:16px;font-family:var(--font);font-weight:700;color:var(--g700);outline:none;text-align:center;" oninput="previewBP()">
+            <input id="input-sys" type="tel" placeholder="收縮壓" style="width:100%;padding:10px 12px;border-radius:10px;border:2px solid var(--g200);font-size:16px;font-family:var(--font);font-weight:700;color:var(--g700);outline:none;text-align:center;" oninput="previewBP()">
           </div>
           <div style="flex:1;">
             <div style="font-size:11px;color:var(--g500);font-weight:700;margin-bottom:4px;">舒張壓</div>
-            <input id="input-dia" type="tel" placeholder="80" style="width:100%;padding:10px 12px;border-radius:10px;border:2px solid var(--g200);font-size:16px;font-family:var(--font);font-weight:700;color:var(--g700);outline:none;text-align:center;" oninput="previewBP()">
+            <input id="input-dia" type="tel" placeholder="舒張壓" style="width:100%;padding:10px 12px;border-radius:10px;border:2px solid var(--g200);font-size:16px;font-family:var(--font);font-weight:700;color:var(--g700);outline:none;text-align:center;" oninput="previewBP()">
           </div>
           <div style="flex:1;">
             <div style="font-size:11px;color:var(--g500);font-weight:700;margin-bottom:4px;">心跳</div>
-            <input id="input-hr" type="tel" placeholder="72" style="width:100%;padding:10px 12px;border-radius:10px;border:2px solid var(--g200);font-size:16px;font-family:var(--font);font-weight:700;color:var(--g700);outline:none;text-align:center;">
+            <input id="input-hr" type="tel" placeholder="心跳" style="width:100%;padding:10px 12px;border-radius:10px;border:2px solid var(--g200);font-size:16px;font-family:var(--font);font-weight:700;color:var(--g700);outline:none;text-align:center;">
           </div>
         </div>
         <div id="bp-preview" style="font-size:12px;font-weight:700;text-align:center;padding:6px;border-radius:8px;display:none;margin-bottom:8px;"></div>
@@ -1302,7 +1303,17 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
 
       <div class="status-alert" id="rpt-alert" style="display:none;">
         <span style="font-size:24px;">⚠️</span>
-        <div><div class="sa-t" id="rpt-alert-txt">今日血壓偏高</div><div class="sa-s">建議與醫師討論調整用藥</div></div>
+        <div style="flex:1;">
+          <div class="sa-t" id="rpt-alert-txt">今日血壓偏高</div>
+          <div class="sa-s" id="rpt-alert-sub">建議與醫師討論調整用藥</div>
+        </div>
+      </div>
+      <div class="status-alert" id="hr-alert" style="display:none;background:#FFF5F5;border-left:4px solid var(--red);">
+        <span style="font-size:24px;">💗</span>
+        <div style="flex:1;">
+          <div class="sa-t" id="hr-alert-txt">心跳偏快</div>
+          <div class="sa-s">建議休息並告知醫師</div>
+        </div>
       </div>
       <div class="rpt-acts">
         <button class="rpt-btn" onclick="showToast('📄 PDF 匯出中…')">📄 匯出 PDF</button>
@@ -3328,15 +3339,33 @@ function saveBP() {
   const s = getBPStatus(sys, dia);
   const alert = document.getElementById('rpt-alert');
   const alertTxt = document.getElementById('rpt-alert-txt');
-  const hrWarning = hr && hr > 100 ? `⚠️ 心跳偏快（${hr} bpm）` : hr && hr < 60 ? `🔵 心跳偏慢（${hr} bpm）` : null;
-  const bpWarning = s && s.level !== 'normal' ? `${s.label}（${sys}/${dia} mmHg）` : null;
+  const alertSub = document.getElementById('rpt-alert-sub');
+  const hrAlertEl = document.getElementById('hr-alert');
+  const hrAlertTxt = document.getElementById('hr-alert-txt');
+
+  // 血壓警示
   if (alert && alertTxt) {
-    if (bpWarning || hrWarning) {
+    if (s && s.level !== 'normal') {
       alert.style.display = 'flex';
-      alertTxt.textContent = [bpWarning, hrWarning].filter(Boolean).join('　｜　');
-      alert.style.background = (s?.level === 'high2' || s?.level === 'crisis' || s?.level === 'high1') ? 'var(--red-l)' : '#FFFBEB';
+      alertTxt.textContent = s.label + `（${sys}/${dia} mmHg）`;
+      if (alertSub) alertSub.textContent = s.level === 'crisis' ? '請立即就醫！' : s.level === 'high2' ? '建議盡快就醫' : '建議與醫師討論';
+      alert.style.background = (s.level === 'crisis' || s.level === 'high2') ? 'var(--red-l)' : '#FFFBEB';
     } else {
       alert.style.display = 'none';
+    }
+  }
+
+  // 心跳警示
+  if (hrAlertEl && hrAlertTxt && hr) {
+    if (hr > 100) {
+      hrAlertEl.style.display = 'flex';
+      hrAlertTxt.textContent = `⚠️ 心跳偏快（${hr} bpm）`;
+    } else if (hr < 60) {
+      hrAlertEl.style.display = 'flex';
+      hrAlertEl.style.background = '#EBF8FF';
+      hrAlertTxt.textContent = `🔵 心跳偏慢（${hr} bpm）`;
+    } else {
+      hrAlertEl.style.display = 'none';
     }
   }
   renderBPChart();
@@ -3347,17 +3376,7 @@ function saveBP() {
   document.getElementById('input-dia').value='';
   document.getElementById('input-hr').value='';
   document.getElementById('bp-preview').style.display='none';
-
-  // 顯示警示 toast（最後顯示，不被蓋掉）
-  const hrWarningToast = hr && hr > 100 ? `⚠️ 心跳偏快（${hr} bpm）` : hr && hr < 60 ? `🔵 心跳偏慢（${hr} bpm）` : null;
-  const bpStatus = getBPStatus(sys, dia);
-  if (hrWarningToast) {
-    showToast(hrWarningToast + '，建議告知醫師');
-  } else if (bpStatus && bpStatus.level !== 'normal') {
-    showToast(`${bpStatus.label}`);
-  } else {
-    showToast('✅ 血壓數值已儲存！');
-  }
+  showToast('✅ 數值已儲存');
 }
 
 function renderBPChart() {
