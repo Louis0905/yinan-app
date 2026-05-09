@@ -1884,6 +1884,28 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
         <button onclick="openRespiteFromFamily()" style="font-size:11px;font-weight:700;color:var(--blue-m);background:var(--blue-l);border:none;padding:3px 10px;border-radius:8px;cursor:pointer;font-family:var(--font);">＋ 編輯 ›</button>
       </div>
       <div id="fv-respite" style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;"></div>
+
+      <!-- 加入 Bot 好友 -->
+      <div style="background:white;border-radius:16px;padding:16px;box-shadow:0 2px 12px rgba(0,0,0,0.08);margin-bottom:20px;">
+        <div style="font-size:13px;font-weight:800;color:var(--g700);margin-bottom:10px;">📲 加入銀安APP 通知 Bot</div>
+        <div style="font-size:12px;color:var(--g500);margin-bottom:12px;line-height:1.7;">
+          加好友後可接收 SOS 緊急通知、壓力警示等即時訊息
+        </div>
+        <div style="display:flex;gap:10px;">
+          <button onclick="openLink('https://line.me/R/ti/p/@862swulo')" style="flex:1;padding:11px;border-radius:12px;background:#06C755;color:white;border:none;font-size:13px;font-weight:800;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:6px;">
+            <span style="font-size:16px;">💬</span> 加 LINE 好友
+          </button>
+          <button onclick="showBotQR()" style="flex:1;padding:11px;border-radius:12px;background:var(--g100);color:var(--g700);border:none;font-size:13px;font-weight:800;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:6px;">
+            <span style="font-size:16px;">📷</span> 掃描 QR Code
+          </button>
+        </div>
+        <!-- QR Code 區（點擊後顯示）-->
+        <div id="bot-qr-area" style="display:none;margin-top:12px;text-align:center;">
+          <div style="font-size:12px;color:var(--g500);margin-bottom:8px;">用 LINE 掃描下方 QR Code</div>
+          <img id="bot-qr-img" src="" alt="Bot QR Code" style="width:160px;height:160px;border-radius:12px;border:2px solid var(--g200);">
+          <div style="font-size:11px;color:var(--g400);margin-top:6px;">加好友後傳任何訊息，系統會回覆您的 User ID</div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -2002,13 +2024,14 @@ function triggerSOS() {
   const sendSOS = (lat, lng, isReal) => {
     const locationStr = isReal
       ? `${lat}, ${lng}`
-      : `${lat}, ${lng}（GPS 未開放，使用預設位置）`;
+      : null; // GPS 未開放時不傳位置字串，只傳警告
     const payload = {
       user: window.userProfile?.name || '未知',
-      location: locationStr,
-      lat, lng,
+      location: isReal ? `${lat}, ${lng}` : '位置未開放',
+      lat: isReal ? lat : null,
+      lng: isReal ? lng : null,
       gps_real: isReal,
-      contacts: emergencyContacts, // 傳送聯絡人清單給 server
+      contacts: emergencyContacts,
     };
     dbPush('sos_logs', payload);
     postToServer('/sos', payload);
@@ -3614,14 +3637,16 @@ let selectedNotifyTypes = ['sos'];
 
 function loadContacts() {
   try {
-    const s = localStorage.getItem('yinan_contacts');
+    const key = `yinan_contacts_${activeProfileIdx}`;
+    const s = localStorage.getItem(key);
     if (s) emergencyContacts = JSON.parse(s);
+    else emergencyContacts = [];
   } catch(e) { emergencyContacts = []; }
 }
 
 function saveContacts() {
-  localStorage.setItem('yinan_contacts', JSON.stringify(emergencyContacts));
-  // 同步到 server
+  const key = `yinan_contacts_${activeProfileIdx}`;
+  localStorage.setItem(key, JSON.stringify(emergencyContacts));
   postToServer('/contacts', { contacts: emergencyContacts });
   updateContactsCountBadge();
 }
@@ -3841,6 +3866,9 @@ function selectProfile(idx) {
   applyProfile(p);
   document.getElementById('profiles-screen').style.display = 'none';
   document.getElementById('assessment').classList.add('done');
+  // 載入此照護對象的緊急聯絡人
+  loadContacts();
+  renderContactsList();
   updateAcctDisplay(); updateHomeCards();
   setTimeout(() => showToast(`👋 已切換至 ${p.name}`), 400);
 }
@@ -4254,6 +4282,20 @@ function renderFamilyView() {
   } else if (fvAlert) fvAlert.style.display = 'none';
 }
 
+
+function showBotQR() {
+  const area = document.getElementById('bot-qr-area');
+  const img  = document.getElementById('bot-qr-img');
+  if (!area || !img) return;
+  if (area.style.display === 'block') { area.style.display = 'none'; return; }
+  // 用 LINE 的 QR Code API（需填入你的 Bot Basic ID）
+  // 格式：https://qr-official.line.me/sid/L/{Bot Basic ID}.png
+  // 先用 qr.io 產生加好友連結的 QR Code
+  const botId = '@862swulo';
+  const friendUrl = encodeURIComponent(`https://line.me/R/ti/p/${botId}`);
+  img.src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${friendUrl}`;
+  area.style.display = 'block';
+}
 
 function openRespiteFromFamily() {
   document.getElementById('family-view-overlay').style.display = 'none';
