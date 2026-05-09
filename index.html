@@ -1606,14 +1606,28 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
       </div>
 
       <!-- 說明 -->
-      <div style="margin:12px 22px 0;background:#FFF5F5;border-radius:12px;padding:12px 14px;border-left:3px solid var(--red);">
-        <div style="font-size:12px;color:var(--red-d);font-weight:700;margin-bottom:4px;">📋 如何取得 LINE User ID？</div>
-        <div style="font-size:11px;color:var(--g600);line-height:1.7;">
-          1. 讓家屬加銀安APP Bot 為好友<br>
-          2. 家屬傳任何訊息給 Bot<br>
-          3. Bot 會自動回覆「您的 User ID：Uxxxxx」<br>
-          4. 家屬截圖告知您，填入下方
+      <div style="margin:12px 22px 0;background:#F0FFF4;border-radius:12px;padding:12px 14px;border-left:3px solid var(--green-m);">
+        <div style="font-size:13px;color:var(--green);font-weight:800;margin-bottom:8px;">📲 Step 1：讓家屬加 Bot 好友</div>
+        <div style="font-size:12px;color:var(--g600);line-height:1.7;margin-bottom:10px;">
+          家屬加好友後，Bot 會自動回覆他們的 User ID，再填入下方聯絡人資料即可收到通知。
         </div>
+        <div style="display:flex;gap:8px;">
+          <button onclick="openLink('https://line.me/R/ti/p/@862swulo')" style="flex:1;padding:10px;border-radius:11px;background:#06C755;color:white;border:none;font-size:13px;font-weight:800;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:6px;">
+            💬 加 LINE 好友
+          </button>
+          <button onclick="toggleContactsQR()" style="flex:1;padding:10px;border-radius:11px;background:white;color:var(--g700);border:2px solid var(--g200);font-size:13px;font-weight:800;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:6px;">
+            📷 QR Code
+          </button>
+        </div>
+        <div id="contacts-qr-area" style="display:none;margin-top:10px;text-align:center;">
+          <img src="" id="contacts-qr-img" style="width:150px;height:150px;border-radius:10px;border:2px solid var(--g200);">
+          <div style="font-size:11px;color:var(--g400);margin-top:6px;">用 LINE 掃描即可加好友</div>
+        </div>
+      </div>
+
+      <div style="margin:10px 22px 0;background:#EBF8FF;border-radius:12px;padding:10px 14px;border-left:3px solid var(--blue-m);">
+        <div style="font-size:13px;color:var(--blue-m);font-weight:800;margin-bottom:2px;">📋 Step 2：新增聯絡人</div>
+        <div style="font-size:12px;color:var(--g600);line-height:1.7;">填入家屬姓名、關係與 Bot 回覆的 User ID，選擇要接收哪些通知類型。</div>
       </div>
 
       <!-- 聯絡人列表 -->
@@ -4282,6 +4296,16 @@ function renderFamilyView() {
   } else if (fvAlert) fvAlert.style.display = 'none';
 }
 
+
+function toggleContactsQR() {
+  const area = document.getElementById('contacts-qr-area');
+  const img  = document.getElementById('contacts-qr-img');
+  if (!area || !img) return;
+  if (area.style.display === 'block') { area.style.display = 'none'; return; }
+  const friendUrl = encodeURIComponent('https://line.me/R/ti/p/@862swulo');
+  img.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${friendUrl}`;
+  area.style.display = 'block';
+}
 
 function showBotQR() {
   const area = document.getElementById('bot-qr-area');
