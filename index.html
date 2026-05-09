@@ -1281,7 +1281,7 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
           </div>
           <div style="flex:1;">
             <div style="font-size:11px;color:var(--g500);font-weight:700;margin-bottom:4px;">心跳</div>
-            <input id="input-hr" type="number" placeholder="72" style="width:100%;padding:10px 12px;border-radius:10px;border:2px solid var(--g200);font-size:16px;font-family:var(--font);font-weight:700;color:var(--g700);outline:none;text-align:center;">
+            <input id="input-hr" type="tel" placeholder="72" style="width:100%;padding:10px 12px;border-radius:10px;border:2px solid var(--g200);font-size:16px;font-family:var(--font);font-weight:700;color:var(--g700);outline:none;text-align:center;">
           </div>
         </div>
         <div id="bp-preview" style="font-size:12px;font-weight:700;text-align:center;padding:6px;border-radius:8px;display:none;margin-bottom:8px;"></div>
@@ -1893,8 +1893,8 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
   <nav class="bnav">
     <button class="nbtn on" data-pg="p-home" onclick="navTo('p-home')"><span class="ni">🏠</span><span class="nl">首頁</span></button>
     <button class="nbtn" onclick="navTo('p-journal','fwd')" style="display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:6px;">
-      <div style="width:46px;height:46px;background:linear-gradient(135deg,#2b6cb0,#3182CE);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:white;box-shadow:0 4px 14px rgba(49,130,206,0.5);margin-top:-22px;border:3px solid white;">＋</div>
-      <span class="nl" style="margin-top:3px;">日誌</span>
+      <div style="width:58px;height:58px;background:linear-gradient(135deg,#2b6cb0,#3182CE);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:white;box-shadow:0 6px 20px rgba(49,130,206,0.55);margin-top:-28px;border:4px solid white;">＋</div>
+      <span class="nl" style="margin-top:4px;font-weight:800;color:var(--blue-m);">日誌</span>
     </button>
     <button class="nbtn" data-pg="p-settings" onclick="navTo('p-settings')"><span class="ni">⚙️</span><span class="nl">設定</span></button>
   </nav>
@@ -3307,15 +3307,7 @@ function saveBP() {
   if (!sys || !dia) { showToast('⚠️ 請輸入收縮壓和舒張壓'); return; }
   if (sys < 60 || sys > 250) { showToast('⚠️ 收縮壓數值異常（60–250）'); return; }
   if (dia < 40 || dia > 150) { showToast('⚠️ 舒張壓數值異常（40–150）'); return; }
-  if (hr && (hr < 40 || hr > 200)) { showToast('⚠️ 心跳數值異常（40–200 bpm）'); return; }
-
-  // 心跳狀態提示
-  const hrEl = document.getElementById('rpt-hr-today');
-  if (hr) {
-    if (hrEl) hrEl.textContent = hr;
-    const hrAlert = hr < 60 ? '🔵 心跳偏慢' : hr > 100 ? '⚠️ 心跳偏快' : null;
-    if (hrAlert) showToast(`${hrAlert}（${hr} bpm），建議告知醫師`);
-  }
+  if (hr && (hr < 40 || hr > 250)) { showToast('⚠️ 心跳數值異常（40–250 bpm）'); return; }
   // Update today's entry or add
   const days = ['日','一','二','三','四','五','六'];
   const todayLabel = days[new Date().getDay()];
@@ -3328,17 +3320,25 @@ function saveBP() {
   const hrDisplay = document.getElementById('rpt-hr-today');
   if (hrDisplay && hr) {
     hrDisplay.textContent = hr;
-    hrDisplay.style.color = hr < 60 ? '#2B6CB0' : hr > 100 ? '#E53E3E' : 'var(--g700)';
+    hrDisplay.style.color = hr < 60 ? '#2B6CB0' : hr > 100 ? '#E53E3E' : '#276749';
   }
   document.getElementById('rpt-spo2-today').textContent = '98%';
+
+  // 合併血壓 + 心跳警示
   const s = getBPStatus(sys, dia);
   const alert = document.getElementById('rpt-alert');
   const alertTxt = document.getElementById('rpt-alert-txt');
-  if (s && s.level !== 'normal' && alert && alertTxt) {
-    alert.style.display = 'flex';
-    alertTxt.textContent = `${s.label}（${sys}/${dia} mmHg）`;
-    alert.style.background = s.level === 'low' ? '#EBF8FF' : 'var(--red-l)';
-  } else if (alert) { alert.style.display = 'none'; }
+  const hrWarning = hr && hr > 100 ? `⚠️ 心跳偏快（${hr} bpm）` : hr && hr < 60 ? `🔵 心跳偏慢（${hr} bpm）` : null;
+  const bpWarning = s && s.level !== 'normal' ? `${s.label}（${sys}/${dia} mmHg）` : null;
+  if (alert && alertTxt) {
+    if (bpWarning || hrWarning) {
+      alert.style.display = 'flex';
+      alertTxt.textContent = [bpWarning, hrWarning].filter(Boolean).join('　｜　');
+      alert.style.background = (s?.level === 'high2' || s?.level === 'crisis' || s?.level === 'high1') ? 'var(--red-l)' : '#FFFBEB';
+    } else {
+      alert.style.display = 'none';
+    }
+  }
   renderBPChart();
   dbPush('bp_logs', { sys, dia, hr: savedHr });
   postToServer('/bp', { sys, dia, hr: savedHr, user: window.userProfile?.name });
@@ -3347,8 +3347,17 @@ function saveBP() {
   document.getElementById('input-dia').value='';
   document.getElementById('input-hr').value='';
   document.getElementById('bp-preview').style.display='none';
-  if (!hr) showToast('✅ 血壓已儲存！（未填心跳）');
-  else showToast('✅ 血壓與心跳數值已儲存！');
+
+  // 顯示警示 toast（最後顯示，不被蓋掉）
+  const hrWarningToast = hr && hr > 100 ? `⚠️ 心跳偏快（${hr} bpm）` : hr && hr < 60 ? `🔵 心跳偏慢（${hr} bpm）` : null;
+  const bpStatus = getBPStatus(sys, dia);
+  if (hrWarningToast) {
+    showToast(hrWarningToast + '，建議告知醫師');
+  } else if (bpStatus && bpStatus.level !== 'normal') {
+    showToast(`${bpStatus.label}`);
+  } else {
+    showToast('✅ 血壓數值已儲存！');
+  }
 }
 
 function renderBPChart() {
