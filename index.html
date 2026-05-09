@@ -2014,28 +2014,28 @@ function onPageEnter(id) {
 let sosLock = false;
 
 function triggerSOS() {
-  if (sosLock) return; // 防止重複觸發
+  if (sosLock) return;
   sosLock = true;
 
   document.getElementById('sos-idle').style.display = 'none';
   const s = document.getElementById('sos-sending');
   s.classList.add('on');
 
+  let sent = false; // 確保只發送一次
+
   const sendSOS = (lat, lng, isReal) => {
-    const locationStr = isReal
-      ? `${lat}, ${lng}`
-      : null; // GPS 未開放時不傳位置字串，只傳警告
+    if (sent) return; // 已發送過，忽略
+    sent = true;
     const payload = {
       user: window.userProfile?.name || '未知',
       location: isReal ? `${lat}, ${lng}` : '位置未開放',
-      lat: isReal ? lat : null,
-      lng: isReal ? lng : null,
+      lat:  isReal ? lat  : null,
+      lng:  isReal ? lng  : null,
       gps_real: isReal,
       contacts: emergencyContacts,
     };
     dbPush('sos_logs', payload);
     postToServer('/sos', payload);
-    // 等資料送出後才顯示完成
     setTimeout(() => {
       s.classList.remove('on');
       document.getElementById('sos-done').classList.add('on');
@@ -2045,11 +2045,11 @@ function triggerSOS() {
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       pos => sendSOS(pos.coords.latitude.toFixed(6), pos.coords.longitude.toFixed(6), true),
-      ()  => sendSOS('25.03369', '121.56448', false),
+      ()  => sendSOS(null, null, false),
       { timeout: 5000, enableHighAccuracy: true }
     );
   } else {
-    setTimeout(() => sendSOS('25.03369', '121.56448', false), 1500);
+    sendSOS(null, null, false);
   }
 }
 function resetSOS() {
@@ -4328,7 +4328,10 @@ function openLINEChat(userId, ccId) {
 }
 
 function startCallDirect(name, av, phone) {
-  startCall(name, av, phone);
+  // 清除非數字（保留 +）
+  const cleanPhone = phone.replace(/[^\d+]/g, '');
+  // 直接跳系統撥號
+  window.location.href = `tel:${cleanPhone}`;
 }
 
 function toggleContactsQR() {
