@@ -11,7 +11,7 @@ const LINE_TOKEN = 'ltvwoo7FoPeILJfjVxxu6xt60G2vaULO0BmYqmGYOVK+iSx1NuzMHfTlEZIQ
 // ── 自架 AI 設定 ──────────────────────────────────
 const AI_API_KEY  = 'Louis@0905';
 const AI_BASE_URL = 'http://60.251.180.157:8000/v1';
-const AI_MODEL    = 'gpt-3.5-turbo'; // 依你的伺服器支援的模型調整
+const AI_MODEL    = 'gpt-oss-20b-MXFP4-Q8';
 
 async function callAI(systemPrompt, userContent) {
   return new Promise((resolve, reject) => {
