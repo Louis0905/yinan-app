@@ -8,6 +8,58 @@ const PORT  = process.env.PORT || 3000;
 
 const LINE_TOKEN = 'ltvwoo7FoPeILJfjVxxu6xt60G2vaULO0BmYqmGYOVK+iSx1NuzMHfTlEZIQ267yXHXeEghmxmBKua4LsxnkLhsJvYws4KPD776VfKT8Ir1YoVnapDYgl/ONE77ld9TM0ihr0xis+/Uai5Lb0WKvVQdB04t89/1O/w1cDnyilFU=';
 
+// ── 自架 AI 設定 ──────────────────────────────────
+const AI_API_KEY  = 'Louis@0905';
+const AI_BASE_URL = 'http://60.251.180.157:8000/v1';
+const AI_MODEL    = 'gpt-3.5-turbo'; // 依你的伺服器支援的模型調整
+
+async function callAI(systemPrompt, userContent) {
+  return new Promise((resolve, reject) => {
+    const body = JSON.stringify({
+      model: AI_MODEL,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user',   content: userContent  }
+      ],
+      temperature: 0.7,
+      max_tokens: 1500
+    });
+
+    // 解析 URL
+    const url = new URL(AI_BASE_URL + '/chat/completions');
+    const isHttps = url.protocol === 'https:';
+    const lib = isHttps ? https : http;
+
+    const opts = {
+      hostname: url.hostname,
+      port: url.port || (isHttps ? 443 : 80),
+      path: url.pathname,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${AI_API_KEY}`,
+        'Content-Length': Buffer.byteLength(body)
+      }
+    };
+
+    const req = lib.request(opts, (res) => {
+      let data = '';
+      res.on('data', c => data += c);
+      res.on('end', () => {
+        try {
+          const json = JSON.parse(data);
+          const content = json.choices?.[0]?.message?.content;
+          if (content) resolve(content);
+          else reject(new Error('AI 回應格式錯誤: ' + data));
+        } catch(e) { reject(new Error('AI 解析失敗: ' + data)); }
+      });
+    });
+    req.on('error', e => reject(e));
+    req.write(body);
+    req.end();
+  });
+}
+
 // 緊急聯絡人（從 APP 同步過來，也可在此直接設定）
 let savedContacts = [];
 
@@ -102,23 +154,33 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // 🆘 SOS
   if (req.method === 'POST' && url === '/sos') {
     const body = await readBody(req);
     const db = loadDB();
     db.sos_logs.push(ts(body));
     saveDB(db);
-    const gpsTag = body.gps_real ? '📍 真實GPS' : '⚠️ 預設位置';
-    const mapsUrl = body.lat ? `https://maps.google.com/?q=${body.lat},${body.lng}` : '';
+    const gpsTag = body.gps_real ? '📍 真實GPS' : '⚠️ GPS未開放';
+    const mapsUrl = body.gps_real && body.lat ? `https://maps.google.com/?q=${body.lat},${body.lng}` : null;
     console.log(`\n🆘🆘🆘 SOS！[${now()}] 使用者:${body.user}`);
     console.log(`  ${gpsTag}: ${body.location}`);
     if (mapsUrl) console.log(`  地圖: ${mapsUrl}`);
 
-    // 使用 APP 傳來的聯絡人，或 server 已儲存的
     const contacts = body.contacts?.length ? body.contacts : savedContacts;
     if (contacts.length > 0) {
-      const msg = [`🆘【銀安APP 緊急求助】`, ``, `📋 照護對象：${body.user}`, `⏰ 時間：${now()}`, `📍 位置：${body.location}`, mapsUrl ? `🗺️ ${mapsUrl}` : '', ``, `請立即確認照護對象狀況！`].filter(Boolean).join('\n');
-      broadcast(contacts, 'sos', msg);
+      const lines = [
+        `🆘【銀安APP 緊急求助】`,
+        ``,
+        `📋 照護對象：${body.user}`,
+        `⏰ 時間：${now()}`,
+      ];
+      if (body.gps_real && body.lat) {
+        lines.push(`📍 位置：${body.lat}, ${body.lng}`);
+        lines.push(`🗺️ ${mapsUrl}`);
+      } else {
+        lines.push(`📍 位置：無法取得（請聯繫確認）`);
+      }
+      lines.push(``, `請立即確認照護對象狀況！`);
+      broadcast(contacts, 'sos', lines.join('\n'));
     } else {
       console.log('  ⚠️  尚未設定緊急聯絡人');
     }
@@ -219,17 +281,155 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // LINE Webhook（取得 User ID）
   if (req.method === 'POST' && url === '/webhook') {
     const body = await readBody(req);
     for (const event of (body.events||[])) {
       const userId = event.source?.userId;
-      if (userId) {
+      if (userId && (event.type === 'follow' || event.type === 'message')) {
         console.log(`\n👤 LINE User ID: ${userId}`);
-        if (event.type === 'follow' || event.type === 'message') {
-          await sendLINE(userId, `👋 您好！\n\n您的 LINE User ID 是：\n${userId}\n\n請將此 ID 提供給照顧者，在銀安APP 的「緊急聯絡人」設定中填入，即可接收 SOS 等緊急通知。`);
-        }
+        // 發送含按鈕的訊息（Flex Message）
+        const flexMsg = {
+          to: userId,
+          messages: [{
+            type: 'flex',
+            altText: '歡迎加入銀安APP！',
+            contents: {
+              type: 'bubble',
+              hero: {
+                type: 'box',
+                layout: 'vertical',
+                contents: [{
+                  type: 'text',
+                  text: '🏥 銀安APP',
+                  size: 'xxl',
+                  weight: 'bold',
+                  color: '#ffffff',
+                  align: 'center'
+                }],
+                backgroundColor: '#3182CE',
+                paddingAll: '20px'
+              },
+              body: {
+                type: 'box',
+                layout: 'vertical',
+                spacing: 'md',
+                contents: [
+                  { type: 'text', text: '👋 歡迎加入銀安APP！', weight: 'bold', size: 'lg', color: '#1a202c' },
+                  { type: 'text', text: '您已成功加入緊急通知名單', size: 'sm', color: '#718096', margin: 'sm' },
+                  { type: 'separator', margin: 'lg' },
+                  { type: 'text', text: '📋 您的 User ID', weight: 'bold', size: 'sm', color: '#4a5568', margin: 'lg' },
+                  {
+                    type: 'box', layout: 'vertical',
+                    backgroundColor: '#EBF8FF', cornerRadius: '8px', paddingAll: '10px', margin: 'sm',
+                    contents: [{ type: 'text', text: userId, size: 'xs', color: '#2b6cb0', wrap: true, weight: 'bold' }]
+                  },
+                  { type: 'text', text: '請截圖此 ID 傳給照顧者，填入緊急聯絡人設定後，即可接收 SOS 通知。', size: 'xs', color: '#718096', wrap: true, margin: 'md' }
+                ]
+              },
+              footer: {
+                type: 'box',
+                layout: 'vertical',
+                spacing: 'sm',
+                contents: [
+                  {
+                    type: 'button',
+                    style: 'primary',
+                    color: '#3182CE',
+                    action: {
+                      type: 'uri',
+                      label: '🏠 開啟銀安APP',
+                      uri: 'https://louis0905.github.io/yinan-app/%E9%8A%80%E5%AE%89APP.html'
+                    }
+                  },
+                  {
+                    type: 'button',
+                    style: 'secondary',
+                    action: {
+                      type: 'message',
+                      label: '📋 再次查看我的 User ID',
+                      text: '查看 User ID'
+                    }
+                  }
+                ]
+              }
+            }
+          }]
+        };
+        // 發送 Flex Message
+        const flexBody = JSON.stringify(flexMsg);
+        await new Promise((resolve) => {
+          const opts = {
+            hostname: 'api.line.me', path: '/v2/bot/message/push', method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${LINE_TOKEN}`, 'Content-Length': Buffer.byteLength(flexBody) }
+          };
+          const req2 = https.request(opts, (res2) => {
+            let d = '';
+            res2.on('data', c => d += c);
+            res2.on('end', () => { console.log(`  歡迎訊息 ${res2.statusCode === 200 ? '✅' : '❌ ' + d}`); resolve(); });
+          });
+          req2.on('error', () => resolve());
+          req2.write(flexBody); req2.end();
+        });
       }
+    }
+    res.writeHead(200); res.end(JSON.stringify({ ok: true })); return;
+  }
+
+  // 🤖 AI 照護日誌生成
+  if (req.method === 'POST' && url === '/ai-journal') {
+    const body = await readBody(req);
+    const { text, profile, date } = body;
+    if (!text) { res.writeHead(400); res.end(JSON.stringify({ ok: false, message: '請提供日誌內容' })); return; }
+
+    console.log(`\n🤖 [${now()}] AI 日誌生成 (${text.length} 字)`);
+
+    const systemPrompt = `你是一位專業的長照照護記錄助理。
+請將照顧者提供的口語記錄整理成結構化的照護日誌報表，使用繁體中文。
+格式要求：
+1. 簡潔清楚，方便家屬閱讀
+2. 自動分類：身體狀況、情緒狀態、飲食記錄、活動記錄、異常事項、待追蹤事項
+3. 沒有提到的項目不要留空白格，直接略過
+4. 結尾加上「照顧者建議」（如有需要）
+5. 輸出格式為純文字，用 emoji 輔助分類`;
+
+    const userContent = `照護對象：${profile?.name || '長輩'}
+記錄日期：${date || now()}
+照顧者口述記錄：
+${text}`;
+
+    try {
+      const result = await callAI(systemPrompt, userContent);
+      console.log(`  ✅ AI 生成完成 (${result.length} 字)`);
+
+      // 儲存日誌
+      const db = loadDB();
+      if (!db.journals) db.journals = [];
+      db.journals.push({
+        _ts: new Date().toISOString(),
+        rawText: text,
+        report: result,
+        profileName: profile?.name || '長輩'
+      });
+      saveDB(db);
+
+      res.writeHead(200);
+      res.end(JSON.stringify({ ok: true, report: result }));
+    } catch(e) {
+      console.log(`  ❌ AI 失敗: ${e.message}`);
+      res.writeHead(500);
+      res.end(JSON.stringify({ ok: false, message: 'AI 服務錯誤: ' + e.message }));
+    }
+    return;
+  }
+
+  // 📨 傳送日誌給家屬
+  if (req.method === 'POST' && url === '/send-journal') {
+    const body = await readBody(req);
+    const { report, contacts, profileName } = body;
+    if (!report || !contacts?.length) { res.writeHead(400); res.end(JSON.stringify({ ok: false })); return; }
+    const msg = `📋【銀安APP 照護日誌】\n\n照護對象：${profileName||'長輩'}\n時間：${now()}\n\n${report}`;
+    for (const c of contacts) {
+      if (c.userId) await sendLINE(c.userId, msg);
     }
     res.writeHead(200); res.end(JSON.stringify({ ok: true })); return;
   }
