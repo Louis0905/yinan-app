@@ -763,7 +763,7 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
   <!-- ══════════════════════════════════════
        LOGIN SCREEN
   ══════════════════════════════════════ -->
-  <div id="login-screen" style="position:absolute;inset:0;z-index:2000;background:#ffffff;display:flex;flex-direction:column;border-radius:44px;overflow:hidden;">
+  <div id="login-screen" style="position:absolute;inset:0;z-index:2000;background:#ffffff;display:none;flex-direction:column;border-radius:44px;overflow:hidden;">
     <div class="asmnt-sbar">
       <span>9:41</span>
       <div class="notch"></div>
@@ -808,6 +808,34 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
       <div class="login-hint">
         Demo 模式：任意手機號碼 + 驗證碼 <b>0000</b> 即可登入
       </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       CARE PROFILES LIST
+  ══════════════════════════════════════ -->
+  <div id="profiles-screen" style="position:absolute;inset:0;z-index:1500;background:#f7f8fc;display:flex;flex-direction:column;border-radius:44px;overflow:hidden;">
+    <div class="asmnt-sbar" style="background:linear-gradient(135deg,#2b6cb0,#3182CE);">
+      <span style="color:white;">9:41</span>
+      <div class="notch"></div>
+      <span style="color:white;">📶 🔋</span>
+    </div>
+    <!-- Header -->
+    <div style="background:linear-gradient(135deg,#2b6cb0,#3182CE);padding:16px 24px 28px;">
+      <div style="font-size:22px;font-weight:900;color:white;margin-bottom:4px;">👥 照護對象</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.8);">選擇或新增照護對象</div>
+    </div>
+
+    <!-- List -->
+    <div style="flex:1;overflow-y:auto;padding:16px 20px 100px;" id="profiles-list">
+      <!-- 動態渲染 -->
+    </div>
+
+    <!-- 新增按鈕 -->
+    <div style="position:absolute;bottom:0;left:0;right:0;padding:16px 20px 28px;background:linear-gradient(to top,#f7f8fc 80%,transparent);">
+      <button onclick="addNewProfile()" style="width:100%;padding:15px;border-radius:16px;background:linear-gradient(135deg,#2b6cb0,#3182CE);color:white;border:none;font-size:16px;font-weight:900;cursor:pointer;font-family:var(--font);box-shadow:0 6px 20px rgba(49,130,206,0.35);display:flex;align-items:center;justify-content:center;gap:8px;">
+        ＋ 新增照護對象
+      </button>
     </div>
   </div>
 
@@ -944,61 +972,82 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
 
     <!-- HOME -->
     <div class="page active" id="p-home">
-      <div class="hero-block" style="position:relative;">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-          <div>
-            <div class="home-greet" id="home-greet">☀️ 早安</div>
-            <div class="home-name" id="home-name">阿嬤</div>
-          </div>
-          <!-- 右上角帳號按鈕 -->
+      <div class="hero-block" style="position:relative;padding-bottom:16px;">
+        <!-- 右上角帳號按鈕 -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <div class="home-greet" id="home-greet">☀️ 早安</div>
           <button class="acct-btn" id="acct-btn" onclick="toggleAcctMenu()">
             <span class="acct-avatar" id="acct-avatar">👵</span>
             <span class="acct-chevron" id="acct-chevron">▾</span>
           </button>
         </div>
-        <div class="home-status" id="home-status-bar"><div class="h-dot"></div><span id="home-status-txt">今日狀態：正常</span></div>
+
+        <!-- 照護對象卡片 -->
+        <div id="profile-hero-card" onclick="navTo('p-profile','fwd')" style="background:rgba(255,255,255,0.18);backdrop-filter:blur(12px);border-radius:18px;padding:14px 16px;cursor:pointer;border:1px solid rgba(255,255,255,0.25);display:none;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div id="profile-hero-avatar" style="width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,0.25);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;border:2px solid rgba(255,255,255,0.4);">👴</div>
+            <div style="flex:1;min-width:0;">
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                <div class="home-name" id="home-name" style="font-size:18px;color:white;font-weight:900;margin:0;"></div>
+                <div id="profile-hero-risk-badge" style="padding:2px 10px;border-radius:20px;font-size:11px;font-weight:800;"></div>
+              </div>
+              <div id="profile-hero-tags" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:5px;"></div>
+            </div>
+            <div style="color:rgba(255,255,255,0.5);font-size:18px;flex-shrink:0;">›</div>
+          </div>
+          <!-- 今日狀態整合在卡片底部 -->
+          <div id="home-status-bar" style="display:flex;align-items:center;gap:7px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.15);">
+            <div class="h-dot"></div>
+            <span id="home-status-txt" style="font-size:12px;color:rgba(255,255,255,0.9);font-weight:700;">今日狀態：正常</span>
+          </div>
+        </div>
+
+        <!-- 未填問卷時的提示 -->
+        <div id="profile-hero-empty" onclick="navTo('p-profile','fwd')" style="background:rgba(255,255,255,0.15);border-radius:18px;padding:14px 16px;cursor:pointer;border:1px dashed rgba(255,255,255,0.4);display:flex;align-items:center;gap:10px;">
+          <div style="font-size:28px;">👴</div>
+          <div>
+            <div style="color:white;font-size:14px;font-weight:800;">新增照護對象</div>
+            <div style="color:rgba(255,255,255,0.7);font-size:12px;margin-top:2px;">點此填寫初評資料</div>
+          </div>
+          <div style="margin-left:auto;color:rgba(255,255,255,0.6);font-size:18px;">›</div>
+        </div>
 
         <!-- 下拉選單 -->
         <div class="acct-menu" id="acct-menu">
-          <!-- 已登入狀態 -->
           <div id="acct-logged-in">
-            <div class="acct-menu-title">目前帳號</div>
+            <div class="acct-menu-title">照護管理</div>
             <div class="acct-item active-acct">
               <div class="ai-av" id="acct-av-display">👵</div>
               <div class="ai-info">
-                <div class="ai-name" id="acct-name-display">阿嬤</div>
-                <div class="ai-role" id="acct-phone-display">未登入</div>
+                <div class="ai-name" id="acct-name-display">照護對象</div>
+                <div class="ai-role" id="acct-phone-display">點此查看評估資料</div>
               </div>
               <span class="ai-check">✓</span>
             </div>
             <div class="acct-divider"></div>
-            <div class="acct-item" onclick="navTo('p-profile','fwd');closeAcctMenu()">
-              <div class="ai-av">📋</div>
-              <div class="ai-info"><div class="ai-name">個人評估資料</div><div class="ai-role">查看或編輯</div></div>
-              <span style="color:var(--g300);font-size:16px;">›</span>
-            </div>
             <div class="acct-item" onclick="navTo('p-settings','fwd');closeAcctMenu()">
               <div class="ai-av">⚙️</div>
               <div class="ai-info"><div class="ai-name">設定</div><div class="ai-role">深色模式、字體大小</div></div>
               <span style="color:var(--g300);font-size:16px;">›</span>
             </div>
+            <div class="acct-item" onclick="closeAcctMenu();toggleRoleView()">
+              <div class="ai-av">👨‍👩‍👧</div>
+              <div class="ai-info"><div class="ai-name">家屬視角</div><div class="ai-role">切換至家屬照護總覽</div></div>
+              <span style="color:var(--g300);font-size:16px;">›</span>
+            </div>
             <div class="acct-divider"></div>
-            <div class="acct-item" onclick="logoutUser()" style="color:var(--red-d);">
-              <div class="ai-av">🚪</div>
-              <div class="ai-info"><div class="ai-name" style="color:var(--red-d);">登出</div><div class="ai-role">返回登入畫面</div></div>
+            <div class="acct-item" onclick="closeAcctMenu();showProfilesScreen()">
+              <div class="ai-av">👥</div>
+              <div class="ai-info"><div class="ai-name">切換照護對象</div><div class="ai-role" id="acct-profiles-count">管理所有照護對象</div></div>
+              <span style="color:var(--g300);font-size:16px;">›</span>
+            </div>
+            <div class="acct-divider"></div>
+            <div class="acct-item" onclick="resetApp()" style="color:var(--red-d);">
+              <div class="ai-av">🔄</div>
+              <div class="ai-info"><div class="ai-name" style="color:var(--red-d);">重新評估</div><div class="ai-role">清除資料重新開始</div></div>
             </div>
           </div>
         </div>
-      </div>
-
-      <!-- ① 評估資料卡片 -->
-      <div id="profile-card" style="display:none;margin:10px 22px 0;background:white;border-radius:14px;padding:13px 15px;box-shadow:var(--sh);border-left:4px solid var(--blue-m);">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-          <div style="font-size:12px;font-weight:800;color:var(--g500);">📋 初始評估資料</div>
-          <button onclick="navTo('p-profile','fwd')" style="font-size:11px;font-weight:700;color:var(--blue-m);background:none;border:none;cursor:pointer;padding:2px 8px;border-radius:8px;background:var(--blue-l);">編輯 ›</button>
-        </div>
-        <div id="profile-tags" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
-        <div id="profile-risk-row" style="margin-top:8px;font-size:12px;color:var(--g500);font-weight:600;"></div>
       </div>
 
       <div class="sos-wrap">
@@ -1247,11 +1296,11 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
         <div style="display:flex;gap:8px;margin-bottom:10px;">
           <div style="flex:1;">
             <div style="font-size:11px;color:var(--g500);font-weight:700;margin-bottom:4px;">收縮壓</div>
-            <input id="input-sys" type="number" placeholder="120" style="width:100%;padding:10px 12px;border-radius:10px;border:2px solid var(--g200);font-size:16px;font-family:var(--font);font-weight:700;color:var(--g700);outline:none;text-align:center;" oninput="previewBP()">
+            <input id="input-sys" type="tel" placeholder="120" style="width:100%;padding:10px 12px;border-radius:10px;border:2px solid var(--g200);font-size:16px;font-family:var(--font);font-weight:700;color:var(--g700);outline:none;text-align:center;" oninput="previewBP()">
           </div>
           <div style="flex:1;">
             <div style="font-size:11px;color:var(--g500);font-weight:700;margin-bottom:4px;">舒張壓</div>
-            <input id="input-dia" type="number" placeholder="80" style="width:100%;padding:10px 12px;border-radius:10px;border:2px solid var(--g200);font-size:16px;font-family:var(--font);font-weight:700;color:var(--g700);outline:none;text-align:center;" oninput="previewBP()">
+            <input id="input-dia" type="tel" placeholder="80" style="width:100%;padding:10px 12px;border-radius:10px;border:2px solid var(--g200);font-size:16px;font-family:var(--font);font-weight:700;color:var(--g700);outline:none;text-align:center;" oninput="previewBP()">
           </div>
           <div style="flex:1;">
             <div style="font-size:11px;color:var(--g500);font-weight:700;margin-bottom:4px;">心跳</div>
@@ -1311,14 +1360,8 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
       <!-- 本週趨勢 -->
       <div class="trend-card">
         <div class="tc-t">📊 本週趨勢</div>
-        <div class="td-row">
-          <div class="td-g2"><div class="td-b td-bg">😄</div><div class="td-l">一</div></div>
-          <div class="td-g2"><div class="td-b td-by">😐</div><div class="td-l">二</div></div>
-          <div class="td-g2"><div class="td-b td-br">😫</div><div class="td-l">三</div></div>
-          <div class="td-g2"><div class="td-b td-br">😵</div><div class="td-l">四</div></div>
-          <div class="td-g2"><div class="td-b td-by">😣</div><div class="td-l">五</div></div>
-          <div class="td-g2"><div class="td-b td-bg">😄</div><div class="td-l">六</div></div>
-          <div class="td-g2" id="today-trend-col"><div class="td-b" id="today-trend-dot" style="background:var(--g100);font-size:10px;color:var(--g400)">？</div><div class="td-l">今</div></div>
+        <div class="td-row" id="weekly-trend-row">
+          <!-- 動態渲染 -->
         </div>
       </div>
 
@@ -1477,9 +1520,18 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
       </div>
 
       <!-- 本週摘要 -->
-      <div style="padding:0 22px 24px;">
+      <div style="padding:0 22px 12px;">
         <div style="font-size:13px;font-weight:800;color:var(--g500);margin-bottom:10px;letter-spacing:0.5px;">📊 本週摘要</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;" id="family-weekly"></div>
+      </div>
+
+      <!-- 喘息計畫 -->
+      <div style="padding:0 22px 24px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <div style="font-size:13px;font-weight:800;color:var(--g500);letter-spacing:0.5px;">📅 本週喘息計畫</div>
+          <button onclick="navTo('p-respite','fwd')" style="font-size:11px;font-weight:700;color:var(--blue-m);background:var(--blue-l);border:none;padding:3px 10px;border-radius:8px;cursor:pointer;font-family:var(--font);">編輯 ›</button>
+        </div>
+        <div id="family-respite-list" style="display:flex;flex-direction:column;gap:8px;"></div>
       </div>
     </div>
 
@@ -1515,20 +1567,12 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
           </div>
         </div>
 
-        <!-- 家屬儀表板入口 -->
-        <div class="dark-card" style="background:white;border-radius:14px;padding:16px;box-shadow:var(--sh);display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="navTo('p-family','fwd')">
-          <div>
-            <div style="font-size:15px;font-weight:800;color:var(--g700);">👨‍👩‍👧 家屬儀表板</div>
-            <div style="font-size:12px;color:var(--g500);margin-top:2px;">遠距照護總覽</div>
-          </div>
-          <span style="font-size:18px;color:var(--g300);">›</span>
-        </div>
 
-        <!-- 個人評估 -->
-        <div class="dark-card" style="background:white;border-radius:14px;padding:16px;box-shadow:var(--sh);display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="navTo('p-profile','fwd')">
+        <!-- 緊急聯絡人 -->
+        <div class="dark-card" style="background:white;border-radius:14px;padding:16px;box-shadow:var(--sh);display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="navTo('p-contacts','fwd')">
           <div>
-            <div style="font-size:15px;font-weight:800;color:var(--g700);">📋 個人評估資料</div>
-            <div style="font-size:12px;color:var(--g500);margin-top:2px;">查看或更新照護資訊</div>
+            <div style="font-size:15px;font-weight:800;color:var(--g700);">📞 緊急聯絡人</div>
+            <div style="font-size:12px;color:var(--g500);margin-top:2px;" id="settings-contacts-count">管理家屬 LINE 通知名單</div>
           </div>
           <span style="font-size:18px;color:var(--g300);">›</span>
         </div>
@@ -1545,6 +1589,90 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
         <!-- 版本 -->
         <div style="text-align:center;padding:16px 0;color:var(--g400);font-size:12px;">
           銀安APP v1.0 · 讓照護更安心
+        </div>
+      </div>
+    </div>
+
+    <!-- EMERGENCY CONTACTS -->
+    <div class="page" id="p-contacts">
+      <div class="hero-block" style="background:linear-gradient(135deg,#702459,#97266D 60%,#B83280);min-height:168px;">
+        <div class="hb-row">
+          <button class="back-btn" onclick="goBack()">←</button>
+          <div><div class="hb-title">📞 緊急聯絡人</div><div class="hb-sub">SOS 時自動發送 LINE 通知</div></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:10px;align-items:center;">
+          <span id="contacts-count-badge" style="background:rgba(255,255,255,0.2);color:white;padding:3px 12px;border-radius:12px;font-size:12px;font-weight:700;">0 位聯絡人</span>
+        </div>
+      </div>
+
+      <!-- 說明 -->
+      <div style="margin:12px 22px 0;background:#FFF5F5;border-radius:12px;padding:12px 14px;border-left:3px solid var(--red);">
+        <div style="font-size:12px;color:var(--red-d);font-weight:700;margin-bottom:4px;">📋 如何取得 LINE User ID？</div>
+        <div style="font-size:11px;color:var(--g600);line-height:1.7;">
+          1. 讓家屬加銀安APP Bot 為好友<br>
+          2. 家屬傳任何訊息給 Bot<br>
+          3. Bot 會自動回覆「您的 User ID：Uxxxxx」<br>
+          4. 家屬截圖告知您，填入下方
+        </div>
+      </div>
+
+      <!-- 聯絡人列表 -->
+      <div style="padding:12px 22px 0;" id="contacts-list-wrap">
+        <!-- 動態渲染 -->
+      </div>
+
+      <!-- 新增按鈕 -->
+      <div style="padding:12px 22px 24px;">
+        <button onclick="openAddContactModal()" style="width:100%;padding:13px;border-radius:13px;background:white;border:2px dashed #B83280;color:#B83280;font-size:14px;font-weight:800;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:7px;">
+          ＋ 新增緊急聯絡人
+        </button>
+      </div>
+
+      <!-- 測試發送 -->
+      <div style="padding:0 22px 24px;">
+        <button onclick="testLINE()" style="width:100%;padding:13px;border-radius:13px;background:var(--green-l);border:2px solid var(--green-m);color:var(--green);font-size:14px;font-weight:800;cursor:pointer;font-family:var(--font);">
+          📲 發送測試訊息給所有聯絡人
+        </button>
+      </div>
+
+      <!-- 新增聯絡人 Modal -->
+      <div class="modal-bg" id="add-contact-modal" onclick="closeAddContactModal(event)">
+        <div class="modal-sheet">
+          <div class="m-handle"></div>
+          <div class="m-title">➕ 新增緊急聯絡人</div>
+          <div class="m-sub">填寫家屬資訊</div>
+          <div class="form-field">
+            <div class="ff-label">姓名</div>
+            <input class="ff-input" id="new-contact-name" type="text" placeholder="例：女兒小芳">
+          </div>
+          <div class="form-field">
+            <div class="ff-label">關係</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;" id="contact-relation-btns">
+              <button onclick="selectRelation(this)" data-val="女兒" class="profile-opt">女兒</button>
+              <button onclick="selectRelation(this)" data-val="兒子" class="profile-opt">兒子</button>
+              <button onclick="selectRelation(this)" data-val="配偶" class="profile-opt">配偶</button>
+              <button onclick="selectRelation(this)" data-val="居服員" class="profile-opt">居服員</button>
+              <button onclick="selectRelation(this)" data-val="其他" class="profile-opt">其他</button>
+            </div>
+          </div>
+          <div class="form-field">
+            <div class="ff-label">LINE User ID</div>
+            <input class="ff-input" id="new-contact-uid" type="text" placeholder="Uxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
+            <div style="font-size:11px;color:var(--g400);margin-top:4px;">讓家屬加 Bot 好友後取得</div>
+          </div>
+          <div class="form-field">
+            <div class="ff-label">通知類型</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;" id="contact-notify-btns">
+              <button onclick="selectNotify(this)" data-val="sos" class="profile-opt sel">🆘 SOS</button>
+              <button onclick="selectNotify(this)" data-val="stress" class="profile-opt">🧠 壓力偏高</button>
+              <button onclick="selectNotify(this)" data-val="bp" class="profile-opt">❤️ 血壓異常</button>
+              <button onclick="selectNotify(this)" data-val="med" class="profile-opt">💊 未服藥</button>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:4px;">
+            <button class="ma-p" onclick="saveNewContact()">✅ 確認新增</button>
+            <button class="ma-s" onclick="closeAddContactModal()">取消</button>
+          </div>
         </div>
       </div>
     </div>
@@ -1710,18 +1838,58 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
   <!-- Bottom nav -->
   <nav class="bnav">
     <button class="nbtn on" data-pg="p-home" onclick="navTo('p-home')"><span class="ni">🏠</span><span class="nl">首頁</span></button>
-    <button class="nbtn" data-pg="p-med" onclick="navTo('p-med')"><span class="ni">💊</span><span class="nl">用藥</span></button>
-    <button class="nbtn" data-pg="p-report" onclick="navTo('p-report')"><span class="ni">📊</span><span class="nl">報表</span></button>
-    <button class="nbtn" data-pg="p-stress" onclick="navTo('p-stress')"><span class="ni">🧠</span><span class="nl">壓力</span></button>
-    <button class="nbtn" data-pg="p-respite" onclick="navTo('p-respite')"><span class="ni">📅</span><span class="nl">喘息</span></button>
     <button class="nbtn" data-pg="p-settings" onclick="navTo('p-settings')"><span class="ni">⚙️</span><span class="nl">設定</span></button>
   </nav>
 
   <div class="toast" id="toast"></div>
+
+  <!-- ── 家屬視角 Overlay ── -->
+  <div id="family-view-overlay" style="position:absolute;inset:0;z-index:800;display:none;flex-direction:column;background:#f0f4ff;border-radius:44px;overflow:hidden;">
+    <div style="background:linear-gradient(135deg,#1a365d,#2b6cb0 60%,#4299e1);padding:52px 22px 20px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.7);font-weight:700;letter-spacing:1px;">家屬視角</div>
+          <div style="font-size:20px;font-weight:900;color:white;margin-top:2px;" id="fv-title">照護總覽</div>
+        </div>
+        <button onclick="toggleRoleView()" style="background:rgba(255,255,255,0.2);border:none;color:white;border-radius:20px;padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;font-family:var(--font);">
+          🏠 照顧者視角
+        </button>
+      </div>
+      <!-- 狀態徽章列 -->
+      <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;" id="fv-badges"></div>
+    </div>
+
+    <div style="flex:1;overflow-y:auto;padding:14px 20px 100px;">
+      <!-- 照護對象卡 -->
+      <div id="fv-subject" style="background:white;border-radius:16px;padding:16px;box-shadow:0 2px 12px rgba(0,0,0,0.08);margin-bottom:14px;"></div>
+
+      <!-- 今日活動時間軸 -->
+      <div style="font-size:13px;font-weight:800;color:var(--g500);margin-bottom:10px;">📋 今日活動</div>
+      <div id="fv-timeline" style="background:white;border-radius:16px;padding:14px 16px;box-shadow:0 2px 12px rgba(0,0,0,0.08);position:relative;padding-left:36px;border-left:none;margin-bottom:14px;"></div>
+
+      <!-- 異常警示 -->
+      <div id="fv-alert" style="display:none;background:var(--red-l);border-radius:14px;padding:14px 16px;border-left:4px solid var(--red);margin-bottom:14px;">
+        <div style="font-size:14px;font-weight:800;color:var(--red-d);">⚠️ 異常沉默警示</div>
+        <div style="font-size:12px;color:var(--g500);margin-top:4px;" id="fv-alert-msg"></div>
+        <button onclick="showToast('📞 已通知照護人員')" style="margin-top:10px;width:100%;padding:10px;border-radius:10px;background:var(--red);color:white;border:none;font-size:13px;font-weight:800;cursor:pointer;font-family:var(--font);">🆘 立即聯繫</button>
+      </div>
+
+      <!-- 本週摘要 -->
+      <div style="font-size:13px;font-weight:800;color:var(--g500);margin-bottom:10px;">📊 本週摘要</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;" id="fv-weekly"></div>
+
+      <!-- 喘息計畫 -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div style="font-size:13px;font-weight:800;color:var(--g500);">📅 本週喘息計畫</div>
+        <button onclick="openRespiteFromFamily()" style="font-size:11px;font-weight:700;color:var(--blue-m);background:var(--blue-l);border:none;padding:3px 10px;border-radius:8px;cursor:pointer;font-family:var(--font);">＋ 編輯 ›</button>
+      </div>
+      <div id="fv-respite" style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;"></div>
+    </div>
+  </div>
 </div>
 
 <script>
-const TAB_ORDER = ['p-home','p-med','p-report','p-stress','p-respite','p-settings','p-family','p-profile','p-ltc','p-db'];
+const TAB_ORDER = ['p-home','p-med','p-report','p-stress','p-respite','p-settings','p-contacts','p-family','p-profile','p-ltc','p-db'];
 let curPage = 'p-home';
 let navStack = ['p-home'];
 
@@ -1733,7 +1901,15 @@ document.addEventListener('DOMContentLoaded', () => {
   renderMedPage();
   renderBPChart();
   renderStressCalendar();
+  renderWeeklyTrend();
   renderRespite();
+  // 啟動時顯示照護對象列表
+  loadCareProfiles();
+  if (careProfiles.length > 0) {
+    renderProfilesList();
+    document.getElementById('profiles-screen').style.display = 'flex';
+  }
+  // 若無照護對象直接顯示問卷
 });
 
 function resetSOSContacts() {
@@ -1802,6 +1978,11 @@ function goBack() {
   nextEl.scrollTop = 0;
   document.querySelectorAll('.nbtn').forEach(b => b.classList.toggle('on', b.dataset.pg === prev));
   onPageEnter(prev);
+  // 若從喘息頁返回且之前是家屬視角，重新顯示家屬視角
+  if (currentRole === 'family' && document.getElementById('family-view-overlay')) {
+    renderFamilyView();
+    document.getElementById('family-view-overlay').style.display = 'flex';
+  }
 }
 
 // Called every time a page becomes visible
@@ -1827,7 +2008,7 @@ function triggerSOS() {
       location: locationStr,
       lat, lng,
       gps_real: isReal,
-      contacts_notified: ['女兒（小芳）', '兒子（阿明）']
+      contacts: emergencyContacts, // 傳送聯絡人清單給 server
     };
     dbPush('sos_logs', payload);
     postToServer('/sos', payload);
@@ -1998,17 +2179,9 @@ function submitStress() {
   dot.style.fontSize = '15px';
   dot.textContent = selectedStress.emoji;
 
-  // Show/hide alert based on level
-  const alertStrip = document.getElementById('stress-alert-strip');
-  alertStrip.style.display = selectedStress.level === 'red' ? 'flex' : 'none';
 
-  // ③ Update home card
-  const homeSub = document.getElementById('home-stress-sub');
-  if (homeSub) homeSub.innerHTML = `<span style="color:var(--green);font-weight:700;">✅ 今日已完成 ${selectedStress.emoji}</span>`;
-
-  // Disable submit button and show completed state
-  const btn = document.querySelector('.sub-btn');
-  if (btn) { btn.textContent = '✅ 今日狀態已記錄'; btn.disabled = true; btn.style.opacity = '0.6'; }
+  if (alertStrip) alertStrip.style.display = selectedStress.level === 'red' ? 'flex' : 'none';
+  syncStressUI(selectedStress.emoji, selectedStress.level, true);
 
   showToast('✅ 今日壓力狀態已記錄！');
 }
@@ -2179,7 +2352,7 @@ function addPlan() {
 // ════════════════════════════════════════
 const TOTAL_STEPS = 5; // 0=welcome,1=name,2=age,3=mobility,4=conditions,5=result
 let asmntCurrent = 0;
-const asmntAnswers = { name:'', age:'', mobility:'', conditions:[] };
+let asmntAnswers = { name:'', age:'', mobility:'', conditions:[] };
 
 function asmntSetProgress(step) {
   const bar = document.getElementById('asmnt-bar');
@@ -2402,60 +2575,81 @@ function buildResult() {
 
 // ── Apply profile to UI everywhere ───────────────
 function applyProfile(p) {
-  // Home name
-  const nameEl = document.getElementById('home-name');
-  if (nameEl) nameEl.textContent = p.name;
-  const acctName0 = document.getElementById('acct-name-0');
-  if (acctName0) acctName0.textContent = p.name;
+  const ageMap  = {'60-69':'60–69 歲','70-79':'70–79 歲','80+':'80 歲以上'};
+  const mobMap  = {'independent':'獨立行動','assisted':'需輔具','bedridden':'臥床 / 輪椅'};
+  const condMap = {'alone':'獨居','dementia':'輕微失智','needs-care':'需日常協助','chronic':'慢性病用藥'};
+  const riskMap = {
+    low:  { label:'一般照護', emoji:'🟢', bg:'rgba(56,161,105,0.25)',  color:'#C6F6D5' },
+    mid:  { label:'需留意',   emoji:'🟡', bg:'rgba(236,201,75,0.3)',   color:'#FEFCBF' },
+    high: { label:'高度關注', emoji:'🔴', bg:'rgba(245,101,101,0.3)',  color:'#FED7D7' },
+  };
+  const r = riskMap[p.risk] || riskMap.low;
 
-  // Home status based on risk
+  const heroCard   = document.getElementById('profile-hero-card');
+  const heroEmpty  = document.getElementById('profile-hero-empty');
+  const heroName   = document.getElementById('home-name');
+  const heroBadge  = document.getElementById('profile-hero-risk-badge');
+  const heroTags   = document.getElementById('profile-hero-tags');
+  const heroAvatar = document.getElementById('profile-hero-avatar');
+  const acctName   = document.getElementById('acct-name-display');
+  const acctSub    = document.getElementById('acct-phone-display');
+
+  if (heroCard)  heroCard.style.display  = 'block';
+  if (heroEmpty) heroEmpty.style.display = 'none';
+  if (heroName)  heroName.textContent  = p.name;
+  if (acctName)  acctName.textContent  = p.name;
+  if (acctSub)   acctSub.textContent   = r.label + ' · 點此查看';
+
+  const femaleKW = ['媽','奶','婆','姨','嬤','外婆'];
+  const isFemale = femaleKW.some(k => p.name.includes(k));
+  const av = isFemale ? '👵' : '👴';
+  if (heroAvatar) heroAvatar.textContent = av;
+  const acctAv = document.getElementById('acct-avatar');
+  if (acctAv) acctAv.textContent = av;
+
+  if (heroBadge) {
+    heroBadge.textContent = r.emoji + ' ' + r.label;
+    heroBadge.style.background = r.bg;
+    heroBadge.style.color = r.color;
+  }
+
+  const tagDefs = [
+    ...(p.age      ? [{ t: ageMap[p.age]||p.age,         c:'rgba(235,248,255,0.25)', tc:'#BEE3F8' }] : []),
+    ...(p.mobility && p.mobility!=='independent' ? [{ 
+      t: mobMap[p.mobility]||p.mobility,
+      c: p.mobility==='bedridden' ? 'rgba(254,215,215,0.35)' : 'rgba(235,248,255,0.25)',
+      tc: p.mobility==='bedridden' ? '#FEB2B2' : '#BEE3F8'
+    }] : []),
+    ...(p.conditions||[]).filter(v=>v!=='none').map(v => ({
+      t: condMap[v]||v,
+      c: (v==='alone'||v==='dementia'||v==='bedridden') ? 'rgba(254,215,215,0.35)' : 'rgba(254,243,199,0.3)',
+      tc: (v==='alone'||v==='dementia'||v==='bedridden') ? '#FEB2B2' : '#FEFCBF'
+    }))
+  ];
+  if (heroTags) heroTags.innerHTML = tagDefs.map(t =>
+    `<span style="padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700;background:${t.c};color:${t.tc};">${t.t}</span>`
+  ).join('');
+
   const statusTxt = document.getElementById('home-status-txt');
   const statusBar = document.getElementById('home-status-bar');
-  if (statusTxt && statusBar) {
-    const map = { low:'今日狀態：正常', mid:'今日狀態：需留意', high:'今日狀態：高風險' };
-    const dotColors = { low:'#68D391', mid:'#F6E05E', high:'#FC8181' };
-    statusTxt.textContent = map[p.risk] || '今日狀態：正常';
-    const dot = statusBar.querySelector('.h-dot');
-    if (dot) dot.style.background = dotColors[p.risk] || '#68D391';
+  if (statusTxt && p) {
+    // 初始用風險等級，之後 updateTodayStatus 會動態覆蓋
+    const initStatus = {low:'今日狀態：正常', mid:'今日狀態：需留意', high:'今日狀態：高風險'};
+    statusTxt.textContent = initStatus[p.risk] || '今日狀態：正常';
+    if (statusBar) {
+      const dot = statusBar.querySelector('.h-dot');
+      if (dot) dot.style.background = {low:'#68D391', mid:'#F6E05E', high:'#FC8181'}[p.risk] || '#68D391';
+    }
   }
 
-  // Profile card on home
-  const card = document.getElementById('profile-card');
-  if (card) {
-    const ageMap = {'60-69':'60–69 歲','70-79':'70–79 歲','80+':'80 歲以上'};
-    const mobMap = {'independent':'獨立行動','assisted':'需輔具','bedridden':'臥床'};
-    const condMap = {'alone':'獨居','dementia':'失智症','needs-care':'需協助','chronic':'慢性病'};
-    const riskMap = { low:{ label:'一般關注', bg:'#E6FFFA', color:'#276749' },
-                      mid:{ label:'中度關注', bg:'#FFFBEB', color:'#744210' },
-                      high:{ label:'高度關注', bg:'#FFF5F5', color:'#742A2A' } };
-    const r = riskMap[p.risk] || riskMap.low;
-
-    const tags = [];
-    if (p.age) tags.push({t: ageMap[p.age]||p.age, c:'#EBF8FF', tc:'#2B6CB0'});
-    if (p.mobility) tags.push({t: mobMap[p.mobility]||p.mobility, c:'#EBF8FF', tc:'#2B6CB0'});
-    (p.conditions||[]).filter(v=>v!=='none').forEach(v => {
-      tags.push({t: condMap[v]||v, c:'#FFF5F5', tc:'#C53030'});
-    });
-
-    document.getElementById('profile-tags').innerHTML = tags.map(t =>
-      `<span style="padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;background:${t.c};color:${t.tc}">${t.t}</span>`
-    ).join('');
-    document.getElementById('profile-risk-row').innerHTML =
-      `<span style="background:${r.bg};color:${r.color};padding:3px 10px;border-radius:12px;font-size:11px;font-weight:800;">風險：${r.label}</span>
-       <span style="margin-left:8px;font-size:11px;color:var(--g400);">點「編輯」可更新</span>`;
-    card.style.display = 'block';
-  }
-
-  // Med reminders: high/dementia → adjust warn timing
   if (p.risk === 'high' || (p.conditions||[]).includes('dementia')) {
     clearTimeout(warnTimer);
     warnTimer = setTimeout(() => {
       const wb = document.getElementById('warn-box');
       if (wb) { wb.style.display = 'block'; wb.style.animation = 'slideUp 0.35s ease'; }
-    }, 5000); // 5s for high-risk demo
+    }, 5000);
   }
 
-  // Update profile edit page fields
   const editName = document.getElementById('profile-edit-name');
   if (editName) editName.value = p.name;
   document.querySelectorAll('.profile-opt[data-group="age"]').forEach(b =>
@@ -2465,7 +2659,6 @@ function applyProfile(p) {
   document.querySelectorAll('.profile-opt.multi').forEach(b =>
     b.classList.toggle('sel', (p.conditions||[]).includes(b.dataset.val)));
 
-  // Update risk on profile page
   const rr = { low:{ label:'一般關注 🟢', bg:'#E6FFFA', c:'#276749' },
                mid:{ label:'中度關注 🟡', bg:'#FFFBEB', c:'#744210' },
                high:{ label:'高度關注 🔴', bg:'#FFF5F5', c:'#742A2A' } }[p.risk] || {};
@@ -2473,6 +2666,7 @@ function applyProfile(p) {
   if (profileRisk) profileRisk.innerHTML =
     `<span style="background:${rr.bg};color:${rr.c};padding:5px 14px;border-radius:20px;font-size:13px;font-weight:800;">風險等級：${rr.label}</span>`;
 }
+
 
 // ── Profile edit page functions ───────────────────
 function pickProfileOpt(el) {
@@ -2608,11 +2802,63 @@ function dbSet(table, value) {
 
 // ── 初始化：從 localStorage 還原資料 ─────────────
 function dbInit() {
-  // Demo 模式：每次開啟都清空，從頭開始
-  localStorage.removeItem(DB_KEY);
+  // 還原上次的資料（不清空）
+  const db = dbLoad();
 
-  // 喘息計畫預設資料
+  // 還原喘息計畫
+  if (db.plans && db.plans.length) {
+    plans = db.plans;
+    nextPlanId = Math.max(...plans.map(p => p.id)) + 1;
+  }
   renderRespite();
+
+  // 還原壓力（今日已填）
+  if (db.stress_logs) {
+    const today = new Date().toDateString();
+    const todayLog = db.stress_logs.find(l => new Date(l._ts).toDateString() === today);
+    if (todayLog) {
+      selectedStress = { emoji: todayLog.emoji, level: todayLog.level };
+      const dot = document.getElementById('today-trend-dot');
+      const levelMap = { green:'var(--green-l)', yellow:'#FFFFF0', red:'var(--red-l)' };
+      if (dot) { dot.style.background = levelMap[todayLog.level]; dot.style.fontSize = '15px'; dot.textContent = todayLog.emoji; }
+      // 同步兩邊 UI
+      syncStressUI(todayLog.emoji, todayLog.level, true);
+    } else {
+      syncStressUI('', '', false);
+    }
+  }
+
+  // 還原用藥（今日已服）
+  if (db.med_logs) {
+    const today = new Date().toDateString();
+    const todayMeds = db.med_logs.filter(l => new Date(l._ts).toDateString() === today);
+    todayMeds.forEach(log => {
+      const med = medList.find(m => m.name === log.name);
+      if (med) med.taken = true;
+    });
+  }
+
+  // 還原血壓紀錄
+  if (db.bp_logs && db.bp_logs.length) {
+    const days = ['日','一','二','三','四','五','六'];
+    db.bp_logs.slice(-7).forEach(l => {
+      const d = new Date(l._ts);
+      const isToday = d.toDateString() === new Date().toDateString();
+      const label = isToday ? '今' : days[d.getDay()];
+      const existing = bpLogs.findIndex(b => b.date === label);
+      if (existing >= 0) bpLogs[existing] = { date: label, sys: l.sys, dia: l.dia, hr: l.hr };
+      else { if (bpLogs.length >= 7) bpLogs.shift(); bpLogs.push({ date: label, sys: l.sys, dia: l.dia, hr: l.hr }); }
+    });
+    renderBPChart();
+    const last = db.bp_logs[db.bp_logs.length - 1];
+    if (last) {
+      document.getElementById('rpt-bp-today')?.setAttribute && null;
+      const bpEl = document.getElementById('rpt-bp-today');
+      const hrEl = document.getElementById('rpt-hr-today');
+      if (bpEl) bpEl.textContent = `${last.sys}/${last.dia}`;
+      if (hrEl) hrEl.textContent = last.hr;
+    }
+  }
 
   // 啟動時偵測伺服器
   checkServer();
@@ -2632,6 +2878,8 @@ function enterApp() {
   const sbar = document.getElementById('sbar');
   if (sbar) sbar.classList.remove('dark');
   updateAcctDisplay();
+  updateHomeCards();
+  setTimeout(() => showToast(`👋 歡迎，開始今日照護！`), 600);
 }
 
 function saveProfile() {
@@ -2684,12 +2932,8 @@ function submitStress() {
   const dot = document.getElementById('today-trend-dot');
   const levelMap = { green: 'var(--green-l)', yellow: '#FFFFF0', red: 'var(--red-l)' };
   dot.style.background = levelMap[selectedStress.level]; dot.style.fontSize = '15px'; dot.textContent = selectedStress.emoji;
-  const alertStrip = document.getElementById('stress-alert-strip');
-  alertStrip.style.display = selectedStress.level === 'red' ? 'flex' : 'none';
-  const homeSub = document.getElementById('home-stress-sub');
-  if (homeSub) homeSub.innerHTML = `<span style="color:var(--green);font-weight:700;">✅ 今日已完成 ${selectedStress.emoji}</span>`;
-  const btn = document.querySelector('.sub-btn');
-  if (btn) { btn.textContent = '✅ 今日狀態已記錄'; btn.disabled = true; btn.style.opacity = '0.6'; }
+  if (alertStrip) alertStrip.style.display = selectedStress.level === 'red' ? 'flex' : 'none';
+  syncStressUI(selectedStress.emoji, selectedStress.level, true);
   showToast('✅ 今日壓力狀態已記錄！');
 }
 
@@ -2756,8 +3000,8 @@ function renderDB() {
 function clearDB() {
   localStorage.removeItem(DB_KEY);
   postToServer('/clear', {});
-  showToast('🗑️ 資料已清除');
-  renderDB();
+  showToast('🗑️ 活動資料已清除（照護對象保留）');
+  renderDB && renderDB();
 }
 
 // 啟動由 DOMContentLoaded 統一處理
@@ -2885,6 +3129,7 @@ function updateHomeMedCard() {
 
 function updateHomeCards() {
   updateHomeMedCard();
+  updateTodayStatus();
   // BP status
   const lastBP = bpLogs[bpLogs.length-1];
   const bpBadge = document.getElementById('home-bp-badge');
@@ -2913,26 +3158,32 @@ function updateHomeCards() {
 // ════════════════════════════════════════
 // 📊 血壓輸入與圖表
 // ════════════════════════════════════════
-let bpLogs = [
-  { date:'一', sys:130, dia:85, hr:70 },
-  { date:'二', sys:128, dia:82, hr:72 },
-  { date:'三', sys:148, dia:95, hr:75 },
-  { date:'四', sys:145, dia:92, hr:74 },
-  { date:'五', sys:132, dia:84, hr:71 },
-  { date:'六', sys:126, dia:80, hr:68 },
-];
+let bpLogs = []; // 從 localStorage 載入，見 dbInit
+
+function getBPStatus(sys, dia) {
+  if (!sys || !dia) return null;
+  // 依衛福部血壓分類標準
+  if (sys >= 180 || dia >= 120) return { label:'🚨 高血壓危象，請立即就醫！', bg:'#FFF5F5', color:'#C53030', level:'crisis' };
+  if (sys >= 160 || dia >= 100) return { label:'⚠️ 第二期高血壓，建議就醫',   bg:'#FFF5F5', color:'#C53030', level:'high2' };
+  if (sys >= 140 || dia >= 90)  return { label:'⚠️ 第一期高血壓，需留意',      bg:'#FFF5F5', color:'#E53E3E', level:'high1' };
+  if (sys >= 130 || dia >= 80)  return { label:'🟡 偏高（高血壓前期）',         bg:'#FFFBEB', color:'#B7791F', level:'pre' };
+  if (sys >= 120 && dia < 80)   return { label:'🟡 收縮壓偏高（注意中）',       bg:'#FFFBEB', color:'#B7791F', level:'elevated' };
+  if (sys < 90  || dia < 60)    return { label:'🔵 血壓偏低，注意暈眩',         bg:'#EBF8FF', color:'#2B6CB0', level:'low' };
+  return                               { label:'✅ 正常範圍',                    bg:'#F0FFF4', color:'#276749', level:'normal' };
+}
 
 function previewBP() {
   const sys = parseInt(document.getElementById('input-sys').value);
   const dia = parseInt(document.getElementById('input-dia').value);
   const preview = document.getElementById('bp-preview');
   if (!sys || !dia) { preview.style.display='none'; return; }
-  const high = sys >= 140 || dia >= 90;
-  const borderline = sys >= 130 || dia >= 85;
+  const s = getBPStatus(sys, dia);
+  if (!s) { preview.style.display='none'; return; }
   preview.style.display = 'block';
-  preview.style.background = high ? 'var(--red-l)' : borderline ? '#FFFBEB' : 'var(--green-l)';
-  preview.style.color = high ? 'var(--red-d)' : borderline ? '#744210' : 'var(--green)';
-  preview.textContent = high ? `⚠️ ${sys}/${dia} 血壓偏高` : borderline ? `🟡 ${sys}/${dia} 邊緣值` : `✅ ${sys}/${dia} 正常`;
+  preview.style.background = s.bg;
+  preview.style.color = s.color;
+  preview.style.fontWeight = '800';
+  preview.textContent = `${sys}/${dia}  ${s.label}`;
 }
 
 function saveBP() {
@@ -2950,12 +3201,14 @@ function saveBP() {
   document.getElementById('rpt-bp-today').textContent = `${sys}/${dia}`;
   document.getElementById('rpt-hr-today').textContent = hr;
   document.getElementById('rpt-spo2-today').textContent = '98%';
-  // Alert
+  const s = getBPStatus(sys, dia);
   const alert = document.getElementById('rpt-alert');
   const alertTxt = document.getElementById('rpt-alert-txt');
-  if (sys >= 140 || dia >= 90) { alert.style.display='flex'; alertTxt.textContent = `今日血壓偏高（${sys}/${dia}）`; alert.style.background='var(--red-l)'; }
-  else if (sys < 110) { alert.style.display='flex'; alertTxt.textContent = `今日血壓偏低（${sys}/${dia}）`; alert.style.background='#FFFBEB'; }
-  else { alert.style.display='none'; }
+  if (s && s.level !== 'normal' && alert && alertTxt) {
+    alert.style.display = 'flex';
+    alertTxt.textContent = `${s.label}（${sys}/${dia} mmHg）`;
+    alert.style.background = s.level === 'low' ? '#EBF8FF' : 'var(--red-l)';
+  } else if (alert) { alert.style.display = 'none'; }
   renderBPChart();
   dbPush('bp_logs', { sys, dia, hr });
   postToServer('/bp', { sys, dia, hr, user: window.userProfile?.name });
@@ -2970,6 +3223,10 @@ function saveBP() {
 function renderBPChart() {
   const chart = document.getElementById('bp-chart');
   if (!chart) return;
+  if (bpLogs.length === 0) {
+    chart.innerHTML = '<div style="flex:1;display:flex;align-items:center;justify-content:center;color:var(--g400);font-size:13px;flex-direction:column;gap:6px;padding:12px 0;"><span style="font-size:28px;">📊</span>尚無血壓紀錄，請輸入今日數值</div>';
+    return;
+  }
   const maxSys = 160; const minSys = 100; const range = maxSys - minSys;
   const maxH = 80;
   chart.innerHTML = '<div class="y-ax"><span>160</span><span>130</span><span>100</span></div>';
@@ -3023,10 +3280,74 @@ function renderStressCalendar() {
   }
 }
 
-function stressCalPrev() { stressCalMonth--; if(stressCalMonth<0){stressCalMonth=11;stressCalYear--;} renderStressCalendar(); }
-function stressCalNext() { stressCalMonth++; if(stressCalMonth>11){stressCalMonth=0;stressCalYear++;} renderStressCalendar(); }
+function renderWeeklyTrend() {
+  const row = document.getElementById('weekly-trend-row');
+  if (!row) return;
+  const db = dbLoad();
+  const logs = db.stress_logs || [];
+  const today = new Date();
+  const dayOfWeek = today.getDay(); // 0=日,1=一...6=六
+  // 本週一到今天
+  const dayLabels = ['日','一','二','三','四','五','六'];
+  const levelBg = { green:'var(--green-l)', yellow:'#FFFFF0', red:'var(--red-l)' };
 
-// Hook into submitStress to also record in calendar
+  // 產生本週每天（週一開始）
+  const days = [];
+  for (let i = 1; i <= 7; i++) {
+    const diff = i - (dayOfWeek === 0 ? 7 : dayOfWeek); // 距今幾天
+    const d = new Date(today);
+    d.setDate(today.getDate() + diff);
+    const isToday = diff === 0;
+    const isFuture = diff > 0;
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const log = logs.find(l => {
+      const ld = new Date(l._ts);
+      return `${ld.getFullYear()}-${String(ld.getMonth()+1).padStart(2,'0')}-${String(ld.getDate()).padStart(2,'0')}` === key;
+    });
+    days.push({ label: isToday ? '今' : dayLabels[i === 7 ? 0 : i], isToday, isFuture, log });
+  }
+
+  row.innerHTML = days.map(d => {
+    let dotStyle = 'background:var(--g100);font-size:10px;color:var(--g400);';
+    let content = d.isFuture ? '' : '？';
+    let extraId = '';
+    if (d.log) {
+      dotStyle = `background:${levelBg[d.log.level]||'var(--g100)'};font-size:15px;`;
+      content = d.log.emoji;
+    }
+    if (d.isToday) extraId = 'id="today-trend-dot"';
+    return `<div class="td-g2" ${d.isToday?'id="today-trend-col"':''}>
+      <div class="td-b" ${extraId} style="${dotStyle}">${content}</div>
+      <div class="td-l" style="${d.isToday?'color:var(--purple);font-weight:800;':''}">${d.label}</div>
+    </div>`;
+  }).join('');
+}
+
+function syncStressUI(emoji, level, isRecorded) {
+  // 首頁卡片
+  const homeSub = document.getElementById('home-stress-sub');
+  if (homeSub) {
+    if (isRecorded) homeSub.innerHTML = `<span style="color:var(--green);font-weight:700;">✅ 今日已完成 ${emoji}</span>`;
+    else homeSub.textContent = '今日未填';
+  }
+  // 壓力頁按鈕
+  const btn = document.querySelector('.sub-btn');
+  if (btn) {
+    if (isRecorded) {
+      btn.textContent = '✅ 已記錄・點此修改';
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      btn.style.background = 'var(--g200)';
+      btn.style.color = 'var(--g600)';
+    } else {
+      btn.textContent = '提交今日狀態';
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      btn.style.background = '';
+      btn.style.color = '';
+    }
+  }
+}
 const _baseSubmitStress = submitStress;
 function submitStress() {
   if (!selectedStress) {
@@ -3045,17 +3366,24 @@ function submitStress() {
   // Record in calendar
   const today = new Date();
   const key = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
-  stressLogMap[key] = { emoji: selectedStress.emoji, level: selectedStress.level };
+  stressLogMap[key] = { emoji: selectedStress.emoji, level: selectedStress.level, note };
   renderStressCalendar();
+  renderWeeklyTrend();
   const dot = document.getElementById('today-trend-dot');
   const levelMap = { green: 'var(--green-l)', yellow: '#FFFFF0', red: 'var(--red-l)' };
-  dot.style.background = levelMap[selectedStress.level]; dot.style.fontSize = '15px'; dot.textContent = selectedStress.emoji;
+  if (dot) { dot.style.background = levelMap[selectedStress.level]; dot.style.fontSize = '15px'; dot.textContent = selectedStress.emoji; }
   const alertStrip = document.getElementById('stress-alert-strip');
-  alertStrip.style.display = selectedStress.level === 'red' ? 'flex' : 'none';
+  if (alertStrip) alertStrip.style.display = selectedStress.level === 'red' ? 'flex' : 'none';
   const homeSub = document.getElementById('home-stress-sub');
   if (homeSub) homeSub.innerHTML = `<span style="color:var(--green);font-weight:700;">✅ 今日已完成 ${selectedStress.emoji}</span>`;
   const btn = document.querySelector('.sub-btn');
-  if (btn) { btn.textContent = '✅ 今日狀態已記錄'; btn.disabled = true; btn.style.opacity = '0.6'; }
+  if (btn) {
+    btn.textContent = '✅ 已記錄 · 點此修改';
+    btn.disabled = false;
+    btn.style.opacity = '1';
+    btn.style.background = 'var(--g200)';
+    btn.style.color = 'var(--g600)';
+  }
   if (note) showToast(`✅ 狀態已記錄：${note.slice(0,10)}…`);
   else showToast('✅ 今日壓力狀態已記錄！');
 }
@@ -3166,93 +3494,22 @@ function otpInput(el) {
 }
 
 function updateAcctDisplay() {
-  const nameEl = document.getElementById('acct-name-display');
+  const nameEl  = document.getElementById('acct-name-display');
   const phoneEl = document.getElementById('acct-phone-display');
-  const avEl = document.getElementById('acct-av-display');
-  const acctAvEl = document.getElementById('acct-avatar');
-  const name = window.userProfile?.name || '使用者';
-  if (nameEl) nameEl.textContent = name;
-  if (phoneEl) phoneEl.textContent = loggedInPhone || '已登入';
-  if (avEl) avEl.textContent = '👵';
-  if (acctAvEl) acctAvEl.textContent = '👵';
+  const avEl    = document.getElementById('acct-av-display');
+  const acctAvEl= document.getElementById('acct-avatar');
+  const name    = window.userProfile?.name || '照護對象';
+  const risk    = window.userProfile?.risk;
+  const riskLabel = { low:'一般照護', mid:'需留意', high:'高度關注' }[risk] || '';
+  if (nameEl)  nameEl.textContent  = name;
+  if (phoneEl) phoneEl.textContent = riskLabel ? riskLabel + ' · 點此查看' : '點此填寫評估資料';
+  if (avEl)    avEl.textContent    = '👵';
+  if (acctAvEl)acctAvEl.textContent= '👵';
 }
 
-function logoutUser() {
-  closeAcctMenu();
-  // Reset everything
-  localStorage.removeItem('yinan_db');
-  loggedInPhone = '';
-  otpSent = false;
-  window.userProfile = null;
-  // Reset login form
-  const phoneEl = document.getElementById('login-phone');
-  const otpEl = document.getElementById('otp-input');
-  const otpSec = document.getElementById('otp-section');
-  const btn = document.getElementById('login-btn');
-  if (phoneEl) phoneEl.value = '';
-  if (otpEl) otpEl.value = '';
-  if (otpSec) otpSec.style.display = 'none';
-  if (btn) { btn.textContent = '發送驗證碼'; btn.style.opacity = '0.4'; btn.style.pointerEvents = 'none'; }
-  // Show login screen
-  document.getElementById('login-screen').style.display = 'flex';
-  // Reset assessment
-  document.getElementById('assessment').classList.remove('done');
-  asmntCurrent = 0;
-  asmntAnswers.name = ''; asmntAnswers.age = ''; asmntAnswers.mobility = ''; asmntAnswers.conditions = [];
-  document.querySelectorAll('.asmnt-step').forEach(s => { s.classList.remove('active','exit'); s.style.transform = 'translateX(100%)'; });
-  document.getElementById('step-0').classList.add('active');
-  document.getElementById('step-0').style.transform = 'translateX(0)';
-  asmntSetProgress(0);
-  asmntUpdateFooter();
-  showToast('👋 已登出');
-}
-
-function showLoginToast(msg) {
-  // Simple toast inside login screen
-  const existing = document.getElementById('login-toast');
-  if (existing) existing.remove();
-  const t = document.createElement('div');
-  t.id = 'login-toast';
-  t.textContent = msg;
-  t.style.cssText = 'position:absolute;bottom:30px;left:50%;transform:translateX(-50%);background:#1a202c;color:white;padding:10px 18px;border-radius:20px;font-size:13px;font-weight:600;white-space:nowrap;z-index:9999;';
-  document.getElementById('login-screen').appendChild(t);
-  setTimeout(() => t.remove(), 3000);
-}
-
-// ── Account menu toggle ───────────────────────────
-function toggleAcctMenu() {
-  const menu = document.getElementById('acct-menu');
-  const btn  = document.getElementById('acct-btn');
-  const chevron = document.getElementById('acct-chevron');
-  const isOpen = menu.classList.contains('open');
-  if (!isOpen) {
-    // Position relative to button
-    const rect = btn.getBoundingClientRect();
-    const phoneRect = document.querySelector('.phone').getBoundingClientRect();
-    menu.style.top  = (rect.bottom - phoneRect.top + 6) + 'px';
-    menu.style.right = (phoneRect.right - rect.right) + 'px';
-  }
-  menu.classList.toggle('open', !isOpen);
-  if (chevron) chevron.textContent = isOpen ? '▾' : '▴';
-}
-function closeAcctMenu() {
-  const menu = document.getElementById('acct-menu');
-  const chevron = document.getElementById('acct-chevron');
-  menu.classList.remove('open');
-  if (chevron) chevron.textContent = '▾';
-}
-// Close menu when clicking outside
-document.addEventListener('click', (e) => {
-  const menu = document.getElementById('acct-menu');
-  const btn = document.getElementById('acct-btn');
-  if (menu && btn && !menu.contains(e.target) && !btn.contains(e.target)) {
-    closeAcctMenu();
-  }
-});
-
-// Remove old openAcctMenu if exists
 function openSOSMap() {
   const mapArea = document.getElementById('sos-map-area');
+  if (!mapArea) return;
   if (mapArea.style.display === 'block') {
     mapArea.style.display = 'none';
     return;
@@ -3286,8 +3543,377 @@ function openSOSMap() {
 }
 
 // ════════════════════════════════════════
-// 🏥 長照資源
+// 📊 今日狀態動態計算
 // ════════════════════════════════════════
+function calcTodayStatus() {
+  const db    = dbLoad();
+  const p     = window.userProfile;
+  const today = new Date().toDateString();
+  let score   = 0;
+
+  // SOS 今日有觸發 → 直接高關注
+  const todaySOS = (db.sos_logs||[]).filter(l => new Date(l._ts).toDateString() === today);
+  if (todaySOS.length > 0) return { level:'high', txt:'今日狀態：需高度關注 🆘', color:'#FC8181' };
+
+  // 血壓今日危象或第二期高血壓 → 直接高關注
+  const lastBP = bpLogs[bpLogs.length-1];
+  if (lastBP?.date === '今' && (lastBP.sys >= 160 || lastBP.dia >= 100)) {
+    return { level:'high', txt:'今日狀態：血壓異常 ⚠️', color:'#FC8181' };
+  }
+
+  // 壓力今日偏高
+  const todayStress = (db.stress_logs||[]).find(l => new Date(l._ts).toDateString() === today);
+  if (todayStress?.level === 'red') score += 2;
+  else if (todayStress?.level === 'green') score -= 1;
+
+  // 血壓偏高（第一期）
+  if (lastBP?.date === '今' && (lastBP.sys >= 140 || lastBP.dia >= 90)) score += 1;
+
+  // 用藥：中午後完全沒服藥
+  const doneMeds  = medList.filter(m => m.taken).length;
+  const totalMeds = medList.length;
+  const hour = new Date().getHours();
+  if (hour >= 13 && doneMeds === 0 && totalMeds > 0) score += 1;
+
+  // 沉默偵測（根據風險等級決定門檻）
+  const allTs = [...(db.sos_logs||[]),...(db.med_logs||[]),...(db.stress_logs||[]),...(db.bp_logs||[])]
+    .map(l => new Date(l._ts));
+  if (allTs.length > 0) {
+    const lastAct   = new Date(Math.max(...allTs));
+    const threshold = p?.risk === 'high' ? 2 : p?.risk === 'mid' ? 3 : 4;
+    const silentH   = (Date.now() - lastAct) / 3600000;
+    if (silentH >= threshold) score += 2;
+  }
+
+  // 結果
+  if (score >= 3) return { level:'high', txt:'今日狀態：需高度關注', color:'#FC8181' };
+  if (score >= 1) return { level:'mid',  txt:'今日狀態：需留意',     color:'#F6E05E' };
+  return           { level:'low',  txt:'今日狀態：正常',       color:'#68D391' };
+}
+
+function updateTodayStatus() {
+  const status = calcTodayStatus();
+  const txt = document.getElementById('home-status-txt');
+  const bar = document.getElementById('home-status-bar');
+  if (txt) txt.textContent = status.txt;
+  if (bar) {
+    const dot = bar.querySelector('.h-dot');
+    if (dot) {
+      dot.style.background  = status.color;
+      dot.style.boxShadow   = `0 0 6px ${status.color}`;
+    }
+  }
+}
+
+// ════════════════════════════════════════
+// 📞 緊急聯絡人管理
+// ════════════════════════════════════════
+let emergencyContacts = [];
+let selectedRelation  = '';
+let selectedNotifyTypes = ['sos'];
+
+function loadContacts() {
+  try {
+    const s = localStorage.getItem('yinan_contacts');
+    if (s) emergencyContacts = JSON.parse(s);
+  } catch(e) { emergencyContacts = []; }
+}
+
+function saveContacts() {
+  localStorage.setItem('yinan_contacts', JSON.stringify(emergencyContacts));
+  // 同步到 server
+  postToServer('/contacts', { contacts: emergencyContacts });
+  updateContactsCountBadge();
+}
+
+function updateContactsCountBadge() {
+  const badge = document.getElementById('contacts-count-badge');
+  const settingsSub = document.getElementById('settings-contacts-count');
+  const n = emergencyContacts.length;
+  if (badge) badge.textContent = `${n} 位聯絡人`;
+  if (settingsSub) settingsSub.textContent = n > 0 ? `已設定 ${n} 位家屬通知` : '管理家屬 LINE 通知名單';
+}
+
+function renderContactsList() {
+  const wrap = document.getElementById('contacts-list-wrap');
+  if (!wrap) return;
+  updateContactsCountBadge();
+  if (emergencyContacts.length === 0) {
+    wrap.innerHTML = `<div style="text-align:center;padding:32px 0;color:var(--g400);">
+      <div style="font-size:40px;margin-bottom:10px;">📵</div>
+      <div style="font-size:14px;font-weight:700;">尚無緊急聯絡人</div>
+      <div style="font-size:12px;margin-top:4px;">新增家屬後，SOS 時會自動發 LINE</div>
+    </div>`;
+    return;
+  }
+  const notifyLabels = { sos:'🆘SOS', stress:'🧠壓力', bp:'❤️血壓', med:'💊用藥' };
+  const relationEmoji = { 女兒:'👩', 兒子:'👨', 配偶:'💑', 居服員:'🏥', 其他:'👤' };
+  wrap.innerHTML = emergencyContacts.map((c, i) => `
+    <div style="background:white;border-radius:14px;padding:14px 15px;box-shadow:var(--sh);margin-bottom:10px;position:relative;">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="width:44px;height:44px;border-radius:50%;background:#FAF5FF;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">
+          ${relationEmoji[c.relation]||'👤'}
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">
+            <div style="font-size:15px;font-weight:900;color:var(--g700);">${c.name}</div>
+            <span style="background:#FAF5FF;color:#6B46C1;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:700;">${c.relation||''}</span>
+          </div>
+          <div style="font-size:11px;color:var(--g400);margin-bottom:4px;font-family:monospace;">${c.userId ? c.userId.slice(0,20)+'…' : '⚠️ 未填 User ID'}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:4px;">
+            ${(c.notifyTypes||['sos']).map(t=>`<span style="background:var(--g100);color:var(--g600);padding:1px 7px;border-radius:8px;font-size:10px;font-weight:700;">${notifyLabels[t]||t}</span>`).join('')}
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <button onclick="editContact(${i})" style="width:32px;height:32px;border-radius:50%;background:var(--blue-l);border:none;color:var(--blue-m);font-size:13px;cursor:pointer;">✏️</button>
+          <button onclick="deleteContact(event,${i})" style="width:32px;height:32px;border-radius:50%;background:var(--red-l);border:none;color:var(--red);font-size:13px;cursor:pointer;">✕</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function openAddContactModal() {
+  selectedRelation = '';
+  selectedNotifyTypes = ['sos'];
+  document.getElementById('new-contact-name').value = '';
+  document.getElementById('new-contact-uid').value = '';
+  document.querySelectorAll('#contact-relation-btns .profile-opt').forEach(b => b.classList.remove('sel'));
+  document.querySelectorAll('#contact-notify-btns .profile-opt').forEach(b => {
+    b.classList.toggle('sel', b.dataset.val === 'sos');
+  });
+  document.getElementById('add-contact-modal').classList.add('on');
+}
+
+function closeAddContactModal(e) {
+  if (!e || e.target === document.getElementById('add-contact-modal'))
+    document.getElementById('add-contact-modal').classList.remove('on');
+}
+
+function selectRelation(btn) {
+  document.querySelectorAll('#contact-relation-btns .profile-opt').forEach(b => b.classList.remove('sel'));
+  btn.classList.add('sel');
+  selectedRelation = btn.dataset.val;
+}
+
+function selectNotify(btn) {
+  btn.classList.toggle('sel');
+  selectedNotifyTypes = [...document.querySelectorAll('#contact-notify-btns .profile-opt.sel')].map(b => b.dataset.val);
+  if (selectedNotifyTypes.length === 0) { btn.classList.add('sel'); selectedNotifyTypes = [btn.dataset.val]; }
+}
+
+function saveNewContact() {
+  const name   = document.getElementById('new-contact-name').value.trim();
+  const userId = document.getElementById('new-contact-uid').value.trim();
+  if (!name) { showToast('⚠️ 請輸入姓名'); return; }
+  if (!userId) { showToast('⚠️ 請填入 LINE User ID'); return; }
+  if (!userId.startsWith('U') || userId.length < 10) { showToast('⚠️ User ID 格式不正確（應以 U 開頭）'); return; }
+  emergencyContacts.push({ name, relation: selectedRelation, userId, notifyTypes: selectedNotifyTypes });
+  saveContacts();
+  document.getElementById('add-contact-modal').classList.remove('on');
+  renderContactsList();
+  showToast(`✅ ${name} 已加入緊急聯絡人！`);
+}
+
+function deleteContact(e, idx) {
+  e.stopPropagation();
+  const btn = e.currentTarget;
+  if (btn.dataset.confirming === 'true') {
+    const name = emergencyContacts[idx].name;
+    emergencyContacts.splice(idx, 1);
+    saveContacts();
+    renderContactsList();
+    showToast(`🗑️ ${name} 已移除`);
+  } else {
+    btn.dataset.confirming = 'true';
+    btn.textContent = '確認?';
+    btn.style.background = 'var(--red)';
+    btn.style.color = 'white';
+    btn.style.width = '52px';
+    btn.style.borderRadius = '12px';
+    btn.style.fontSize = '10px';
+    setTimeout(() => {
+      btn.dataset.confirming = 'false';
+      btn.textContent = '✕';
+      btn.style.cssText = '';
+      btn.style.width='32px'; btn.style.height='32px';
+      btn.style.borderRadius='50%'; btn.style.background='var(--red-l)';
+      btn.style.border='none'; btn.style.color='var(--red)';
+      btn.style.fontSize='13px'; btn.style.cursor='pointer';
+    }, 2500);
+  }
+}
+
+function editContact(idx) {
+  const c = emergencyContacts[idx];
+  selectedRelation = c.relation || '';
+  selectedNotifyTypes = c.notifyTypes || ['sos'];
+  document.getElementById('new-contact-name').value = c.name;
+  document.getElementById('new-contact-uid').value = c.userId;
+  document.querySelectorAll('#contact-relation-btns .profile-opt').forEach(b =>
+    b.classList.toggle('sel', b.dataset.val === selectedRelation));
+  document.querySelectorAll('#contact-notify-btns .profile-opt').forEach(b =>
+    b.classList.toggle('sel', selectedNotifyTypes.includes(b.dataset.val)));
+  // 刪舊的，存新的
+  emergencyContacts.splice(idx, 1);
+  document.getElementById('add-contact-modal').classList.add('on');
+}
+
+async function testLINE() {
+  if (emergencyContacts.length === 0) { showToast('⚠️ 尚未設定任何聯絡人'); return; }
+  showToast('📲 發送測試訊息中…');
+  try {
+    const r = await fetch(SERVER_URL + '/line-test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contacts: emergencyContacts,
+        user: window.userProfile?.name || '測試'
+      }),
+      signal: AbortSignal.timeout(8000)
+    });
+    const data = await r.json();
+    if (data.ok) showToast('✅ 測試訊息已發送！');
+    else showToast('❌ 發送失敗，請確認 User ID');
+  } catch(e) {
+    showToast('❌ 連線失敗，請確認伺服器狀態');
+  }
+}
+
+// 載入聯絡人
+loadContacts();
+renderContactsList();
+let careProfiles    = [];
+let activeProfileIdx = 0;
+
+function loadCareProfiles() {
+  try { const s = localStorage.getItem('yinan_profiles'); if (s) careProfiles = JSON.parse(s); } catch(e) { careProfiles = []; }
+}
+function saveCareProfiles() {
+  localStorage.setItem('yinan_profiles', JSON.stringify(careProfiles));
+}
+
+function renderProfilesList() {
+  const list = document.getElementById('profiles-list');
+  if (!list) return;
+  if (careProfiles.length === 0) {
+    list.innerHTML = `<div style="text-align:center;padding:48px 20px;color:var(--g400);">
+      <div style="font-size:56px;margin-bottom:14px;">👤</div>
+      <div style="font-size:16px;font-weight:800;color:var(--g600);margin-bottom:6px;">尚無照護對象</div>
+      <div style="font-size:13px;">點下方「新增照護對象」開始</div></div>`;
+    return;
+  }
+  const ageMap  = {'60-69':'60–69 歲','70-79':'70–79 歲','80+':'80 歲以上'};
+  const mobMap  = {'independent':'獨立行動','assisted':'需輔具','bedridden':'臥床'};
+  const condMap = {'alone':'獨居','dementia':'輕微失智','needs-care':'需日常協助','chronic':'慢性病'};
+  const riskColor = { low:'#38A169', mid:'#D69E2E', high:'#E53E3E' };
+  const riskLabel = { low:'一般照護', mid:'需留意', high:'高度關注' };
+  list.innerHTML = careProfiles.map((p, i) => {
+    const isActive = i === activeProfileIdx;
+    const femaleKW = ['媽','奶','婆','姨','嬤','外婆'];
+    const av = femaleKW.some(k => p.name.includes(k)) ? '👵' : '👴';
+    const tags = [
+      p.age ? ageMap[p.age] : null,
+      p.mobility && p.mobility!=='independent' ? mobMap[p.mobility] : null,
+      ...(p.conditions||[]).filter(v=>v!=='none').map(v=>condMap[v]||v)
+    ].filter(Boolean);
+    return `<div onclick="selectProfile(${i})" style="background:white;border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 2px 12px rgba(0,0,0,0.08);cursor:pointer;border:2px solid ${isActive?'#3182CE':'transparent'};position:relative;">
+      ${isActive?`<div style="position:absolute;top:12px;right:12px;background:#3182CE;color:white;font-size:10px;font-weight:800;padding:2px 8px;border-radius:10px;">使用中</div>`:''}
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="width:48px;height:48px;border-radius:50%;background:${isActive?'#EBF8FF':'var(--g100)'};display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">${av}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
+            <div style="font-size:17px;font-weight:900;color:var(--g700);">${p.name}</div>
+            <span style="font-size:11px;font-weight:700;color:${riskColor[p.risk]||'#38A169'};">${riskLabel[p.risk]||''}</span>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:4px;">
+            ${tags.slice(0,3).map(t=>`<span style="padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;background:var(--g100);color:var(--g600);">${t}</span>`).join('')}
+          </div>
+        </div>
+        <button onclick="deleteProfile(event,${i})" style="width:30px;height:30px;border-radius:50%;background:var(--red-l);border:none;color:var(--red);font-size:13px;cursor:pointer;flex-shrink:0;">✕</button>
+      </div></div>`;
+  }).join('');
+}
+
+function selectProfile(idx) {
+  activeProfileIdx = idx;
+  const p = careProfiles[idx];
+  window.userProfile = p;
+  applyProfile(p);
+  document.getElementById('profiles-screen').style.display = 'none';
+  document.getElementById('assessment').classList.add('done');
+  updateAcctDisplay(); updateHomeCards();
+  setTimeout(() => showToast(`👋 已切換至 ${p.name}`), 400);
+}
+
+function deleteProfile(e, idx) {
+  e.stopPropagation();
+  // 第一次點：變成確認狀態
+  const btn = e.currentTarget;
+  if (btn.dataset.confirming === 'true') {
+    careProfiles.splice(idx, 1);
+    if (activeProfileIdx >= careProfiles.length) activeProfileIdx = 0;
+    saveCareProfiles();
+    renderProfilesList();
+    showToast('🗑️ 已刪除');
+  } else {
+    btn.dataset.confirming = 'true';
+    btn.textContent = '確認?';
+    btn.style.background = 'var(--red)';
+    btn.style.color = 'white';
+    btn.style.width = '52px';
+    btn.style.borderRadius = '12px';
+    btn.style.fontSize = '10px';
+    setTimeout(() => {
+      if (btn.dataset.confirming === 'true') {
+        btn.dataset.confirming = 'false';
+        btn.textContent = '✕';
+        btn.style.background = 'var(--red-l)';
+        btn.style.color = 'var(--red)';
+        btn.style.width = '30px';
+        btn.style.borderRadius = '50%';
+        btn.style.fontSize = '13px';
+      }
+    }, 2500);
+  }
+}
+
+function addNewProfile() {
+  document.getElementById('profiles-screen').style.display = 'none';
+  document.getElementById('assessment').classList.remove('done');
+  asmntCurrent = 0; asmntAnswers = { name:'', age:'', mobility:'', conditions:[] };
+  document.querySelectorAll('.asmnt-step').forEach(s => {
+    s.classList.remove('active','exit'); s.style.transform='translateX(100%)'; s.style.transition='';
+  });
+  document.getElementById('step-0').classList.add('active');
+  document.getElementById('step-0').style.transform = 'translateX(0)';
+  asmntSetProgress(0); asmntUpdateFooter();
+}
+
+function showProfilesScreen() {
+  loadCareProfiles(); renderProfilesList();
+  document.getElementById('profiles-screen').style.display = 'flex';
+}
+
+function enterApp() {
+  if (window.userProfile) {
+    const existing = careProfiles.findIndex(p => p.name === window.userProfile.name);
+    if (existing >= 0) { careProfiles[existing] = window.userProfile; activeProfileIdx = existing; }
+    else { careProfiles.push(window.userProfile); activeProfileIdx = careProfiles.length - 1; }
+    saveCareProfiles();
+    dbSet('profile', window.userProfile);
+    dbPush('assessment_logs', { ...window.userProfile, event:'completed' });
+    postToServer('/profile', { ...window.userProfile, event:'completed' });
+    applyProfile(window.userProfile);
+  }
+  document.getElementById('assessment').classList.add('done');
+  const sbar = document.getElementById('sbar');
+  if (sbar) sbar.classList.remove('dark');
+  updateAcctDisplay(); updateHomeCards();
+  // 顯示介面切換按鈕
+  setTimeout(() => showToast(`✅ ${window.userProfile?.name} 已加入照護清單！`), 600);
+}
+
+function resetApp() { closeAcctMenu(); showProfilesScreen(); }
 function showLTCTab(tab) {
   const applyPanel  = document.getElementById('ltc-apply-panel');
   const nearbyPanel = document.getElementById('ltc-nearby-panel');
@@ -3460,15 +4086,217 @@ function renderFamilyDashboard() {
     sa.style.display=h>=threshold?'block':'none';
     if(h>=threshold&&sm) sm.textContent=`已超過 ${Math.floor(h)} 小時無操作（${risk==='high'?'高風險':'中風險'}警示門檻：${threshold}小時），最後活動：${lastAct.toLocaleString('zh-TW',{hour:'2-digit',minute:'2-digit'})}`;
   } else if(sa) sa.style.display='none';
+
+  // 喘息計畫
+  const respiteList = document.getElementById('family-respite-list');
+  if (respiteList) {
+    const DAY_LABELS = ['一','二','三','四','五','六','日'];
+    const today = new Date();
+    const todayDay = today.getDay() === 0 ? 6 : today.getDay() - 1;
+    const thisWeekPlans = plans.filter(p => p.day >= todayDay).sort((a,b) => a.day - b.day);
+    const nextWeekPlans = plans.filter(p => p.day < todayDay).sort((a,b) => a.day - b.day);
+    const sorted = [...thisWeekPlans, ...nextWeekPlans].slice(0, 5);
+    if (sorted.length === 0) {
+      respiteList.innerHTML = `<div style="font-size:13px;color:var(--g400);text-align:center;padding:12px;">本週無喘息計畫</div>`;
+    } else {
+      respiteList.innerHTML = sorted.map(p => {
+        const isToday = p.day === todayDay;
+        const isTomorrow = p.day === (todayDay + 1) % 7;
+        const badge = isToday ? `<span style="background:var(--blue-l);color:var(--blue-m);padding:1px 7px;border-radius:8px;font-size:10px;font-weight:800;">今天</span>` :
+                      isTomorrow ? `<span style="background:var(--green-l);color:var(--green);padding:1px 7px;border-radius:8px;font-size:10px;font-weight:800;">明天</span>` : '';
+        return `<div style="background:white;border-radius:12px;padding:12px 14px;box-shadow:var(--sh);display:flex;align-items:center;gap:10px;${isToday?'border-left:3px solid var(--blue-m);':''}">
+          <div style="font-size:20px;">${p.icon||'📅'}</div>
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:800;color:var(--g700);">${p.name} ${badge}</div>
+            <div style="font-size:11px;color:var(--g500);margin-top:2px;">週${DAY_LABELS[p.day]} ${p.time}</div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+  }
 }
 
-// Pages with light/white background that need dark sbar text
+// ════════════════════════════════════════
+// 👨‍👩‍👧 照顧者 / 家屬 雙介面切換
+// ════════════════════════════════════════
+let currentRole = 'caregiver'; // 'caregiver' | 'family'
+
+function toggleRoleView() {
+  if (currentRole === 'caregiver') {
+    currentRole = 'family';
+    renderFamilyView();
+    document.getElementById('family-view-overlay').style.display = 'flex';
+    document.getElementById('role-switch-icon').textContent = '🏠';
+    document.getElementById('role-switch-label').textContent = '照顧者視角';
+  } else {
+    currentRole = 'caregiver';
+    document.getElementById('family-view-overlay').style.display = 'none';
+    document.getElementById('role-switch-icon').textContent = '👨‍👩‍👧';
+    document.getElementById('role-switch-label').textContent = '家屬視角';
+  }
+}
+
+function renderFamilyView() {
+  const p   = window.userProfile;
+  const db  = dbLoad();
+  const DAY_LABELS = ['一','二','三','四','五','六','日'];
+
+  // Title
+  const titleEl = document.getElementById('fv-title');
+  if (titleEl && p) titleEl.textContent = p.name + ' 的照護總覽';
+
+  // Badges
+  const badges = document.getElementById('fv-badges');
+  const riskLabel = { low:'🟢 一般', mid:'🟡 需留意', high:'🔴 高度關注' };
+  const sosToday = (db.sos_logs||[]).filter(l => new Date(l._ts).toDateString() === new Date().toDateString()).length;
+  if (badges) badges.innerHTML = [
+    { t: riskLabel[p?.risk]||'未評估', bg:'rgba(255,255,255,0.2)' },
+    sosToday > 0 ? { t:`🆘 今日SOS ${sosToday}次`, bg:'rgba(254,215,215,0.4)' } : null,
+    { t:`💊 用藥 ${medList.filter(m=>m.taken).length}/${medList.length}`, bg:'rgba(255,255,255,0.15)' },
+  ].filter(Boolean).map(b =>
+    `<span style="background:${b.bg};color:white;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;">${b.t}</span>`
+  ).join('');
+
+  // Subject card
+  const subj = document.getElementById('fv-subject');
+  if (subj && p) {
+    const femaleKW = ['媽','奶','婆','姨','嬤','外婆'];
+    const av = femaleKW.some(k => p.name.includes(k)) ? '👵' : '👴';
+    const lastStress = (db.stress_logs||[]).slice(-1)[0];
+    const lastMed    = (db.med_logs||[]).slice(-1)[0];
+    subj.innerHTML = `<div style="display:flex;align-items:center;gap:12px;">
+      <div style="width:48px;height:48px;border-radius:50%;background:var(--blue-l);display:flex;align-items:center;justify-content:center;font-size:26px;">${av}</div>
+      <div><div style="font-size:17px;font-weight:900;color:var(--g700);">${p.name}</div>
+      <div style="font-size:12px;color:var(--g500);margin-top:2px;">${riskLabel[p.risk]||''}</div></div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+      ${lastStress?`<span style="background:var(--green-l);color:var(--green);padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;">最近心情 ${lastStress.emoji}</span>`:''}
+      ${lastMed?`<span style="background:var(--blue-l);color:var(--blue-m);padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;">最近服藥 ${lastMed.name}</span>`:''}
+      ${sosToday>0?`<span style="background:var(--red-l);color:var(--red-d);padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;">⚠️ 今日 SOS ${sosToday}次</span>`:'<span style="background:var(--green-l);color:var(--green);padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;">✅ 無緊急事件</span>'}
+    </div>`;
+  }
+
+  // Timeline
+  const timeline = document.getElementById('fv-timeline');
+  if (timeline) {
+    const events = [
+      ...(db.sos_logs||[]).map(l=>({ts:l._ts,icon:'🆘',text:`SOS 求助`})),
+      ...(db.med_logs||[]).map(l=>({ts:l._ts,icon:'💊',text:`服藥：${l.name}`})),
+      ...(db.stress_logs||[]).map(l=>({ts:l._ts,icon:l.emoji,text:`壓力：${l.level==='green'?'良好':l.level==='yellow'?'普通':'偏高'}${l.note?'・'+l.note.slice(0,12):''}`})),
+      ...(db.bp_logs||[]).map(l=>({ts:l._ts,icon:'❤️',text:`血壓：${l.sys}/${l.dia}`})),
+    ].sort((a,b)=>new Date(b.ts)-new Date(a.ts)).slice(0,6);
+    timeline.innerHTML = events.length
+      ? `<div style="position:absolute;left:16px;top:0;bottom:0;width:2px;background:var(--g200);"></div>` +
+        events.map(e=>{
+          const t=new Date(e.ts).toLocaleString('zh-TW',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+          return `<div style="position:relative;padding:0 0 12px 20px;">
+            <div style="position:absolute;left:-5px;top:3px;width:10px;height:10px;border-radius:50%;background:var(--blue-m);border:2px solid white;"></div>
+            <div style="font-size:10px;color:var(--g400);font-weight:700;">${t}</div>
+            <div style="font-size:13px;color:var(--g700);font-weight:600;"><span style="margin-right:6px;">${e.icon}</span>${e.text}</div>
+          </div>`;
+        }).join('')
+      : '<div style="font-size:13px;color:var(--g400);text-align:center;padding:12px;">尚無活動紀錄</div>';
+  }
+
+  // Weekly summary
+  const weekly = document.getElementById('fv-weekly');
+  if (weekly) {
+    const weekStart = new Date(); weekStart.setDate(weekStart.getDate()-weekStart.getDay());
+    const wf = arr => (arr||[]).filter(l=>new Date(l._ts)>=weekStart);
+    const sosW=wf(db.sos_logs).length, medW=wf(db.med_logs).length;
+    const highW=wf(db.stress_logs).filter(l=>l.level==='red').length;
+    const bpW=wf(db.bp_logs);
+    const avgSys=bpW.length?Math.round(bpW.reduce((s,l)=>s+l.sys,0)/bpW.length):'--';
+    weekly.innerHTML=[
+      {v:sosW, l:'本週SOS', c:sosW>0?'var(--red-l)':'var(--green-l)', vc:sosW>0?'var(--red-d)':'var(--green)'},
+      {v:medW, l:'本週服藥', c:'var(--blue-l)', vc:'var(--blue-m)'},
+      {v:highW,l:'高壓天數', c:highW>2?'var(--red-l)':'var(--green-l)', vc:highW>2?'var(--red-d)':'var(--green)'},
+      {v:avgSys,l:'平均收縮壓', c:typeof avgSys==='number'&&avgSys>=140?'var(--red-l)':'var(--blue-l)', vc:typeof avgSys==='number'&&avgSys>=140?'var(--red-d)':'var(--blue-m)'},
+    ].map(s=>`<div style="background:${s.c};border-radius:12px;padding:14px;text-align:center;">
+      <div style="font-size:22px;font-weight:900;color:${s.vc};">${s.v}</div>
+      <div style="font-size:11px;color:var(--g500);margin-top:3px;">${s.l}</div>
+    </div>`).join('');
+  }
+
+  // Respite plans
+  const respite = document.getElementById('fv-respite');
+  if (respite) {
+    const today = new Date();
+    const todayDay = today.getDay() === 0 ? 6 : today.getDay() - 1;
+    const sorted = [...plans].sort((a,b)=>{
+      const da = (a.day - todayDay + 7) % 7;
+      const db2 = (b.day - todayDay + 7) % 7;
+      return da - db2;
+    }).slice(0, 5);
+    respite.innerHTML = sorted.length ? sorted.map(p => {
+      const isToday = p.day === todayDay;
+      const isTomorrow = (p.day - todayDay + 7) % 7 === 1;
+      const badge = isToday ? `<span style="background:var(--blue-l);color:var(--blue-m);padding:1px 7px;border-radius:8px;font-size:10px;font-weight:800;">今天</span>` :
+                    isTomorrow ? `<span style="background:var(--green-l);color:var(--green);padding:1px 7px;border-radius:8px;font-size:10px;font-weight:800;">明天</span>` : '';
+      return `<div style="background:white;border-radius:12px;padding:12px 14px;box-shadow:0 2px 8px rgba(0,0,0,0.06);display:flex;align-items:center;gap:10px;${isToday?'border-left:3px solid var(--blue-m);':''}">
+        <div style="font-size:20px;">${p.icon||'📅'}</div>
+        <div style="flex:1;"><div style="font-size:13px;font-weight:800;color:var(--g700);">${p.name} ${badge}</div>
+        <div style="font-size:11px;color:var(--g500);">週${DAY_LABELS[p.day]} ${p.time}</div></div>
+      </div>`;
+    }).join('') : '<div style="font-size:13px;color:var(--g400);text-align:center;padding:12px;">本週無喘息計畫</div>';
+  }
+
+  // Silence alert
+  const allTs=[...(db.sos_logs||[]),...(db.med_logs||[]),...(db.stress_logs||[]),...(db.bp_logs||[])].map(l=>new Date(l._ts));
+  const lastAct = allTs.length ? new Date(Math.max(...allTs)) : null;
+  const fvAlert = document.getElementById('fv-alert');
+  const fvAlertMsg = document.getElementById('fv-alert-msg');
+  if (fvAlert && lastAct) {
+    const threshold = p?.risk === 'high' ? 2 : p?.risk === 'mid' ? 3 : 4;
+    const h = (Date.now() - lastAct) / 3600000;
+    fvAlert.style.display = h >= threshold ? 'block' : 'none';
+    if (h >= threshold && fvAlertMsg) fvAlertMsg.textContent = `已超過 ${Math.floor(h)} 小時無操作，最後活動：${lastAct.toLocaleString('zh-TW',{hour:'2-digit',minute:'2-digit'})}`;
+  } else if (fvAlert) fvAlert.style.display = 'none';
+}
+
+
+function openRespiteFromFamily() {
+  document.getElementById('family-view-overlay').style.display = 'none';
+  currentRole = 'caregiver';
+  navTo('p-respite', 'fwd');
+  showToast('📝 編輯完成後按「←」返回家屬視角');
+}
+
+function toggleAcctMenu() {
+  const menu    = document.getElementById('acct-menu');
+  const btn     = document.getElementById('acct-btn');
+  const chevron = document.getElementById('acct-chevron');
+  const isOpen  = menu.classList.contains('open');
+  if (!isOpen) {
+    const rect      = btn.getBoundingClientRect();
+    const phoneRect = document.querySelector('.phone').getBoundingClientRect();
+    menu.style.top   = (rect.bottom - phoneRect.top + 6) + 'px';
+    menu.style.right = (phoneRect.right - rect.right) + 'px';
+  }
+  menu.classList.toggle('open', !isOpen);
+  if (chevron) chevron.textContent = isOpen ? '▾' : '▴';
+}
+
+function closeAcctMenu() {
+  const menu    = document.getElementById('acct-menu');
+  const chevron = document.getElementById('acct-chevron');
+  if (menu)    menu.classList.remove('open');
+  if (chevron) chevron.textContent = '▾';
+}
+
+document.addEventListener('click', (e) => {
+  const menu = document.getElementById('acct-menu');
+  const btn  = document.getElementById('acct-btn');
+  if (menu && btn && !menu.contains(e.target) && !btn.contains(e.target)) closeAcctMenu();
+});
 const LIGHT_HERO_PAGES = new Set(['p-home']); // home has gradient but sbar floats above
 
 function onPageEnter(id) {
   if (id === 'p-sos') { resetSOS(); resetSOSContacts(); }
   if (id === 'p-family') renderFamilyDashboard();
   if (id === 'p-home') updateHomeCards();
+  if (id === 'p-stress') { renderWeeklyTrend(); renderStressCalendar(); }
+  if (id === 'p-contacts') { renderContactsList(); }
 }
 
 let toastTimer;
