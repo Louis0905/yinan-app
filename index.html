@@ -1096,32 +1096,9 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
           <span class="ring-text">SOS</span>
           <span class="ring-sub">按下求助</span>
         </button>
-        <div class="contact-list">
+        <div class="contact-list" id="sos-contacts-list">
           <div style="font-size:12px;font-weight:800;color:#742A2A;margin-bottom:4px;">📋 點擊聯絡人直接聯繫</div>
-          <!-- Contact 1: daughter - call + LINE -->
-          <div class="cc" id="cc1">
-            <span class="cc-av">👩</span>
-            <div style="flex:1">
-              <div class="cc-n">女兒（小芳）</div>
-              <div class="cc-r" id="cc1-status">LINE + 電話</div>
-            </div>
-            <div class="cc-actions">
-              <button class="cc-act-btn cc-line" onclick="sendLine('cc1','小芳')" title="傳 LINE">💬</button>
-              <button class="cc-act-btn cc-call" onclick="startCall('女兒（小芳）','👩','0912-345-678')" title="撥打電話">📞</button>
-            </div>
-          </div>
-          <!-- Contact 2: son - LINE + 電話 -->
-          <div class="cc" id="cc2">
-            <span class="cc-av">👨</span>
-            <div style="flex:1">
-              <div class="cc-n">兒子（阿明）</div>
-              <div class="cc-r" id="cc2-status">LINE 通知</div>
-            </div>
-            <div class="cc-actions">
-              <button class="cc-act-btn cc-line" onclick="sendLine('cc2','阿明')" title="傳 LINE">💬</button>
-              <button class="cc-act-btn cc-call" onclick="startCall('兒子（阿明）','👨','0923-456-789')" title="撥打電話">📞</button>
-            </div>
-          </div>
+          <!-- 動態渲染 by renderSOSContacts() -->
         </div>
       </div>
       <div class="sos-state" id="sos-sending">
@@ -1675,6 +1652,10 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
             <div style="font-size:11px;color:var(--g400);margin-top:4px;">讓家屬加 Bot 好友後取得</div>
           </div>
           <div class="form-field">
+            <div class="ff-label">電話號碼（選填）</div>
+            <input class="ff-input" id="new-contact-phone" type="tel" placeholder="例：0912345678">
+          </div>
+          <div class="form-field">
             <div class="ff-label">通知類型</div>
             <div style="display:flex;gap:8px;flex-wrap:wrap;" id="contact-notify-btns">
               <button onclick="selectNotify(this)" data-val="sos" class="profile-opt sel">🆘 SOS</button>
@@ -2030,7 +2011,12 @@ function onPageEnter(id) {
 }
 
 // ── SOS main ─────────────────────────────────────
+let sosLock = false;
+
 function triggerSOS() {
+  if (sosLock) return; // 防止重複觸發
+  sosLock = true;
+
   document.getElementById('sos-idle').style.display = 'none';
   const s = document.getElementById('sos-sending');
   s.classList.add('on');
@@ -2067,10 +2053,10 @@ function triggerSOS() {
   }
 }
 function resetSOS() {
+  sosLock = false; // 解鎖，下次可以再按
   document.getElementById('sos-idle').style.display = '';
   document.getElementById('sos-sending').classList.remove('on');
   document.getElementById('sos-done').classList.remove('on');
-  // 不清除 LINE 狀態，讓聯絡人狀態保留
 }
 
 // ── Calling overlay ───────────────────────────────
@@ -3716,6 +3702,7 @@ function openAddContactModal() {
   selectedNotifyTypes = ['sos'];
   document.getElementById('new-contact-name').value = '';
   document.getElementById('new-contact-uid').value = '';
+  document.getElementById('new-contact-phone').value = '';
   document.querySelectorAll('#contact-relation-btns .profile-opt').forEach(b => b.classList.remove('sel'));
   document.querySelectorAll('#contact-notify-btns .profile-opt').forEach(b => {
     b.classList.toggle('sel', b.dataset.val === 'sos');
@@ -3743,13 +3730,15 @@ function selectNotify(btn) {
 function saveNewContact() {
   const name   = document.getElementById('new-contact-name').value.trim();
   const userId = document.getElementById('new-contact-uid').value.trim();
+  const phone  = document.getElementById('new-contact-phone').value.trim();
   if (!name) { showToast('⚠️ 請輸入姓名'); return; }
-  if (!userId) { showToast('⚠️ 請填入 LINE User ID'); return; }
-  if (!userId.startsWith('U') || userId.length < 10) { showToast('⚠️ User ID 格式不正確（應以 U 開頭）'); return; }
-  emergencyContacts.push({ name, relation: selectedRelation, userId, notifyTypes: selectedNotifyTypes });
+  if (!userId && !phone) { showToast('⚠️ 請填入 LINE User ID 或電話號碼'); return; }
+  if (userId && (!userId.startsWith('U') || userId.length < 10)) { showToast('⚠️ User ID 格式不正確（應以 U 開頭）'); return; }
+  emergencyContacts.push({ name, relation: selectedRelation, userId, phone, notifyTypes: selectedNotifyTypes });
   saveContacts();
   document.getElementById('add-contact-modal').classList.remove('on');
   renderContactsList();
+  renderSOSContacts();
   showToast(`✅ ${name} 已加入緊急聯絡人！`);
 }
 
@@ -3786,13 +3775,13 @@ function editContact(idx) {
   const c = emergencyContacts[idx];
   selectedRelation = c.relation || '';
   selectedNotifyTypes = c.notifyTypes || ['sos'];
-  document.getElementById('new-contact-name').value = c.name;
-  document.getElementById('new-contact-uid').value = c.userId;
+  document.getElementById('new-contact-name').value  = c.name;
+  document.getElementById('new-contact-uid').value   = c.userId || '';
+  document.getElementById('new-contact-phone').value = c.phone  || '';
   document.querySelectorAll('#contact-relation-btns .profile-opt').forEach(b =>
     b.classList.toggle('sel', b.dataset.val === selectedRelation));
   document.querySelectorAll('#contact-notify-btns .profile-opt').forEach(b =>
     b.classList.toggle('sel', selectedNotifyTypes.includes(b.dataset.val)));
-  // 刪舊的，存新的
   emergencyContacts.splice(idx, 1);
   document.getElementById('add-contact-modal').classList.add('on');
 }
@@ -3821,6 +3810,7 @@ async function testLINE() {
 // 載入聯絡人
 loadContacts();
 renderContactsList();
+renderSOSContacts();
 let careProfiles    = [];
 let activeProfileIdx = 0;
 
@@ -4297,6 +4287,50 @@ function renderFamilyView() {
 }
 
 
+function renderSOSContacts() {
+  const list = document.getElementById('sos-contacts-list');
+  if (!list) return;
+  const relationEmoji = { 女兒:'👩', 兒子:'👨', 配偶:'💑', 居服員:'🏥', 其他:'👤' };
+  const header = '<div style="font-size:12px;font-weight:800;color:#742A2A;margin-bottom:4px;">📋 點擊聯絡人直接聯繫</div>';
+
+  if (emergencyContacts.length === 0) {
+    list.innerHTML = header + `<div style="text-align:center;padding:12px;color:rgba(255,255,255,0.6);font-size:13px;">
+      尚未設定緊急聯絡人<br>
+      <span style="font-size:11px;">請至「設定 → 緊急聯絡人」新增</span>
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = header + emergencyContacts.map((c, i) => {
+    const av = relationEmoji[c.relation] || '👤';
+    const hasLINE = !!c.userId;
+    const hasPhone = !!c.phone;
+    const statusTxt = hasLINE && hasPhone ? 'LINE + 電話' : hasLINE ? 'LINE 通知' : hasPhone ? '電話' : '未設定';
+    return `<div class="cc" id="sos-cc-${i}">
+      <span class="cc-av">${av}</span>
+      <div style="flex:1">
+        <div class="cc-n">${c.name}</div>
+        <div class="cc-r" id="sos-cc-${i}-status">${c.relation ? c.relation + '・' : ''}${statusTxt}</div>
+      </div>
+      <div class="cc-actions">
+        ${hasLINE ? `<button class="cc-act-btn cc-line" onclick="openLINEChat('${c.userId}','sos-cc-${i}')" title="開啟 LINE 聊天">💬</button>` : ''}
+        ${hasPhone ? `<button class="cc-act-btn cc-call" onclick="startCallDirect('${c.name}','${av}','${c.phone}')" title="撥打電話">📞</button>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openLINEChat(userId, ccId) {
+  // 開啟 LINE 對話（line://ti/p/{userId}）
+  window.open(`https://line.me/R/ti/p/${userId}`, '_blank');
+  const statusEl = document.getElementById(ccId + '-status');
+  if (statusEl) statusEl.innerHTML = '<span style="color:#06C755;font-weight:700;">💬 LINE 已開啟</span>';
+}
+
+function startCallDirect(name, av, phone) {
+  startCall(name, av, phone);
+}
+
 function toggleContactsQR() {
   const area = document.getElementById('contacts-qr-area');
   const img  = document.getElementById('contacts-qr-img');
@@ -4358,7 +4392,7 @@ document.addEventListener('click', (e) => {
 const LIGHT_HERO_PAGES = new Set(['p-home']); // home has gradient but sbar floats above
 
 function onPageEnter(id) {
-  if (id === 'p-sos') { resetSOS(); resetSOSContacts(); }
+  if (id === 'p-sos') { resetSOS(); resetSOSContacts(); renderSOSContacts(); }
   if (id === 'p-family') renderFamilyDashboard();
   if (id === 'p-home') updateHomeCards();
   if (id === 'p-stress') { renderWeeklyTrend(); renderStressCalendar(); }
