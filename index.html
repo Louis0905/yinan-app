@@ -729,7 +729,7 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
 <div class="phone">
 
   <div class="sbar" id="sbar">
-    <span>9:41</span>
+    <span id="sbar-time">9:41</span>
     <div class="notch"></div>
     <span>📶 🔋</span>
   </div>
@@ -738,7 +738,7 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
        PRIVACY POLICY SCREEN
   ══════════════════════════════════════ -->
   <div id="privacy-screen" style="position:absolute;inset:0;z-index:3000;background:#ffffff;display:none;flex-direction:column;border-radius:44px;overflow:hidden;">
-    <div class="asmnt-sbar"><span>9:41</span><div class="notch"></div><span>📶 🔋</span></div>
+    <div class="asmnt-sbar"><span class="sbar-clock">--:--</span><div class="notch"></div><span>📶 🔋</span></div>
     <div style="flex:1;display:flex;flex-direction:column;padding:28px 26px 20px;overflow-y:auto;">
       <div style="font-size:28px;margin-bottom:12px;">🔒</div>
       <div style="font-size:20px;font-weight:900;color:var(--g700);margin-bottom:6px;">隱私權政策</div>
@@ -765,7 +765,7 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
   ══════════════════════════════════════ -->
   <div id="login-screen" style="position:absolute;inset:0;z-index:2000;background:#ffffff;display:none;flex-direction:column;border-radius:44px;overflow:hidden;">
     <div class="asmnt-sbar">
-      <span>9:41</span>
+      <span class="sbar-clock">--:--</span>
       <div class="notch"></div>
       <span>📶 🔋</span>
     </div>
@@ -816,7 +816,7 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
   ══════════════════════════════════════ -->
   <div id="profiles-screen" style="position:absolute;inset:0;z-index:1500;background:#f7f8fc;display:flex;flex-direction:column;border-radius:44px;overflow:hidden;">
     <div class="asmnt-sbar" style="background:linear-gradient(135deg,#2b6cb0,#3182CE);">
-      <span style="color:white;">9:41</span>
+      <span class="sbar-clock" style="color:white;">--:--</span>
       <div class="notch"></div>
       <span style="color:white;">📶 🔋</span>
     </div>
@@ -844,7 +844,7 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
   ══════════════════════════════════════ -->
   <div id="assessment">
     <div class="asmnt-sbar">
-      <span>9:41</span>
+      <span class="sbar-clock">--:--</span>
       <div class="notch"></div>
       <span>📶 🔋</span>
     </div>
@@ -1920,6 +1920,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderStressCalendar();
   renderWeeklyTrend();
   renderRespite();
+  updateClock(); // 立即更新時鐘
   // 啟動時顯示照護對象列表
   loadCareProfiles();
   if (careProfiles.length > 0) {
@@ -3027,7 +3028,29 @@ function clearDB() {
   renderDB && renderDB();
 }
 
-// 啟動由 DOMContentLoaded 統一處理
+// ════════════════════════════════════════
+// 🕐 即時時鐘
+// ════════════════════════════════════════
+function updateClock() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2, '0');
+  const m = String(now.getMinutes()).padStart(2, '0');
+  const timeStr = `${h}:${m}`;
+  // 更新所有時鐘
+  const mainClock = document.getElementById('sbar-time');
+  if (mainClock) mainClock.textContent = timeStr;
+  document.querySelectorAll('.sbar-clock').forEach(el => el.textContent = timeStr);
+  // 同步用藥頁（重新渲染過期狀態）
+  renderMedPage();
+}
+
+// 每分鐘更新一次
+setInterval(updateClock, 60000);
+// 對齊到下一個整分鐘再開始
+setTimeout(() => {
+  updateClock();
+  setInterval(updateClock, 60000);
+}, (60 - new Date().getSeconds()) * 1000);
 
 
 // ════════════════════════════════════════
@@ -3056,14 +3079,21 @@ function renderMedPage() {
   if (prog) { prog.textContent = `${done}/${total} 完成`; prog.style.background = done===total ? 'rgba(56,161,105,0.25)' : 'rgba(255,255,255,0.2)'; }
   const sorted = [...medList].sort((a,b) => a.time.localeCompare(b.time));
   container.innerHTML = sorted.map(med => {
-    const isPast = hhmm > med.time;
+    const isPast    = hhmm > med.time;
+    const isNow = !med.taken && isPast && (() => {
+      const [mh, mm] = med.time.split(':').map(Number);
+      const medMinutes = mh * 60 + mm;
+      const nowMinutes = now.getHours() * 60 + now.getMinutes();
+      return nowMinutes >= medMinutes && nowMinutes - medMinutes <= 30;
+    })();
     const tagCls = med.taken ? 'mt-ok' : isPast ? 'mt-act' : 'mt-pend';
     const tagTxt = med.taken ? '✅ 已服用' : isPast ? '確認服藥' : '⏳ 未到時間';
     const icoCls = med.taken ? 'mi-g' : isPast ? 'mi-y' : '';
     const onclick = med.taken ? '' : isPast ? `onclick="openMedById(${med.id})"` : '';
+    const nowBadge = isNow ? `<span style="background:var(--red);color:white;font-size:9px;font-weight:800;padding:1px 6px;border-radius:8px;margin-left:6px;">現在</span>` : '';
     return `<div class="time-grp">
-      <div class="time-lbl">⏰ ${med.time}</div>
-      <div class="med-row" ${onclick} style="${med.taken?'opacity:0.6':''}">
+      <div class="time-lbl">⏰ ${med.time}${nowBadge}</div>
+      <div class="med-row" ${onclick} style="${med.taken?'opacity:0.6':''}${isNow?';border-left:3px solid var(--red);':''}">
         <div class="med-ico ${icoCls}">💊</div>
         <div style="flex:1"><div class="med-n">${med.name}</div><div class="med-d">${med.dose}</div></div>
         <div style="display:flex;gap:6px;align-items:center;">
@@ -3212,17 +3242,33 @@ function previewBP() {
 function saveBP() {
   const sys = parseInt(document.getElementById('input-sys').value);
   const dia = parseInt(document.getElementById('input-dia').value);
-  const hr  = parseInt(document.getElementById('input-hr').value) || 72;
+  const hr  = parseInt(document.getElementById('input-hr').value);
   if (!sys || !dia) { showToast('⚠️ 請輸入收縮壓和舒張壓'); return; }
+  if (sys < 60 || sys > 250) { showToast('⚠️ 收縮壓數值異常（60–250）'); return; }
+  if (dia < 40 || dia > 150) { showToast('⚠️ 舒張壓數值異常（40–150）'); return; }
+  if (hr && (hr < 40 || hr > 200)) { showToast('⚠️ 心跳數值異常（40–200 bpm）'); return; }
+
+  // 心跳狀態提示
+  const hrEl = document.getElementById('rpt-hr-today');
+  if (hr) {
+    if (hrEl) hrEl.textContent = hr;
+    const hrAlert = hr < 60 ? '🔵 心跳偏慢' : hr > 100 ? '⚠️ 心跳偏快' : null;
+    if (hrAlert) showToast(`${hrAlert}（${hr} bpm），建議告知醫師`);
+  }
   // Update today's entry or add
   const days = ['日','一','二','三','四','五','六'];
   const todayLabel = days[new Date().getDay()];
+  const savedHr = hr || 72;
   const idx = bpLogs.findIndex(b => b.date === '今' || b.date === todayLabel);
-  if (idx >= 0) bpLogs[idx] = { date:'今', sys, dia, hr };
-  else { if (bpLogs.length >= 7) bpLogs.shift(); bpLogs.push({ date:'今', sys, dia, hr }); }
+  if (idx >= 0) bpLogs[idx] = { date:'今', sys, dia, hr: savedHr };
+  else { if (bpLogs.length >= 7) bpLogs.shift(); bpLogs.push({ date:'今', sys, dia, hr: savedHr }); }
   // Update hero stats
   document.getElementById('rpt-bp-today').textContent = `${sys}/${dia}`;
-  document.getElementById('rpt-hr-today').textContent = hr;
+  const hrDisplay = document.getElementById('rpt-hr-today');
+  if (hrDisplay && hr) {
+    hrDisplay.textContent = hr;
+    hrDisplay.style.color = hr < 60 ? '#2B6CB0' : hr > 100 ? '#E53E3E' : 'var(--g700)';
+  }
   document.getElementById('rpt-spo2-today').textContent = '98%';
   const s = getBPStatus(sys, dia);
   const alert = document.getElementById('rpt-alert');
@@ -3233,14 +3279,15 @@ function saveBP() {
     alert.style.background = s.level === 'low' ? '#EBF8FF' : 'var(--red-l)';
   } else if (alert) { alert.style.display = 'none'; }
   renderBPChart();
-  dbPush('bp_logs', { sys, dia, hr });
-  postToServer('/bp', { sys, dia, hr, user: window.userProfile?.name });
+  dbPush('bp_logs', { sys, dia, hr: savedHr });
+  postToServer('/bp', { sys, dia, hr: savedHr, user: window.userProfile?.name });
   updateHomeCards();
   document.getElementById('input-sys').value='';
   document.getElementById('input-dia').value='';
   document.getElementById('input-hr').value='';
   document.getElementById('bp-preview').style.display='none';
-  showToast('✅ 血壓數值已儲存！');
+  if (!hr) showToast('✅ 血壓已儲存！（未填心跳）');
+  else showToast('✅ 血壓與心跳數值已儲存！');
 }
 
 function renderBPChart() {
