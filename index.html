@@ -1787,6 +1787,65 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
       </div>
     </div>
 
+    <!-- JOURNAL PAGE -->
+    <div class="page" id="p-journal">
+      <div class="hero-block" style="background:linear-gradient(135deg,#1a365d,#2b6cb0 60%,#4299e1);min-height:168px;">
+        <div class="hb-row">
+          <button class="back-btn" onclick="goBack()">←</button>
+          <div><div class="hb-title">📝 照護日誌</div><div class="hb-sub">語音或文字記錄，AI 自動整理</div></div>
+        </div>
+      </div>
+
+      <div style="padding:14px 22px 0;">
+        <!-- 輸入區 -->
+        <div style="background:white;border-radius:16px;padding:16px;box-shadow:var(--sh);margin-bottom:14px;">
+          <div style="font-size:13px;font-weight:800;color:var(--g600);margin-bottom:10px;">🎙️ 今日照護記錄</div>
+          <textarea id="journal-input" placeholder="用語音或文字描述今天的照護狀況，例如：&#10;「阿嬤今天早上吃了一碗粥，精神不錯，有去散步，下午血壓偏高量到148，晚上說腳有點麻…」"
+            style="width:100%;height:140px;padding:12px;border-radius:12px;border:2px solid var(--g200);font-size:14px;font-family:var(--font);color:var(--g700);outline:none;resize:none;line-height:1.7;box-sizing:border-box;"
+            onfocus="this.style.borderColor='var(--blue-m)'"
+            onblur="this.style.borderColor='var(--g200)'"></textarea>
+
+          <!-- 語音輸入按鈕 -->
+          <div style="display:flex;gap:10px;margin-top:10px;">
+            <button id="voice-btn" onclick="toggleVoice()" style="flex:1;padding:11px;border-radius:12px;background:var(--g100);border:none;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:6px;">
+              🎙️ 語音輸入
+            </button>
+            <button onclick="clearJournal()" style="padding:11px 14px;border-radius:12px;background:var(--g100);border:none;font-size:14px;cursor:pointer;">🗑️</button>
+          </div>
+          <div id="voice-status" style="font-size:11px;color:var(--g400);text-align:center;margin-top:6px;display:none;">🔴 錄音中…說完後再按一次停止</div>
+        </div>
+
+        <!-- 生成按鈕 -->
+        <button onclick="generateJournal()" id="journal-gen-btn"
+          style="width:100%;padding:15px;border-radius:14px;background:linear-gradient(135deg,#2b6cb0,#3182CE);color:white;border:none;font-size:16px;font-weight:900;cursor:pointer;font-family:var(--font);margin-bottom:14px;display:flex;align-items:center;justify-content:center;gap:8px;">
+          ✨ AI 整理成報表
+        </button>
+
+        <!-- 報表結果 -->
+        <div id="journal-result" style="display:none;">
+          <div style="background:white;border-radius:16px;padding:16px;box-shadow:var(--sh);margin-bottom:12px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+              <div style="font-size:14px;font-weight:800;color:var(--g700);">📋 照護報表</div>
+              <div style="font-size:11px;color:var(--g400);" id="journal-date"></div>
+            </div>
+            <div id="journal-report-text" style="font-size:13px;color:var(--g700);line-height:1.9;white-space:pre-wrap;"></div>
+          </div>
+          <div style="display:flex;gap:10px;margin-bottom:24px;">
+            <button onclick="sendJournalLINE()" style="flex:1;padding:12px;border-radius:12px;background:#06C755;color:white;border:none;font-size:14px;font-weight:800;cursor:pointer;font-family:var(--font);">💬 傳送給家屬</button>
+            <button onclick="copyJournal()" style="flex:1;padding:12px;border-radius:12px;background:var(--g100);color:var(--g700);border:none;font-size:14px;font-weight:800;cursor:pointer;font-family:var(--font);">📋 複製</button>
+          </div>
+        </div>
+
+        <!-- 歷史日誌 -->
+        <div style="margin-bottom:24px;">
+          <div style="font-size:13px;font-weight:800;color:var(--g500);margin-bottom:10px;">📚 歷史日誌</div>
+          <div id="journal-history" style="display:flex;flex-direction:column;gap:8px;">
+            <div style="font-size:13px;color:var(--g400);text-align:center;padding:16px;">尚無歷史日誌</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div><!-- /screens -->
 
   <!-- Add Plan Modal -->
@@ -1833,6 +1892,10 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
   <!-- Bottom nav -->
   <nav class="bnav">
     <button class="nbtn on" data-pg="p-home" onclick="navTo('p-home')"><span class="ni">🏠</span><span class="nl">首頁</span></button>
+    <button class="nbtn" onclick="navTo('p-journal','fwd')" style="display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:6px;">
+      <div style="width:46px;height:46px;background:linear-gradient(135deg,#2b6cb0,#3182CE);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:white;box-shadow:0 4px 14px rgba(49,130,206,0.5);margin-top:-22px;border:3px solid white;">＋</div>
+      <span class="nl" style="margin-top:3px;">日誌</span>
+    </button>
     <button class="nbtn" data-pg="p-settings" onclick="navTo('p-settings')"><span class="ni">⚙️</span><span class="nl">設定</span></button>
   </nav>
 
@@ -1906,7 +1969,7 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
 </div>
 
 <script>
-const TAB_ORDER = ['p-home','p-med','p-report','p-stress','p-respite','p-settings','p-contacts','p-family','p-profile','p-ltc','p-db'];
+const TAB_ORDER = ['p-home','p-med','p-report','p-stress','p-respite','p-journal','p-settings','p-contacts','p-family','p-profile','p-ltc','p-db'];
 let curPage = 'p-home';
 let navStack = ['p-home'];
 
@@ -3069,6 +3132,7 @@ function renderMedPage() {
   const container = document.getElementById('med-today-list');
   if (!container) return;
   const now = new Date();
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
   const hhmm = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
   const today = now.toLocaleDateString('zh-TW',{month:'long',day:'numeric'});
   const badge = document.getElementById('med-date-badge');
@@ -3079,13 +3143,10 @@ function renderMedPage() {
   if (prog) { prog.textContent = `${done}/${total} 完成`; prog.style.background = done===total ? 'rgba(56,161,105,0.25)' : 'rgba(255,255,255,0.2)'; }
   const sorted = [...medList].sort((a,b) => a.time.localeCompare(b.time));
   container.innerHTML = sorted.map(med => {
-    const isPast    = hhmm > med.time;
-    const isNow = !med.taken && isPast && (() => {
-      const [mh, mm] = med.time.split(':').map(Number);
-      const medMinutes = mh * 60 + mm;
-      const nowMinutes = now.getHours() * 60 + now.getMinutes();
-      return nowMinutes >= medMinutes && nowMinutes - medMinutes <= 30;
-    })();
+    const [mh, mm] = med.time.split(':').map(Number);
+    const medMinutes = mh * 60 + mm;
+    const isPast = nowMinutes > medMinutes;
+    const isNow  = !med.taken && isPast && (nowMinutes - medMinutes <= 30);
     const tagCls = med.taken ? 'mt-ok' : isPast ? 'mt-act' : 'mt-pend';
     const tagTxt = med.taken ? '✅ 已服用' : isPast ? '確認服藥' : '⏳ 未到時間';
     const icoCls = med.taken ? 'mi-g' : isPast ? 'mi-y' : '';
@@ -4196,8 +4257,173 @@ function renderFamilyDashboard() {
 }
 
 // ════════════════════════════════════════
-// 👨‍👩‍👧 照顧者 / 家屬 雙介面切換
+// 📝 照護日誌
 // ════════════════════════════════════════
+let voiceRecognition = null;
+let isRecording = false;
+let journalHistory = [];
+
+function loadJournalHistory() {
+  try {
+    const s = localStorage.getItem(`yinan_journals_${activeProfileIdx}`);
+    if (s) journalHistory = JSON.parse(s);
+    else journalHistory = [];
+  } catch(e) { journalHistory = []; }
+  renderJournalHistory();
+}
+
+function saveJournalHistory() {
+  localStorage.setItem(`yinan_journals_${activeProfileIdx}`, JSON.stringify(journalHistory.slice(-20)));
+}
+
+function renderJournalHistory() {
+  const el = document.getElementById('journal-history');
+  if (!el) return;
+  if (journalHistory.length === 0) {
+    el.innerHTML = '<div style="font-size:13px;color:var(--g400);text-align:center;padding:16px;">尚無歷史日誌</div>';
+    return;
+  }
+  el.innerHTML = journalHistory.slice().reverse().slice(0, 5).map((j, i) => {
+    const d = new Date(j._ts).toLocaleString('zh-TW', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
+    return `<div style="background:white;border-radius:12px;padding:12px 14px;box-shadow:var(--sh);cursor:pointer;" onclick="showHistoryJournal(${journalHistory.length-1-i})">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+        <div style="font-size:13px;font-weight:800;color:var(--g700);">📋 ${j.profileName || '長輩'} 的照護日誌</div>
+        <div style="font-size:11px;color:var(--g400);">${d}</div>
+      </div>
+      <div style="font-size:12px;color:var(--g500);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">${j.rawText.slice(0, 50)}…</div>
+    </div>`;
+  }).join('');
+}
+
+function showHistoryJournal(idx) {
+  const j = journalHistory[idx];
+  if (!j) return;
+  document.getElementById('journal-input').value = j.rawText;
+  document.getElementById('journal-report-text').textContent = j.report;
+  document.getElementById('journal-date').textContent = new Date(j._ts).toLocaleString('zh-TW');
+  document.getElementById('journal-result').style.display = 'block';
+}
+
+function clearJournal() {
+  document.getElementById('journal-input').value = '';
+  document.getElementById('journal-result').style.display = 'none';
+}
+
+function toggleVoice() {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    showToast('⚠️ 此瀏覽器不支援語音輸入，請改用 Chrome');
+    return;
+  }
+  if (isRecording) {
+    voiceRecognition?.stop();
+    return;
+  }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  voiceRecognition = new SR();
+  voiceRecognition.lang = 'zh-TW';
+  voiceRecognition.continuous = true;
+  voiceRecognition.interimResults = true;
+  const textarea = document.getElementById('journal-input');
+  const btn = document.getElementById('voice-btn');
+  const status = document.getElementById('voice-status');
+  let finalText = textarea.value;
+
+  voiceRecognition.onstart = () => {
+    isRecording = true;
+    btn.style.background = 'var(--red-l)';
+    btn.style.color = 'var(--red-d)';
+    btn.innerHTML = '⏹️ 停止錄音';
+    status.style.display = 'block';
+  };
+  voiceRecognition.onresult = (e) => {
+    let interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) finalText += e.results[i][0].transcript;
+      else interim = e.results[i][0].transcript;
+    }
+    textarea.value = finalText + interim;
+  };
+  voiceRecognition.onend = () => {
+    isRecording = false;
+    btn.style.background = '';
+    btn.style.color = '';
+    btn.innerHTML = '🎙️ 語音輸入';
+    status.style.display = 'none';
+    textarea.value = finalText;
+  };
+  voiceRecognition.onerror = () => {
+    isRecording = false;
+    btn.innerHTML = '🎙️ 語音輸入';
+    status.style.display = 'none';
+    showToast('⚠️ 語音識別失敗，請再試一次');
+  };
+  voiceRecognition.start();
+}
+
+async function generateJournal() {
+  const text = document.getElementById('journal-input').value.trim();
+  if (!text) { showToast('⚠️ 請先輸入或錄音照護記錄'); return; }
+
+  const btn = document.getElementById('journal-gen-btn');
+  btn.innerHTML = '⏳ AI 整理中…';
+  btn.disabled = true;
+  btn.style.opacity = '0.7';
+
+  try {
+    const r = await fetch(SERVER_URL + '/ai-journal', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text,
+        profile: window.userProfile,
+        date: new Date().toLocaleString('zh-TW')
+      }),
+      signal: AbortSignal.timeout(30000)
+    });
+    const data = await r.json();
+    if (!data.ok) throw new Error(data.message);
+
+    // 顯示報表
+    document.getElementById('journal-report-text').textContent = data.report;
+    document.getElementById('journal-date').textContent = new Date().toLocaleString('zh-TW');
+    document.getElementById('journal-result').style.display = 'block';
+    document.getElementById('journal-result').scrollIntoView({ behavior:'smooth' });
+
+    // 儲存歷史
+    journalHistory.push({ _ts: new Date().toISOString(), rawText: text, report: data.report, profileName: window.userProfile?.name });
+    saveJournalHistory();
+    renderJournalHistory();
+    showToast('✅ 報表生成完成！');
+  } catch(e) {
+    showToast('❌ AI 服務失敗：' + e.message);
+  } finally {
+    btn.innerHTML = '✨ AI 整理成報表';
+    btn.disabled = false;
+    btn.style.opacity = '1';
+  }
+}
+
+function copyJournal() {
+  const text = document.getElementById('journal-report-text').textContent;
+  navigator.clipboard?.writeText(text).then(() => showToast('📋 已複製到剪貼簿'));
+}
+
+function sendJournalLINE() {
+  const report = document.getElementById('journal-report-text').textContent;
+  if (!report) return;
+  const contacts = emergencyContacts.filter(c => c.userId);
+  if (contacts.length === 0) { showToast('⚠️ 請先設定家屬 LINE User ID'); return; }
+
+  fetch(SERVER_URL + '/send-journal', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ report, contacts, profileName: window.userProfile?.name }),
+    signal: AbortSignal.timeout(10000)
+  }).then(r => r.json()).then(data => {
+    if (data.ok) showToast(`✅ 日誌已傳送給 ${contacts.length} 位家屬`);
+    else showToast('❌ 傳送失敗');
+  }).catch(() => showToast('❌ 連線失敗'));
+}
 let currentRole = 'caregiver'; // 'caregiver' | 'family'
 
 function toggleRoleView() {
@@ -4447,6 +4673,7 @@ function onPageEnter(id) {
   if (id === 'p-home') updateHomeCards();
   if (id === 'p-stress') { renderWeeklyTrend(); renderStressCalendar(); }
   if (id === 'p-contacts') { renderContactsList(); }
+  if (id === 'p-journal')  { loadJournalHistory(); }
 }
 
 let toastTimer;
