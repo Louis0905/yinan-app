@@ -370,17 +370,17 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
 /* dropdown */
 .acct-menu{position:fixed;top:auto;right:auto;z-index:9000;
   background:white;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.22);
-  min-width:210px;overflow:hidden;
+  min-width:250px;overflow:hidden;
   transform:scale(0.92) translateY(-8px);opacity:0;pointer-events:none;
   transition:all 0.2s cubic-bezier(0.34,1.56,0.64,1);transform-origin:top right;}
 .acct-menu.open{transform:scale(1) translateY(0);opacity:1;pointer-events:all;}
-.acct-menu-title{font-size:10px;font-weight:800;color:var(--g400);padding:12px 14px 6px;text-transform:uppercase;letter-spacing:0.6px;}
-.acct-item{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;transition:background 0.12s;}
+.acct-menu-title{font-size:11px;font-weight:800;color:var(--g400);padding:14px 16px 6px;text-transform:uppercase;letter-spacing:0.6px;}
+.acct-item{display:flex;align-items:center;gap:12px;padding:13px 16px;cursor:pointer;transition:background 0.12s;}
 .acct-item:active{background:var(--g100);}
 .acct-item.active-acct{background:var(--blue-l);}
-.acct-item .ai-av{font-size:24px;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--g100);}
-.acct-item .ai-info .ai-name{font-size:14px;font-weight:800;color:var(--g700);}
-.acct-item .ai-info .ai-role{font-size:11px;color:var(--g500);}
+.acct-item .ai-av{font-size:20px;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--g100);flex-shrink:0;}
+.acct-item .ai-info .ai-name{font-size:15px;font-weight:800;color:var(--g700);}
+.acct-item .ai-info .ai-role{font-size:12px;color:var(--g500);margin-top:1px;}
 .acct-item .ai-check{margin-left:auto;color:var(--blue-m);font-size:16px;font-weight:800;}
 .acct-divider{height:1px;background:var(--g100);margin:4px 0;}
 .acct-add{display:flex;align-items:center;gap:10px;padding:10px 14px 14px;cursor:pointer;color:var(--blue-m);font-size:13px;font-weight:700;}
@@ -976,10 +976,10 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
       <div class="hero-block" style="position:relative;padding-bottom:16px;">
         <!-- 右上角帳號按鈕 -->
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-          <div class="home-greet" id="home-greet">☀️ 早安</div>
-          <button class="acct-btn" id="acct-btn" onclick="toggleAcctMenu()">
-            <span class="acct-avatar" id="acct-avatar">👵</span>
-            <span class="acct-chevron" id="acct-chevron">▾</span>
+          <div class="home-greet" id="home-greet" style="font-size:22px;font-weight:900;">☀️ 早安</div>
+          <button class="acct-btn" id="acct-btn" onclick="toggleAcctMenu()" style="padding:9px 16px;gap:6px;border-radius:20px;">
+            <span style="font-size:14px;font-weight:900;color:white;letter-spacing:0.5px;">選單</span>
+            <span class="acct-chevron" id="acct-chevron" style="font-size:11px;">▾</span>
           </button>
         </div>
 
@@ -3110,11 +3110,23 @@ function updateClock() {
   const h = String(now.getHours()).padStart(2, '0');
   const m = String(now.getMinutes()).padStart(2, '0');
   const timeStr = `${h}:${m}`;
+  const hr = now.getHours();
+
   // 更新所有時鐘
   const mainClock = document.getElementById('sbar-time');
   if (mainClock) mainClock.textContent = timeStr;
   document.querySelectorAll('.sbar-clock').forEach(el => el.textContent = timeStr);
-  // 同步用藥頁（重新渲染過期狀態）
+
+  // 問候語隨時間變化
+  const greetEl = document.getElementById('home-greet');
+  if (greetEl) {
+    if (hr >= 5 && hr < 12)       greetEl.textContent = '☀️ 早安';
+    else if (hr >= 12 && hr < 18) greetEl.textContent = '🌤️ 午安';
+    else if (hr >= 18 && hr < 22) greetEl.textContent = '🌙 晚安';
+    else                           greetEl.textContent = '🌛 深夜了';
+  }
+
+  // 同步用藥頁
   renderMedPage();
 }
 
