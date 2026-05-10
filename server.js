@@ -338,7 +338,7 @@ const server = http.createServer(async (req, res) => {
                     action: {
                       type: 'uri',
                       label: '🏠 開啟銀安APP',
-                      uri: 'https://louis0905.github.io/yinan-app/%E9%8A%80%E5%AE%89APP.html'
+                      uri: 'https://louis0905.github.io/yinan-app/'
                     }
                   },
                   {
