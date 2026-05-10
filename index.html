@@ -2118,37 +2118,13 @@ function triggerSOS() {
   };
 
   if (navigator.geolocation) {
-    // 先顯示「取得位置中」
     const sendingTxt = document.querySelector('#sos-sending .st-s');
     if (sendingTxt) sendingTxt.innerHTML = '📍 取得 GPS 位置中…<br>📲 準備發送 LINE 通知';
 
-    // 先嘗試取得精確 GPS，最多等 15 秒
-    let gpsSent = false;
-    const gpsTimer = setTimeout(() => {
-      // 15 秒還沒拿到 → 先用低精度重試一次
-      if (!gpsSent) {
-        navigator.geolocation.getCurrentPosition(
-          pos => {
-            if (!gpsSent) { gpsSent = true; sendSOS(pos.coords.latitude.toFixed(6), pos.coords.longitude.toFixed(6), true); }
-          },
-          () => {
-            if (!gpsSent) { gpsSent = true; sendSOS(null, null, false); }
-          },
-          { timeout: 5000, enableHighAccuracy: false }
-        );
-      }
-    }, 15000);
-
     navigator.geolocation.getCurrentPosition(
-      pos => {
-        clearTimeout(gpsTimer);
-        if (!gpsSent) { gpsSent = true; sendSOS(pos.coords.latitude.toFixed(6), pos.coords.longitude.toFixed(6), true); }
-      },
-      () => {
-        clearTimeout(gpsTimer);
-        if (!gpsSent) { gpsSent = true; sendSOS(null, null, false); }
-      },
-      { timeout: 15000, enableHighAccuracy: true, maximumAge: 30000 }
+      pos => sendSOS(pos.coords.latitude.toFixed(6), pos.coords.longitude.toFixed(6), true),
+      ()  => sendSOS(null, null, false),
+      { timeout: 10000, enableHighAccuracy: true, maximumAge: 0 }
     );
   } else {
     sendSOS(null, null, false);
@@ -4735,7 +4711,13 @@ document.addEventListener('click', (e) => {
 const LIGHT_HERO_PAGES = new Set(['p-home']); // home has gradient but sbar floats above
 
 function onPageEnter(id) {
-  if (id === 'p-sos') { resetSOS(); resetSOSContacts(); renderSOSContacts(); }
+  if (id === 'p-sos') {
+    resetSOS(); resetSOSContacts(); renderSOSContacts();
+    // 提前請求 GPS 權限，讓用戶授權後再按 SOS 時能更快取得位置
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(() => {}, () => {}, { timeout: 3000, maximumAge: 60000 });
+    }
+  }
   if (id === 'p-family') renderFamilyDashboard();
   if (id === 'p-home') updateHomeCards();
   if (id === 'p-stress') { renderWeeklyTrend(); renderStressCalendar(); }
