@@ -321,7 +321,17 @@ const server = http.createServer(async (req, res) => {
                   {
                     type: 'box', layout: 'vertical',
                     backgroundColor: '#EBF8FF', cornerRadius: '8px', paddingAll: '10px', margin: 'sm',
-                    contents: [{ type: 'text', text: userId, size: 'xs', color: '#2b6cb0', wrap: true, weight: 'bold' }]
+                    contents: [
+                      { type: 'text', text: userId, size: 'xs', color: '#2b6cb0', wrap: true, weight: 'bold' }
+                    ],
+                    action: { type: 'clipboard', clipboardText: userId }
+                  },
+                  {
+                    type: 'box', layout: 'horizontal', margin: 'sm',
+                    contents: [{
+                      type: 'button', style: 'secondary', height: 'sm',
+                      action: { type: 'clipboard', clipboardText: userId, label: '📋 點此複製 User ID' }
+                    }]
                   },
                   { type: 'text', text: '請截圖此 ID 傳給照顧者，填入緊急聯絡人設定後，即可接收 SOS 通知。', size: 'xs', color: '#718096', wrap: true, margin: 'md' }
                 ]
