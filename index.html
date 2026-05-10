@@ -2096,10 +2096,10 @@ function triggerSOS() {
   const s = document.getElementById('sos-sending');
   s.classList.add('on');
 
-  let sent = false; // 確保只發送一次
+  let sent = false;
 
   const sendSOS = (lat, lng, isReal) => {
-    if (sent) return; // 已發送過，忽略
+    if (sent) return;
     sent = true;
     const payload = {
       user: window.userProfile?.name || '未知',
@@ -2118,10 +2118,37 @@ function triggerSOS() {
   };
 
   if (navigator.geolocation) {
+    // 先顯示「取得位置中」
+    const sendingTxt = document.querySelector('#sos-sending .st-s');
+    if (sendingTxt) sendingTxt.innerHTML = '📍 取得 GPS 位置中…<br>📲 準備發送 LINE 通知';
+
+    // 先嘗試取得精確 GPS，最多等 15 秒
+    let gpsSent = false;
+    const gpsTimer = setTimeout(() => {
+      // 15 秒還沒拿到 → 先用低精度重試一次
+      if (!gpsSent) {
+        navigator.geolocation.getCurrentPosition(
+          pos => {
+            if (!gpsSent) { gpsSent = true; sendSOS(pos.coords.latitude.toFixed(6), pos.coords.longitude.toFixed(6), true); }
+          },
+          () => {
+            if (!gpsSent) { gpsSent = true; sendSOS(null, null, false); }
+          },
+          { timeout: 5000, enableHighAccuracy: false }
+        );
+      }
+    }, 15000);
+
     navigator.geolocation.getCurrentPosition(
-      pos => sendSOS(pos.coords.latitude.toFixed(6), pos.coords.longitude.toFixed(6), true),
-      ()  => sendSOS(null, null, false),
-      { timeout: 5000, enableHighAccuracy: true }
+      pos => {
+        clearTimeout(gpsTimer);
+        if (!gpsSent) { gpsSent = true; sendSOS(pos.coords.latitude.toFixed(6), pos.coords.longitude.toFixed(6), true); }
+      },
+      () => {
+        clearTimeout(gpsTimer);
+        if (!gpsSent) { gpsSent = true; sendSOS(null, null, false); }
+      },
+      { timeout: 15000, enableHighAccuracy: true, maximumAge: 30000 }
     );
   } else {
     sendSOS(null, null, false);
