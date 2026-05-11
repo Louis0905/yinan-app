@@ -1110,7 +1110,7 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
       <div class="sos-state" id="sos-done">
         <span class="done-ico">✅</span>
         <div class="done-t" style="color:white;">已通知家人！</div>
-        <div class="st-s" style="color:rgba(255,255,255,0.85);">👨‍👩‍👧 LINE 已送出<br>📍 位置已分享</div>
+        <div class="st-s" id="sos-done-msg" style="color:rgba(255,255,255,0.85);">👨‍👩‍👧 LINE 已送出<br>📍 位置已分享</div>
         <div class="row-btns">
           <button class="btn-o" style="border-color:rgba(255,255,255,0.6);color:white;background:rgba(255,255,255,0.15);" onclick="openSOSMap()">📍 查看位置</button>
           <button class="btn-s" style="background:white;color:var(--red-d);" onclick="resetSOS();goBack()">返回首頁</button>
@@ -1658,9 +1658,14 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
             </div>
           </div>
           <div class="form-field">
-            <div class="ff-label">LINE User ID</div>
+            <div class="ff-label">LINE User ID（接收通知用）</div>
             <input class="ff-input" id="new-contact-uid" type="text" placeholder="Uxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
-            <div style="font-size:11px;color:var(--g400);margin-top:4px;">讓家屬加 Bot 好友後取得</div>
+            <div style="font-size:11px;color:var(--g400);margin-top:4px;">讓家屬加 Bot 好友後取得，用於 SOS 推播</div>
+          </div>
+          <div class="form-field">
+            <div class="ff-label">LINE ID（傳訊息用，選填）</div>
+            <input class="ff-input" id="new-contact-lineid" type="text" placeholder="例：louis0905（不含 @）">
+            <div style="font-size:11px;color:var(--g400);margin-top:4px;">LINE → 設定 → 個人檔案 → LINE ID</div>
           </div>
           <div class="form-field">
             <div class="ff-label">電話號碼（選填）</div>
@@ -2114,6 +2119,15 @@ function triggerSOS() {
     setTimeout(() => {
       s.classList.remove('on');
       document.getElementById('sos-done').classList.add('on');
+      // 更新完成畫面顯示 GPS 狀態
+      const doneMsg = document.getElementById('sos-done-msg');
+      if (doneMsg) {
+        if (isReal) {
+          doneMsg.innerHTML = `👨‍👩‍👧 LINE 已送出<br>📍 位置已分享（${lat}, ${lng}）`;
+        } else {
+          doneMsg.innerHTML = `👨‍👩‍👧 LINE 已送出<br>⚠️ 位置未取得，請口頭告知位置`;
+        }
+      }
     }, 500);
   };
 
@@ -2124,7 +2138,7 @@ function triggerSOS() {
     navigator.geolocation.getCurrentPosition(
       pos => sendSOS(pos.coords.latitude.toFixed(6), pos.coords.longitude.toFixed(6), true),
       ()  => sendSOS(null, null, false),
-      { timeout: 10000, enableHighAccuracy: true, maximumAge: 0 }
+      { timeout: 8000, enableHighAccuracy: true, maximumAge: 0 }
     );
   } else {
     sendSOS(null, null, false);
@@ -3835,7 +3849,7 @@ function renderContactsList() {
             <div style="font-size:15px;font-weight:900;color:var(--g700);">${c.name}</div>
             <span style="background:#FAF5FF;color:#6B46C1;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:700;">${c.relation||''}</span>
           </div>
-          <div style="font-size:11px;color:var(--g400);margin-bottom:4px;font-family:monospace;">${c.userId ? c.userId.slice(0,20)+'…' : '⚠️ 未填 User ID'}</div>
+          <div style="font-size:11px;color:var(--g400);margin-bottom:4px;font-family:monospace;">${c.userId ? 'User ID: ' + c.userId.slice(0,16)+'…' : c.lineId ? 'LINE ID: @'+c.lineId : '⚠️ 未填聯絡方式'}</div>
           <div style="display:flex;flex-wrap:wrap;gap:4px;">
             ${(c.notifyTypes||['sos']).map(t=>`<span style="background:var(--g100);color:var(--g600);padding:1px 7px;border-radius:8px;font-size:10px;font-weight:700;">${notifyLabels[t]||t}</span>`).join('')}
           </div>
@@ -3853,6 +3867,7 @@ function openAddContactModal() {
   selectedNotifyTypes = ['sos'];
   document.getElementById('new-contact-name').value = '';
   document.getElementById('new-contact-uid').value = '';
+  document.getElementById('new-contact-lineid').value = '';
   document.getElementById('new-contact-phone').value = '';
   document.querySelectorAll('#contact-relation-btns .profile-opt').forEach(b => b.classList.remove('sel'));
   document.querySelectorAll('#contact-notify-btns .profile-opt').forEach(b => {
@@ -3881,11 +3896,12 @@ function selectNotify(btn) {
 function saveNewContact() {
   const name   = document.getElementById('new-contact-name').value.trim();
   const userId = document.getElementById('new-contact-uid').value.trim();
+  const lineId = document.getElementById('new-contact-lineid').value.trim().replace('@','');
   const phone  = document.getElementById('new-contact-phone').value.trim();
   if (!name) { showToast('⚠️ 請輸入姓名'); return; }
-  if (!userId && !phone) { showToast('⚠️ 請填入 LINE User ID 或電話號碼'); return; }
+  if (!userId && !phone && !lineId) { showToast('⚠️ 請填入至少一種聯絡方式'); return; }
   if (userId && (!userId.startsWith('U') || userId.length < 10)) { showToast('⚠️ User ID 格式不正確（應以 U 開頭）'); return; }
-  emergencyContacts.push({ name, relation: selectedRelation, userId, phone, notifyTypes: selectedNotifyTypes });
+  emergencyContacts.push({ name, relation: selectedRelation, userId, lineId, phone, notifyTypes: selectedNotifyTypes });
   saveContacts();
   document.getElementById('add-contact-modal').classList.remove('on');
   renderContactsList();
@@ -3926,9 +3942,10 @@ function editContact(idx) {
   const c = emergencyContacts[idx];
   selectedRelation = c.relation || '';
   selectedNotifyTypes = c.notifyTypes || ['sos'];
-  document.getElementById('new-contact-name').value  = c.name;
-  document.getElementById('new-contact-uid').value   = c.userId || '';
-  document.getElementById('new-contact-phone').value = c.phone  || '';
+  document.getElementById('new-contact-name').value    = c.name;
+  document.getElementById('new-contact-uid').value     = c.userId  || '';
+  document.getElementById('new-contact-lineid').value  = c.lineId  || '';
+  document.getElementById('new-contact-phone').value   = c.phone   || '';
   document.querySelectorAll('#contact-relation-btns .profile-opt').forEach(b =>
     b.classList.toggle('sel', b.dataset.val === selectedRelation));
   document.querySelectorAll('#contact-notify-btns .profile-opt').forEach(b =>
@@ -4619,7 +4636,7 @@ function renderSOSContacts() {
 
   list.innerHTML = header + emergencyContacts.map((c, i) => {
     const av = relationEmoji[c.relation] || '👤';
-    const hasLINE = !!c.userId;
+    const hasLINE  = !!c.userId || !!c.lineId;
     const hasPhone = !!c.phone;
     const statusTxt = hasLINE && hasPhone ? 'LINE + 電話' : hasLINE ? 'LINE 通知' : hasPhone ? '電話' : '未設定';
     return `<div class="cc" id="sos-cc-${i}">
@@ -4629,16 +4646,19 @@ function renderSOSContacts() {
         <div class="cc-r" id="sos-cc-${i}-status">${c.relation ? c.relation + '・' : ''}${statusTxt}</div>
       </div>
       <div class="cc-actions">
-        ${hasLINE ? `<button class="cc-act-btn cc-line" onclick="openLINEChat('${c.userId}','sos-cc-${i}')" title="開啟 LINE 聊天">💬</button>` : ''}
+        ${hasLINE ? `<button class="cc-act-btn cc-line" onclick="openLINEChat('${c.lineId||''}','sos-cc-${i}')" title="開啟 LINE 聊天">💬</button>` : ''}
         ${hasPhone ? `<button class="cc-act-btn cc-call" onclick="startCallDirect('${c.name}','${av}','${c.phone}')" title="撥打電話">📞</button>` : ''}
       </div>
     </div>`;
   }).join('');
 }
 
-function openLINEChat(userId, ccId) {
-  // 開啟 LINE 對話（line://ti/p/{userId}）
-  window.open(`https://line.me/R/ti/p/${userId}`, '_blank');
+function openLINEChat(lineId, ccId) {
+  if (lineId) {
+    window.open(`https://line.me/R/ti/p/~${lineId}`, '_blank');
+  } else {
+    window.open(`https://line.me/R/ti/p/@862swulo`, '_blank');
+  }
   const statusEl = document.getElementById(ccId + '-status');
   if (statusEl) statusEl.innerHTML = '<span style="color:#06C755;font-weight:700;">💬 LINE 已開啟</span>';
 }
@@ -4715,7 +4735,7 @@ function onPageEnter(id) {
     resetSOS(); resetSOSContacts(); renderSOSContacts();
     // 提前請求 GPS 權限，讓用戶授權後再按 SOS 時能更快取得位置
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(() => {}, () => {}, { timeout: 3000, maximumAge: 60000 });
+      navigator.geolocation.getCurrentPosition(() => {}, () => {}, { timeout: 10000, maximumAge: 60000 });
     }
   }
   if (id === 'p-family') renderFamilyDashboard();
