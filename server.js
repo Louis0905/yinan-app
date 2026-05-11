@@ -287,6 +287,17 @@ const server = http.createServer(async (req, res) => {
       const userId = event.source?.userId;
       if (userId && (event.type === 'follow' || event.type === 'message')) {
         console.log(`\n👤 LINE User ID: ${userId}`);
+
+        // 如果用戶傳的是文字，判斷是否在回覆 LINE ID
+        if (event.type === 'message' && event.message?.type === 'text') {
+          const text = event.message.text.trim().replace('@', '');
+          // 如果不是查詢指令，當作是回覆 LINE ID
+          if (text !== '查看 User ID' && text.length > 0 && text.length < 30 && !text.includes(' ')) {
+            const replyMsg = `✅ 您的 LINE ID 確認！\n\n請將以下兩個資訊提供給照顧者：\n\n📋 通知 ID：\n${userId}\n\n💬 LINE ID：\n${text}\n\n照顧者填入緊急聯絡人設定後，即可接收通知及直接傳訊息給您！`;
+            await sendLINE(userId, replyMsg);
+            res.writeHead(200); res.end(JSON.stringify({ ok: true })); return;
+          }
+        }
         // 發送含按鈕的訊息（Flex Message）
         const flexMsg = {
           to: userId,
@@ -317,31 +328,27 @@ const server = http.createServer(async (req, res) => {
                   { type: 'text', text: '👋 歡迎加入銀安APP！', weight: 'bold', size: 'lg', color: '#1a202c' },
                   { type: 'text', text: '您已成功加入緊急通知名單', size: 'sm', color: '#718096', margin: 'sm' },
                   { type: 'separator', margin: 'lg' },
-                  { type: 'text', text: '① 填入「通知 ID」（接收 SOS 用）', weight: 'bold', size: 'sm', color: '#4a5568', margin: 'lg' },
+                  { type: 'text', text: '① 通知 ID（接收 SOS 用）', weight: 'bold', size: 'sm', color: '#4a5568', margin: 'lg' },
                   {
-                    type: 'box', layout: 'vertical',
+                    type: 'box', layout: 'horizontal',
                     backgroundColor: '#EBF8FF', cornerRadius: '8px', paddingAll: '10px', margin: 'sm',
+                    action: { type: 'clipboard', clipboardText: userId },
                     contents: [
-                      { type: 'text', text: userId, size: 'xs', color: '#2b6cb0', wrap: true, weight: 'bold' }
-                    ],
-                    action: { type: 'clipboard', clipboardText: userId }
+                      { type: 'text', text: userId, size: 'xxs', color: '#2b6cb0', wrap: true, weight: 'bold', flex: 5 },
+                      { type: 'text', text: '複製', size: 'xs', color: '#3182CE', weight: 'bold', flex: 1, align: 'end', gravity: 'center' }
+                    ]
                   },
-                  {
-                    type: 'button', style: 'secondary', height: 'sm', margin: 'sm',
-                    action: { type: 'clipboard', label: '📋 點此複製通知 ID', clipboardText: userId },
-                    color: '#EBF8FF'
-                  },
-                  { type: 'text', text: '👆 點此複製「通知 ID」', size: 'xs', color: '#718096', wrap: true, margin: 'xs', align: 'center' },
                   { type: 'separator', margin: 'lg' },
-                  { type: 'text', text: '② 查詢「LINE ID」（直接對話用）', weight: 'bold', size: 'sm', color: '#4a5568', margin: 'lg' },
+                  { type: 'text', text: '② LINE ID（直接對話用）', weight: 'bold', size: 'sm', color: '#4a5568', margin: 'lg' },
                   {
                     type: 'box', layout: 'vertical',
                     backgroundColor: '#F0FFF4', cornerRadius: '8px', paddingAll: '10px', margin: 'sm',
                     contents: [
-                      { type: 'text', text: 'LINE → 設定 → 個人檔案 → LINE ID', size: 'xs', color: '#276749', wrap: true, weight: 'bold' }
+                      { type: 'text', text: '請直接回覆您的 LINE ID 給我', size: 'sm', color: '#276749', wrap: true, weight: 'bold' },
+                      { type: 'text', text: '（LINE → 設定 → 個人檔案 → LINE ID）', size: 'xs', color: '#48BB78', wrap: true, margin: 'xs' }
                     ]
                   },
-                  { type: 'text', text: '將以上兩個 ID 都提供給照顧者，填入緊急聯絡人設定後，可接收 SOS 通知 & 直接傳訊息。', size: 'xs', color: '#718096', wrap: true, margin: 'md' }
+                  { type: 'text', text: '回覆後我會幫您確認，再提供給照顧者填入設定', size: 'xs', color: '#718096', wrap: true, margin: 'md' }
                 ]
               },
               footer: {
