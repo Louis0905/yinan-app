@@ -291,10 +291,73 @@ const server = http.createServer(async (req, res) => {
         // 如果用戶傳的是文字，判斷是否在回覆 LINE ID
         if (event.type === 'message' && event.message?.type === 'text') {
           const text = event.message.text.trim().replace('@', '');
-          // 如果不是查詢指令，當作是回覆 LINE ID
           if (text !== '查看 User ID' && text.length > 0 && text.length < 30 && !text.includes(' ')) {
-            const replyMsg = `✅ 您的 LINE ID 確認！\n\n請將以下兩個資訊提供給照顧者：\n\n📋 通知 ID：\n${userId}\n\n💬 LINE ID：\n${text}\n\n照顧者填入緊急聯絡人設定後，即可接收通知及直接傳訊息給您！`;
-            await sendLINE(userId, replyMsg);
+            const confirmFlex = {
+              to: userId,
+              messages: [{
+                type: 'flex',
+                altText: '✅ ID 整理完成，請截圖給照顧者',
+                contents: {
+                  type: 'bubble',
+                  hero: {
+                    type: 'box', layout: 'vertical',
+                    contents: [{ type: 'text', text: '🏥 銀安APP', size: 'xxl', weight: 'bold', color: '#ffffff', align: 'center' }],
+                    backgroundColor: '#3182CE', paddingAll: '20px'
+                  },
+                  body: {
+                    type: 'box', layout: 'vertical', spacing: 'md',
+                    contents: [
+                      { type: 'text', text: '✅ ID 整理完成！', weight: 'bold', size: 'lg', color: '#1a202c' },
+                      { type: 'text', text: '請截圖此訊息提供給照顧者填入設定', size: 'sm', color: '#718096', margin: 'sm' },
+                      { type: 'separator', margin: 'lg' },
+                      { type: 'text', text: '📋 User ID（接收 SOS 通知用）', weight: 'bold', size: 'sm', color: '#4a5568', margin: 'lg' },
+                      {
+                        type: 'box', layout: 'horizontal',
+                        backgroundColor: '#EBF8FF', cornerRadius: '8px', paddingAll: '10px', margin: 'sm',
+                        action: { type: 'clipboard', clipboardText: userId },
+                        contents: [
+                          { type: 'text', text: userId, size: 'xxs', color: '#2b6cb0', wrap: true, weight: 'bold', flex: 5 },
+                          { type: 'text', text: '複製', size: 'xs', color: '#3182CE', weight: 'bold', flex: 1, align: 'end', gravity: 'center' }
+                        ]
+                      },
+                      { type: 'separator', margin: 'lg' },
+                      { type: 'text', text: '💬 LINE ID（直接對話用）', weight: 'bold', size: 'sm', color: '#4a5568', margin: 'lg' },
+                      {
+                        type: 'box', layout: 'horizontal',
+                        backgroundColor: '#F0FFF4', cornerRadius: '8px', paddingAll: '10px', margin: 'sm',
+                        action: { type: 'clipboard', clipboardText: text },
+                        contents: [
+                          { type: 'text', text: text, size: 'sm', color: '#276749', wrap: true, weight: 'bold', flex: 5 },
+                          { type: 'text', text: '複製', size: 'xs', color: '#38A169', weight: 'bold', flex: 1, align: 'end', gravity: 'center' }
+                        ]
+                      },
+                      { type: 'text', text: '👆 點擊各區塊可分別複製', size: 'xs', color: '#718096', wrap: true, margin: 'sm', align: 'center' }
+                    ]
+                  },
+                  footer: {
+                    type: 'box', layout: 'vertical', spacing: 'sm',
+                    contents: [
+                      { type: 'button', style: 'primary', color: '#3182CE',
+                        action: { type: 'uri', label: '🏠 開啟銀安APP', uri: 'https://louis0905.github.io/yinan-app/' } }
+                    ]
+                  }
+                }
+              }]
+            };
+            const confirmBody = JSON.stringify(confirmFlex);
+            await new Promise((resolve) => {
+              const opts = {
+                hostname: 'api.line.me', path: '/v2/bot/message/push', method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${LINE_TOKEN}`, 'Content-Length': Buffer.byteLength(confirmBody) }
+              };
+              const req2 = https.request(opts, (res2) => {
+                let d = '';
+                res2.on('data', c => d += c);
+                res2.on('end', () => { console.log(`  LINE ID 確認訊息 ${res2.statusCode === 200 ? '✅' : '❌ ' + d}`); resolve(); });
+              });
+              req2.on('error', () => resolve());
+              req2.write(confirmBody); req2.end();
+            });
             res.writeHead(200); res.end(JSON.stringify({ ok: true })); return;
           }
         }
