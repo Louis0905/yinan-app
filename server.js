@@ -353,7 +353,6 @@ const server = http.createServer(async (req, res) => {
                     type: 'button',
                     style: 'primary',
                     color: '#3182CE',
-                    label: '🏠 開啟銀安APP',
                     action: {
                       type: 'uri',
                       label: '🏠 開啟銀安APP',
@@ -363,7 +362,6 @@ const server = http.createServer(async (req, res) => {
                   {
                     type: 'button',
                     style: 'secondary',
-                    label: '📋 再次查看我的 ID',
                     action: {
                       type: 'message',
                       label: '📋 再次查看我的 ID',
