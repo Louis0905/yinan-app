@@ -328,8 +328,7 @@ const server = http.createServer(async (req, res) => {
                   },
                   {
                     type: 'button', style: 'secondary', height: 'sm', margin: 'sm',
-                    label: '📋 點此複製通知 ID',
-                    action: { type: 'clipboard', clipboardText: userId },
+                    action: { type: 'clipboard', label: '📋 點此複製通知 ID', clipboardText: userId },
                     color: '#EBF8FF'
                   },
                   { type: 'text', text: '👆 點此複製「通知 ID」', size: 'xs', color: '#718096', wrap: true, margin: 'xs', align: 'center' },
