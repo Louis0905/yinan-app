@@ -317,7 +317,7 @@ const server = http.createServer(async (req, res) => {
                   { type: 'text', text: '👋 歡迎加入銀安APP！', weight: 'bold', size: 'lg', color: '#1a202c' },
                   { type: 'text', text: '您已成功加入緊急通知名單', size: 'sm', color: '#718096', margin: 'sm' },
                   { type: 'separator', margin: 'lg' },
-                  { type: 'text', text: '📋 您的 User ID', weight: 'bold', size: 'sm', color: '#4a5568', margin: 'lg' },
+                  { type: 'text', text: '① 填入「通知 ID」（接收 SOS 用）', weight: 'bold', size: 'sm', color: '#4a5568', margin: 'lg' },
                   {
                     type: 'box', layout: 'vertical',
                     backgroundColor: '#EBF8FF', cornerRadius: '8px', paddingAll: '10px', margin: 'sm',
@@ -327,13 +327,21 @@ const server = http.createServer(async (req, res) => {
                     action: { type: 'clipboard', clipboardText: userId }
                   },
                   {
-                    type: 'box', layout: 'horizontal', margin: 'sm',
-                    contents: [{
-                      type: 'button', style: 'secondary', height: 'sm',
-                      action: { type: 'clipboard', clipboardText: userId, label: '📋 點此複製 User ID' }
-                    }]
+                    type: 'button', style: 'secondary', height: 'sm', margin: 'sm',
+                    action: { type: 'clipboard', clipboardText: userId },
+                    color: '#EBF8FF'
                   },
-                  { type: 'text', text: '請截圖此 ID 傳給照顧者，填入緊急聯絡人設定後，即可接收 SOS 通知。', size: 'xs', color: '#718096', wrap: true, margin: 'md' }
+                  { type: 'text', text: '👆 點此複製「通知 ID」', size: 'xs', color: '#718096', wrap: true, margin: 'xs', align: 'center' },
+                  { type: 'separator', margin: 'lg' },
+                  { type: 'text', text: '② 查詢「LINE ID」（直接對話用）', weight: 'bold', size: 'sm', color: '#4a5568', margin: 'lg' },
+                  {
+                    type: 'box', layout: 'vertical',
+                    backgroundColor: '#F0FFF4', cornerRadius: '8px', paddingAll: '10px', margin: 'sm',
+                    contents: [
+                      { type: 'text', text: 'LINE → 設定 → 個人檔案 → LINE ID', size: 'xs', color: '#276749', wrap: true, weight: 'bold' }
+                    ]
+                  },
+                  { type: 'text', text: '將以上兩個 ID 都提供給照顧者，填入緊急聯絡人設定後，可接收 SOS 通知 & 直接傳訊息。', size: 'xs', color: '#718096', wrap: true, margin: 'md' }
                 ]
               },
               footer: {
