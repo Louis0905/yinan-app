@@ -303,32 +303,21 @@ const server = http.createServer(async (req, res) => {
           to: userId,
           messages: [{
             type: 'flex',
-            altText: '歡迎加入銀安APP！',
+            altText: '歡迎加入銀安APP！您的 User ID：' + userId,
             contents: {
               type: 'bubble',
               hero: {
-                type: 'box',
-                layout: 'vertical',
-                contents: [{
-                  type: 'text',
-                  text: '🏥 銀安APP',
-                  size: 'xxl',
-                  weight: 'bold',
-                  color: '#ffffff',
-                  align: 'center'
-                }],
-                backgroundColor: '#3182CE',
-                paddingAll: '20px'
+                type: 'box', layout: 'vertical',
+                contents: [{ type: 'text', text: '🏥 銀安APP', size: 'xxl', weight: 'bold', color: '#ffffff', align: 'center' }],
+                backgroundColor: '#3182CE', paddingAll: '20px'
               },
               body: {
-                type: 'box',
-                layout: 'vertical',
-                spacing: 'md',
+                type: 'box', layout: 'vertical', spacing: 'md',
                 contents: [
                   { type: 'text', text: '👋 歡迎加入銀安APP！', weight: 'bold', size: 'lg', color: '#1a202c' },
                   { type: 'text', text: '您已成功加入緊急通知名單', size: 'sm', color: '#718096', margin: 'sm' },
                   { type: 'separator', margin: 'lg' },
-                  { type: 'text', text: '① 通知 ID（接收 SOS 用）', weight: 'bold', size: 'sm', color: '#4a5568', margin: 'lg' },
+                  { type: 'text', text: '📋 您的 User ID', weight: 'bold', size: 'sm', color: '#4a5568', margin: 'lg' },
                   {
                     type: 'box', layout: 'horizontal',
                     backgroundColor: '#EBF8FF', cornerRadius: '8px', paddingAll: '10px', margin: 'sm',
@@ -338,43 +327,19 @@ const server = http.createServer(async (req, res) => {
                       { type: 'text', text: '複製', size: 'xs', color: '#3182CE', weight: 'bold', flex: 1, align: 'end', gravity: 'center' }
                     ]
                   },
+                  { type: 'text', text: '👆 點擊藍色區塊可複製', size: 'xs', color: '#718096', wrap: true, margin: 'xs', align: 'center' },
                   { type: 'separator', margin: 'lg' },
-                  { type: 'text', text: '② LINE ID（直接對話用）', weight: 'bold', size: 'sm', color: '#4a5568', margin: 'lg' },
-                  {
-                    type: 'box', layout: 'vertical',
-                    backgroundColor: '#F0FFF4', cornerRadius: '8px', paddingAll: '10px', margin: 'sm',
-                    contents: [
-                      { type: 'text', text: '請直接回覆您的 LINE ID 給我', size: 'sm', color: '#276749', wrap: true, weight: 'bold' },
-                      { type: 'text', text: '（LINE → 設定 → 個人檔案 → LINE ID）', size: 'xs', color: '#48BB78', wrap: true, margin: 'xs' }
-                    ]
-                  },
-                  { type: 'text', text: '回覆後我會幫您確認，再提供給照顧者填入設定', size: 'xs', color: '#718096', wrap: true, margin: 'md' }
+                  { type: 'text', text: '💬 LINE ID（直接對話用）', weight: 'bold', size: 'sm', color: '#4a5568', margin: 'lg' },
+                  { type: 'text', text: '請回覆您的 LINE ID 給我，收到後我會整理成一則訊息方便截圖給照顧者。\n\n查詢：LINE → 設定 → 個人檔案 → LINE ID', size: 'xs', color: '#718096', wrap: true, margin: 'sm' }
                 ]
               },
               footer: {
-                type: 'box',
-                layout: 'vertical',
-                spacing: 'sm',
+                type: 'box', layout: 'vertical', spacing: 'sm',
                 contents: [
-                  {
-                    type: 'button',
-                    style: 'primary',
-                    color: '#3182CE',
-                    action: {
-                      type: 'uri',
-                      label: '🏠 開啟銀安APP',
-                      uri: 'https://louis0905.github.io/yinan-app/'
-                    }
-                  },
-                  {
-                    type: 'button',
-                    style: 'secondary',
-                    action: {
-                      type: 'message',
-                      label: '📋 再次查看我的 ID',
-                      text: '查看 User ID'
-                    }
-                  }
+                  { type: 'button', style: 'primary', color: '#3182CE',
+                    action: { type: 'uri', label: '🏠 開啟銀安APP', uri: 'https://louis0905.github.io/yinan-app/' } },
+                  { type: 'button', style: 'secondary',
+                    action: { type: 'message', label: '📋 再次查看 User ID', text: '查看 User ID' } }
                 ]
               }
             }
