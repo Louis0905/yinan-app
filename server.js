@@ -285,145 +285,110 @@ const server = http.createServer(async (req, res) => {
     const body = await readBody(req);
     for (const event of (body.events||[])) {
       const userId = event.source?.userId;
-      if (userId && (event.type === 'follow' || event.type === 'message')) {
-        console.log(`\n👤 LINE User ID: ${userId}`);
+      if (!userId) continue;
 
-        // 如果用戶傳的是文字，判斷是否在回覆 LINE ID
-        if (event.type === 'message' && event.message?.type === 'text') {
-          const text = event.message.text.trim().replace('@', '');
-          if (text !== '查看 User ID' && text.length > 0 && text.length < 30 && !text.includes(' ')) {
-            const confirmFlex = {
-              to: userId,
-              messages: [{
-                type: 'flex',
-                altText: '✅ ID 整理完成，請截圖給照顧者',
-                contents: {
-                  type: 'bubble',
-                  hero: {
-                    type: 'box', layout: 'vertical',
-                    contents: [{ type: 'text', text: '🏥 銀安APP', size: 'xxl', weight: 'bold', color: '#ffffff', align: 'center' }],
-                    backgroundColor: '#3182CE', paddingAll: '20px'
-                  },
-                  body: {
-                    type: 'box', layout: 'vertical', spacing: 'md',
-                    contents: [
-                      { type: 'text', text: '✅ ID 整理完成！', weight: 'bold', size: 'lg', color: '#1a202c' },
-                      { type: 'text', text: '請截圖此訊息提供給照顧者填入設定', size: 'sm', color: '#718096', margin: 'sm' },
-                      { type: 'separator', margin: 'lg' },
-                      { type: 'text', text: '📋 User ID（接收 SOS 通知用）', weight: 'bold', size: 'sm', color: '#4a5568', margin: 'lg' },
-                      {
-                        type: 'box', layout: 'horizontal',
-                        backgroundColor: '#EBF8FF', cornerRadius: '8px', paddingAll: '10px', margin: 'sm',
-                        action: { type: 'clipboard', clipboardText: userId },
-                        contents: [
-                          { type: 'text', text: userId, size: 'xxs', color: '#2b6cb0', wrap: true, weight: 'bold', flex: 5 },
-                          { type: 'text', text: '複製', size: 'xs', color: '#3182CE', weight: 'bold', flex: 1, align: 'end', gravity: 'center' }
-                        ]
-                      },
-                      { type: 'separator', margin: 'lg' },
-                      { type: 'text', text: '💬 LINE ID（直接對話用）', weight: 'bold', size: 'sm', color: '#4a5568', margin: 'lg' },
-                      {
-                        type: 'box', layout: 'horizontal',
-                        backgroundColor: '#F0FFF4', cornerRadius: '8px', paddingAll: '10px', margin: 'sm',
-                        action: { type: 'clipboard', clipboardText: text },
-                        contents: [
-                          { type: 'text', text: text, size: 'sm', color: '#276749', wrap: true, weight: 'bold', flex: 5 },
-                          { type: 'text', text: '複製', size: 'xs', color: '#38A169', weight: 'bold', flex: 1, align: 'end', gravity: 'center' }
-                        ]
-                      },
-                      { type: 'text', text: '👆 點擊各區塊可分別複製', size: 'xs', color: '#718096', wrap: true, margin: 'sm', align: 'center' }
-                    ]
-                  },
-                  footer: {
-                    type: 'box', layout: 'vertical', spacing: 'sm',
-                    contents: [
-                      { type: 'button', style: 'primary', color: '#3182CE',
-                        action: { type: 'uri', label: '🏠 開啟銀安APP', uri: 'https://louis0905.github.io/yinan-app/' } }
-                    ]
-                  }
-                }
-              }]
-            };
-            const confirmBody = JSON.stringify(confirmFlex);
-            await new Promise((resolve) => {
-              const opts = {
-                hostname: 'api.line.me', path: '/v2/bot/message/push', method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${LINE_TOKEN}`, 'Content-Length': Buffer.byteLength(confirmBody) }
-              };
-              const req2 = https.request(opts, (res2) => {
-                let d = '';
-                res2.on('data', c => d += c);
-                res2.on('end', () => { console.log(`  LINE ID 確認訊息 ${res2.statusCode === 200 ? '✅' : '❌ ' + d}`); resolve(); });
-              });
-              req2.on('error', () => resolve());
-              req2.write(confirmBody); req2.end();
-            });
-            res.writeHead(200); res.end(JSON.stringify({ ok: true })); return;
-          }
-        }
-        // 發送含按鈕的訊息（Flex Message）
-        const flexMsg = {
+      // 只回應：加好友、查看User ID指令、LINE ID格式回覆
+      const isFollow = event.type === 'follow';
+      const isViewId = event.type === 'message' && event.message?.text === '查看 User ID';
+      const isLineIdReply = event.type === 'message' && event.message?.type === 'text' &&
+        /^[a-zA-Z0-9._-]{3,20}$/.test(event.message.text.trim().replace('@',''));
+
+      if (!isFollow && !isViewId && !isLineIdReply) continue; // 其他訊息不回覆
+
+      console.log(`\n👤 LINE User ID: ${userId} (${event.type})`);
+
+      // LINE ID 格式回覆 → 發確認卡片
+      if (isLineIdReply) {
+        const lineId = event.message.text.trim().replace('@','');
+        console.log(`  💬 收到 LINE ID: ${lineId}`);
+        const msg = {
           to: userId,
-          messages: [{
-            type: 'flex',
-            altText: '歡迎加入銀安APP！您的 User ID：' + userId,
-            contents: {
-              type: 'bubble',
-              hero: {
-                type: 'box', layout: 'vertical',
-                contents: [{ type: 'text', text: '🏥 銀安APP', size: 'xxl', weight: 'bold', color: '#ffffff', align: 'center' }],
-                backgroundColor: '#3182CE', paddingAll: '20px'
+          messages: [{ type: 'flex', altText: '✅ ID 整理完成，請截圖給照顧者',
+            contents: { type: 'bubble',
+              hero: { type: 'box', layout: 'vertical', backgroundColor: '#3182CE', paddingAll: '20px',
+                contents: [{ type: 'text', text: '🏥 銀安APP', size: 'xxl', weight: 'bold', color: '#ffffff', align: 'center' }]
               },
-              body: {
-                type: 'box', layout: 'vertical', spacing: 'md',
-                contents: [
-                  { type: 'text', text: '👋 歡迎加入銀安APP！', weight: 'bold', size: 'lg', color: '#1a202c' },
-                  { type: 'text', text: '您已成功加入緊急通知名單', size: 'sm', color: '#718096', margin: 'sm' },
-                  { type: 'separator', margin: 'lg' },
-                  { type: 'text', text: '📋 您的 User ID', weight: 'bold', size: 'sm', color: '#4a5568', margin: 'lg' },
-                  {
-                    type: 'box', layout: 'horizontal',
-                    backgroundColor: '#EBF8FF', cornerRadius: '8px', paddingAll: '10px', margin: 'sm',
-                    action: { type: 'clipboard', clipboardText: userId },
-                    contents: [
-                      { type: 'text', text: userId, size: 'xxs', color: '#2b6cb0', wrap: true, weight: 'bold', flex: 5 },
-                      { type: 'text', text: '複製', size: 'xs', color: '#3182CE', weight: 'bold', flex: 1, align: 'end', gravity: 'center' }
-                    ]
-                  },
-                  { type: 'text', text: '👆 點擊藍色區塊可複製', size: 'xs', color: '#718096', wrap: true, margin: 'xs', align: 'center' },
-                  { type: 'separator', margin: 'lg' },
-                  { type: 'text', text: '💬 LINE ID（直接對話用）', weight: 'bold', size: 'sm', color: '#4a5568', margin: 'lg' },
-                  { type: 'text', text: '請回覆您的 LINE ID 給我，收到後我會整理成一則訊息方便截圖給照顧者。\n\n查詢：LINE → 設定 → 個人檔案 → LINE ID', size: 'xs', color: '#718096', wrap: true, margin: 'sm' }
-                ]
-              },
-              footer: {
-                type: 'box', layout: 'vertical', spacing: 'sm',
-                contents: [
-                  { type: 'button', style: 'primary', color: '#3182CE',
-                    action: { type: 'uri', label: '🏠 開啟銀安APP', uri: 'https://louis0905.github.io/yinan-app/' } },
-                  { type: 'button', style: 'secondary',
-                    action: { type: 'message', label: '📋 再次查看 User ID', text: '查看 User ID' } }
-                ]
-              }
+              body: { type: 'box', layout: 'vertical', spacing: 'md', contents: [
+                { type: 'text', text: '✅ ID 整理完成！', weight: 'bold', size: 'lg', color: '#1a202c' },
+                { type: 'text', text: '請截圖提供給照顧者填入設定', size: 'sm', color: '#718096', margin: 'sm' },
+                { type: 'separator', margin: 'lg' },
+                { type: 'text', text: '📋 User ID（接收 SOS 通知用）', weight: 'bold', size: 'sm', color: '#4a5568', margin: 'lg' },
+                { type: 'box', layout: 'horizontal', backgroundColor: '#EBF8FF', cornerRadius: '8px', paddingAll: '10px', margin: 'sm',
+                  action: { type: 'clipboard', clipboardText: userId },
+                  contents: [
+                    { type: 'text', text: userId, size: 'xxs', color: '#2b6cb0', wrap: true, weight: 'bold', flex: 5 },
+                    { type: 'text', text: '複製', size: 'xs', color: '#3182CE', weight: 'bold', flex: 1, align: 'end', gravity: 'center' }
+                  ]
+                },
+                { type: 'separator', margin: 'lg' },
+                { type: 'text', text: '💬 LINE ID（直接對話用）', weight: 'bold', size: 'sm', color: '#4a5568', margin: 'lg' },
+                { type: 'box', layout: 'horizontal', backgroundColor: '#F0FFF4', cornerRadius: '8px', paddingAll: '10px', margin: 'sm',
+                  action: { type: 'clipboard', clipboardText: lineId },
+                  contents: [
+                    { type: 'text', text: lineId, size: 'sm', color: '#276749', wrap: true, weight: 'bold', flex: 5 },
+                    { type: 'text', text: '複製', size: 'xs', color: '#38A169', weight: 'bold', flex: 1, align: 'end', gravity: 'center' }
+                  ]
+                },
+                { type: 'text', text: '👆 點擊各區塊可分別複製', size: 'xs', color: '#718096', wrap: true, margin: 'sm', align: 'center' }
+              ]},
+              footer: { type: 'box', layout: 'vertical', spacing: 'sm', contents: [
+                { type: 'button', style: 'primary', color: '#3182CE',
+                  action: { type: 'uri', label: '🏠 開啟銀安APP', uri: 'https://louis0905.github.io/yinan-app/' } }
+              ]}
             }
           }]
         };
-        // 發送 Flex Message
-        const flexBody = JSON.stringify(flexMsg);
-        await new Promise((resolve) => {
-          const opts = {
-            hostname: 'api.line.me', path: '/v2/bot/message/push', method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${LINE_TOKEN}`, 'Content-Length': Buffer.byteLength(flexBody) }
-          };
-          const req2 = https.request(opts, (res2) => {
-            let d = '';
-            res2.on('data', c => d += c);
-            res2.on('end', () => { console.log(`  歡迎訊息 ${res2.statusCode === 200 ? '✅' : '❌ ' + d}`); resolve(); });
-          });
-          req2.on('error', () => resolve());
-          req2.write(flexBody); req2.end();
+        const mb = JSON.stringify(msg);
+        await new Promise(r => {
+          const o = { hostname:'api.line.me', path:'/v2/bot/message/push', method:'POST',
+            headers:{ 'Content-Type':'application/json', 'Authorization':`Bearer ${LINE_TOKEN}`, 'Content-Length':Buffer.byteLength(mb) } };
+          const rq = https.request(o, rs => { let d=''; rs.on('data',c=>d+=c); rs.on('end',()=>{ console.log(`  確認訊息 ${rs.statusCode===200?'✅':'❌ '+d}`); r(); }); });
+          rq.on('error', ()=>r()); rq.write(mb); rq.end();
         });
+        continue;
       }
+
+      // 加好友 或 查看User ID → 發歡迎訊息
+      const welcomeMsg = {
+        to: userId,
+        messages: [{ type: 'flex', altText: '歡迎加入銀安APP！您的 User ID：' + userId,
+          contents: { type: 'bubble',
+            hero: { type: 'box', layout: 'vertical', backgroundColor: '#3182CE', paddingAll: '20px',
+              contents: [{ type: 'text', text: '🏥 銀安APP', size: 'xxl', weight: 'bold', color: '#ffffff', align: 'center' }]
+            },
+            body: { type: 'box', layout: 'vertical', spacing: 'md', contents: [
+              { type: 'text', text: '👋 歡迎加入銀安APP！', weight: 'bold', size: 'lg', color: '#1a202c' },
+              { type: 'text', text: '您已成功加入緊急通知名單', size: 'sm', color: '#718096', margin: 'sm' },
+              { type: 'separator', margin: 'lg' },
+              { type: 'text', text: '📋 您的 User ID', weight: 'bold', size: 'sm', color: '#4a5568', margin: 'lg' },
+              { type: 'box', layout: 'horizontal', backgroundColor: '#EBF8FF', cornerRadius: '8px', paddingAll: '10px', margin: 'sm',
+                action: { type: 'clipboard', clipboardText: userId },
+                contents: [
+                  { type: 'text', text: userId, size: 'xxs', color: '#2b6cb0', wrap: true, weight: 'bold', flex: 5 },
+                  { type: 'text', text: '複製', size: 'xs', color: '#3182CE', weight: 'bold', flex: 1, align: 'end', gravity: 'center' }
+                ]
+              },
+              { type: 'text', text: '👆 點擊藍色區塊可複製', size: 'xs', color: '#718096', wrap: true, margin: 'xs', align: 'center' },
+              { type: 'separator', margin: 'lg' },
+              { type: 'text', text: '💬 LINE ID（直接對話用）', weight: 'bold', size: 'sm', color: '#4a5568', margin: 'lg' },
+              { type: 'text', text: '請回覆您的 LINE ID 給我，收到後我會整理成一則訊息方便截圖給照顧者。\n\n查詢：LINE → 設定 → 個人檔案 → LINE ID', size: 'xs', color: '#718096', wrap: true, margin: 'sm' }
+            ]},
+            footer: { type: 'box', layout: 'vertical', spacing: 'sm', contents: [
+              { type: 'button', style: 'primary', color: '#3182CE',
+                action: { type: 'uri', label: '🏠 開啟銀安APP', uri: 'https://louis0905.github.io/yinan-app/' } },
+              { type: 'button', style: 'secondary',
+                action: { type: 'message', label: '📋 再次查看 User ID', text: '查看 User ID' } }
+            ]}
+          }
+        }]
+      };
+      const wb = JSON.stringify(welcomeMsg);
+      await new Promise(r => {
+        const o = { hostname:'api.line.me', path:'/v2/bot/message/push', method:'POST',
+          headers:{ 'Content-Type':'application/json', 'Authorization':`Bearer ${LINE_TOKEN}`, 'Content-Length':Buffer.byteLength(wb) } };
+        const rq = https.request(o, rs => { let d=''; rs.on('data',c=>d+=c); rs.on('end',()=>{ console.log(`  歡迎訊息 ${rs.statusCode===200?'✅':'❌ '+d}`); r(); }); });
+        rq.on('error', ()=>r()); rq.write(wb); rq.end();
+      });
     }
     res.writeHead(200); res.end(JSON.stringify({ ok: true })); return;
   }
