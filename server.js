@@ -10,7 +10,7 @@ const LINE_TOKEN = 'ltvwoo7FoPeILJfjVxxu6xt60G2vaULO0BmYqmGYOVK+iSx1NuzMHfTlEZIQ
 
 // ── 自架 AI 設定 ──────────────────────────────────
 const AI_API_KEY  = 'Louis@0905';
-const AI_BASE_URL = 'http://60.251.180.157:8001/v1';
+const AI_BASE_URL = 'http://60.251.180.157:8000/v1';
 const AI_MODEL    = 'gpt-oss-20b-MXFP4-Q8';
 
 async function callAI(systemPrompt, userContent) {
@@ -401,14 +401,10 @@ const server = http.createServer(async (req, res) => {
 
     console.log(`\n🤖 [${now()}] AI 日誌生成 (${text.length} 字)`);
 
-    const systemPrompt = `你是一位專業的長照照護記錄助理。
-請將照顧者提供的口語記錄整理成結構化的照護日誌報表，使用繁體中文。
-格式要求：
-1. 簡潔清楚，方便家屬閱讀
-2. 自動分類：身體狀況、情緒狀態、飲食記錄、活動記錄、異常事項、待追蹤事項
-3. 沒有提到的項目不要留空白格，直接略過
-4. 結尾加上「照顧者建議」（如有需要）
-5. 輸出格式為純文字，用 emoji 輔助分類`;
+    const isAutoAlert = body.autoAlert === true;
+    const systemPrompt = isAutoAlert
+      ? `你是長照照護異常分析助理。根據偵測到的異常事件，生成簡短的家屬通知摘要（繁體中文，不超過150字）。先說明異常狀況，再給出建議行動。語氣溫和但明確。`
+      : `你是一位專業的長照照護記錄助理。請將照顧者提供的口語記錄整理成結構化的照護日誌報表，使用繁體中文。格式要求：1.簡潔清楚方便家屬閱讀 2.自動分類：身體狀況、情緒狀態、飲食記錄、活動記錄、異常事項、待追蹤事項 3.沒提到的項目直接略過 4.若為交接班記錄加上【交接重點】段落 5.結尾加上照顧者建議（如有需要）6.輸出純文字用emoji輔助分類`;
 
     const userContent = `照護對象：${profile?.name || '長輩'}
 記錄日期：${date || now()}
