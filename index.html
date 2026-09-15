@@ -3432,38 +3432,46 @@ function previewBP() {
 }
 
 function saveBP() {
-  const sys = parseInt(document.getElementById('input-sys').value);
-  const dia = parseInt(document.getElementById('input-dia').value);
-  const hr  = parseInt(document.getElementById('input-hr').value);
-  if (!sys || !dia) { showToast('⚠️ 請輸入收縮壓和舒張壓'); return; }
-  if (sys < 60 || sys > 250) { showToast('⚠️ 收縮壓數值異常（60–250）'); return; }
-  if (dia < 40 || dia > 150) { showToast('⚠️ 舒張壓數值異常（40–150）'); return; }
-  if (hr && (hr < 40 || hr > 250)) { showToast('⚠️ 心跳數值異常（40–250 bpm）'); return; }
-  // Update today's entry or add
+  const sysRaw = document.getElementById('input-sys').value;
+  const diaRaw = document.getElementById('input-dia').value;
+  const hrRaw  = document.getElementById('input-hr').value;
+  const sys = parseInt(sysRaw);
+  const dia = parseInt(diaRaw);
+  const hr  = parseInt(hrRaw);
+
+  // 輸入驗證
+  if (!sysRaw || !diaRaw) { showToast('⚠️ 請輸入收縮壓和舒張壓'); return; }
+  if (isNaN(sys) || sys < 60 || sys > 250) { showToast('⚠️ 收縮壓應介於 60–250 mmHg'); return; }
+  if (isNaN(dia) || dia < 40 || dia > 150) { showToast('⚠️ 舒張壓應介於 40–150 mmHg'); return; }
+  if (hrRaw && (isNaN(hr) || hr < 30 || hr > 250)) { showToast('⚠️ 心跳應介於 30–250 bpm'); return; }
+  if (sys <= dia) { showToast('⚠️ 收縮壓應大於舒張壓'); return; }
+
   const days = ['日','一','二','三','四','五','六'];
   const todayLabel = days[new Date().getDay()];
-  const savedHr = hr || 72;
+  const savedHr = hrRaw ? hr : 0;
   const idx = bpLogs.findIndex(b => b.date === '今' || b.date === todayLabel);
   if (idx >= 0) bpLogs[idx] = { date:'今', sys, dia, hr: savedHr };
   else { if (bpLogs.length >= 7) bpLogs.shift(); bpLogs.push({ date:'今', sys, dia, hr: savedHr }); }
-  // Update hero stats
+
+  // Hero 更新
   document.getElementById('rpt-bp-today').textContent = `${sys}/${dia}`;
   const hrDisplay = document.getElementById('rpt-hr-today');
-  if (hrDisplay && hr) {
-    hrDisplay.textContent = hr;
-    hrDisplay.style.color = hr < 60 ? '#2B6CB0' : hr > 100 ? '#E53E3E' : '#276749';
+  if (hrDisplay) {
+    if (savedHr) {
+      hrDisplay.textContent = savedHr;
+      hrDisplay.style.color = savedHr < 60 ? '#2B6CB0' : savedHr > 100 ? '#E53E3E' : '#276749';
+    } else {
+      hrDisplay.textContent = '--';
+      hrDisplay.style.color = 'var(--g400)';
+    }
   }
   document.getElementById('rpt-spo2-today').textContent = '98%';
 
-  // 合併血壓 + 心跳警示
+  // 血壓警示
   const s = getBPStatus(sys, dia);
   const alert = document.getElementById('rpt-alert');
   const alertTxt = document.getElementById('rpt-alert-txt');
   const alertSub = document.getElementById('rpt-alert-sub');
-  const hrAlertEl = document.getElementById('hr-alert');
-  const hrAlertTxt = document.getElementById('hr-alert-txt');
-
-  // 血壓警示
   if (alert && alertTxt) {
     if (s && s.level !== 'normal') {
       alert.style.display = 'flex';
@@ -3476,29 +3484,45 @@ function saveBP() {
   }
 
   // 心跳警示
-  if (hrAlertEl && hrAlertTxt && hr) {
-    if (hr > 100) {
+  const hrAlertEl  = document.getElementById('hr-alert');
+  const hrAlertTxt = document.getElementById('hr-alert-txt');
+  if (hrAlertEl && hrAlertTxt && savedHr) {
+    if (savedHr > 100) {
       hrAlertEl.style.display = 'flex';
-      hrAlertTxt.textContent = `⚠️ 心跳偏快（${hr} bpm）`;
-    } else if (hr < 60) {
+      hrAlertEl.style.background = '#FFF5F5';
+      hrAlertTxt.textContent = `💗 心跳偏快（${savedHr} bpm）`;
+    } else if (savedHr < 60) {
       hrAlertEl.style.display = 'flex';
       hrAlertEl.style.background = '#EBF8FF';
-      hrAlertTxt.textContent = `🔵 心跳偏慢（${hr} bpm）`;
+      hrAlertTxt.textContent = `🔵 心跳偏慢（${savedHr} bpm）`;
     } else {
       hrAlertEl.style.display = 'none';
     }
+  } else if (hrAlertEl) {
+    hrAlertEl.style.display = 'none';
   }
+
   renderBPChart();
   dbPush('bp_logs', { sys, dia, hr: savedHr });
   postToServer('/bp', { sys, dia, hr: savedHr, user: window.userProfile?.name });
   updateHomeCards();
-  // 自動異常偵測推播
-  if (s?.level === 'crisis') autoAlertAI('bp_crisis', { sys, dia, user: window.userProfile?.name });
-  else if (s?.level === 'high2' || s?.level === 'high1') autoAlertAI('bp_high', { sys, dia, user: window.userProfile?.name });
-  document.getElementById('input-sys').value='';
-  document.getElementById('input-dia').value='';
-  document.getElementById('input-hr').value='';
-  document.getElementById('bp-preview').style.display='none';
+
+  // 自動異常偵測 → AI分析 → LINE推播
+  if (s?.level === 'crisis') {
+    autoAlertAI('bp_crisis', { sys, dia, hr: savedHr, user: window.userProfile?.name });
+  } else if (s?.level === 'high2' || s?.level === 'high1') {
+    autoAlertAI('bp_high', { sys, dia, hr: savedHr, user: window.userProfile?.name });
+  }
+  if (savedHr && savedHr > 120) {
+    autoAlertAI('hr_high', { hr: savedHr, sys, dia, user: window.userProfile?.name });
+  } else if (savedHr && savedHr < 50) {
+    autoAlertAI('hr_low', { hr: savedHr, sys, dia, user: window.userProfile?.name });
+  }
+
+  document.getElementById('input-sys').value = '';
+  document.getElementById('input-dia').value = '';
+  document.getElementById('input-hr').value  = '';
+  document.getElementById('bp-preview').style.display = 'none';
   showToast('✅ 數值已儲存');
 }
 
@@ -4801,6 +4825,8 @@ async function autoAlertAI(triggerType, data) {
   const triggerMap = {
     bp_crisis:  { label:'🚨 血壓危象', notifyType:'bp' },
     bp_high:    { label:'⚠️ 血壓偏高', notifyType:'bp' },
+    hr_high:    { label:'💗 心跳偏快', notifyType:'bp' },
+    hr_low:     { label:'🔵 心跳偏慢', notifyType:'bp' },
     stress_red: { label:'🧠 壓力偏高', notifyType:'stress' },
     med_missed: { label:'💊 未服藥警示', notifyType:'med' },
     silence:    { label:'⏰ 異常沉默', notifyType:'sos' },
