@@ -999,7 +999,7 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
           <!-- 今日狀態整合在卡片底部 -->
           <div id="home-status-bar" style="display:flex;align-items:center;gap:7px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.15);">
             <div class="h-dot"></div>
-            <span id="home-status-txt" style="font-size:12px;color:rgba(255,255,255,0.9);font-weight:700;">今日狀態：正常</span>
+            <span id="home-status-txt" style="font-size:12px;color:rgba(255,255,255,0.9);font-weight:700;" data-i18n="status_normal">今日狀態：正常</span>
           </div>
         </div>
 
@@ -1016,7 +1016,7 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
         <!-- 下拉選單 -->
         <div class="acct-menu" id="acct-menu">
           <div id="acct-logged-in">
-            <div class="acct-menu-title">照護管理</div>
+            <div class="acct-menu-title" data-i18n="menu_care">照護管理</div>
             <div class="acct-item active-acct">
               <div class="ai-av" id="acct-av-display">👵</div>
               <div class="ai-info">
@@ -1042,19 +1042,19 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
             </div>
             <div class="acct-item" onclick="closeAcctMenu();toggleRoleView()">
               <div class="ai-av">👨‍👩‍👧</div>
-              <div class="ai-info"><div class="ai-name">家屬視角</div><div class="ai-role">切換至家屬照護總覽</div></div>
+              <div class="ai-info"><div class="ai-name" data-i18n="menu_family">家屬視角</div><div class="ai-role">切換至家屬照護總覽</div></div>
               <span style="color:var(--g300);font-size:16px;">›</span>
             </div>
             <div class="acct-divider"></div>
             <div class="acct-item" onclick="closeAcctMenu();showProfilesScreen()">
               <div class="ai-av">👥</div>
-              <div class="ai-info"><div class="ai-name">切換照護對象</div><div class="ai-role" id="acct-profiles-count">管理所有照護對象</div></div>
+              <div class="ai-info"><div class="ai-name" data-i18n="menu_switch">切換照護對象</div><div class="ai-role" id="acct-profiles-count">管理所有照護對象</div></div>
               <span style="color:var(--g300);font-size:16px;">›</span>
             </div>
             <div class="acct-divider"></div>
             <div class="acct-item" onclick="resetApp()" style="color:var(--red-d);">
               <div class="ai-av">🔄</div>
-              <div class="ai-info"><div class="ai-name" style="color:var(--red-d);">重新評估</div><div class="ai-role">清除資料重新開始</div></div>
+              <div class="ai-info"><div class="ai-name" style="color:var(--red-d);" data-i18n="menu_reassess">重新評估</div><div class="ai-role">清除資料重新開始</div></div>
             </div>
           </div>
         </div>
@@ -1192,7 +1192,7 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
       <div class="hero-block">
         <div class="hb-row">
           <button class="back-btn" onclick="goBack()">←</button>
-          <div><div class="hb-title" data-i18n="med_title">💊 用藥提醒</div><div class="hb-sub" data-i18n="med_sub">今天記得按時服藥！</div></div>
+          <div><div class="hb-title" data-i18n="med_title">💊 用藥提醒</div><div class="hb-sub" data-i18n="med_sub" data-i18n="med_sub">今天記得按時服藥！</div></div>
         </div>
         <div style="display:flex;gap:10px;margin-top:12px;">
           <div class="hb-badge" id="med-date-badge">📅 今天載入中…</div>
@@ -1268,7 +1268,7 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
       <div class="hero-block">
         <div class="hb-row">
           <button class="back-btn" onclick="goBack()">←</button>
-          <div><div class="hb-title" data-i18n="report_title">📊 健康報表</div><div class="hb-sub" data-i18n="report_sub">過去 7 天記錄</div></div>
+          <div><div class="hb-title" data-i18n="report_title">📊 健康報表</div><div class="hb-sub" data-i18n="report_sub" data-i18n="report_sub">過去 7 天記錄</div></div>
         </div>
         <div class="rpt-stats">
           <div class="rpt-st"><div class="rpt-v" id="rpt-bp-today">--/--</div><div class="rpt-l">今日血壓</div></div>
@@ -1346,7 +1346,7 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
       <div class="hero-block">
         <div class="hb-row">
           <button class="back-btn" onclick="goBack()">←</button>
-          <div><div class="hb-title" data-i18n="stress_title">🧠 壓力燈號</div><div class="hb-sub" data-i18n="stress_sub">今天感覺如何？</div></div>
+          <div><div class="hb-title" data-i18n="stress_title">🧠 壓力燈號</div><div class="hb-sub" data-i18n="stress_sub" data-i18n="stress_sub">今天感覺如何？</div></div>
         </div>
       </div>
       <div class="sec-t" style="padding-top:14px;">今天壓力幾分？</div>
@@ -1406,7 +1406,7 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
       <div class="hero-block">
         <div class="hb-row">
           <button class="back-btn" onclick="goBack()">←</button>
-          <div><div class="hb-title" data-i18n="respite_title">📅 喘息計畫</div><div class="hb-sub" id="respite-sub">本週照護安排</div></div>
+          <div><div class="hb-title" data-i18n="respite_title">📅 喘息計畫</div><div class="hb-sub" id="respite-sub" data-i18n="respite_sub">本週照護安排</div></div>
         </div>
       </div>
       <!-- Week strip: rendered by JS -->
@@ -1556,8 +1556,8 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
         <!-- 深色模式 -->
         <div class="dark-card" style="background:white;border-radius:14px;padding:16px;box-shadow:var(--sh);display:flex;align-items:center;justify-content:space-between;">
           <div>
-            <div style="font-size:15px;font-weight:800;color:var(--g700);">🌙 深色模式</div>
-            <div style="font-size:12px;color:var(--g500);margin-top:2px;">切換深色介面</div>
+            <div style="font-size:15px;font-weight:800;color:var(--g700);" data-i18n="dark_mode">🌙 深色模式</div>
+            <div style="font-size:12px;color:var(--g500);margin-top:2px;" data-i18n="dark_mode_sub">切換深色介面</div>
           </div>
           <div class="toggle-sw" id="dark-toggle" onclick="toggleDarkMode()">
             <div class="toggle-knob"></div>
@@ -1566,12 +1566,12 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
 
         <!-- 字體大小 -->
         <div class="dark-card" style="background:white;border-radius:14px;padding:16px;box-shadow:var(--sh);">
-          <div style="font-size:15px;font-weight:800;color:var(--g700);margin-bottom:12px;">🔤 字體大小</div>
+          <div style="font-size:15px;font-weight:800;color:var(--g700);margin-bottom:12px;" data-i18n="font_size_label">🔤 字體大小</div>
           <div style="display:flex;gap:8px;">
-            <button onclick="setFontSize('small')" id="fs-small" class="fs-btn">小</button>
-            <button onclick="setFontSize('medium')" id="fs-medium" class="fs-btn fs-active">中</button>
-            <button onclick="setFontSize('large')" id="fs-large" class="fs-btn">大</button>
-            <button onclick="setFontSize('xlarge')" id="fs-xlarge" class="fs-btn">特大</button>
+            <button onclick="setFontSize('small')" id="fs-small" class="fs-btn" data-i18n="font_sm">小</button>
+            <button onclick="setFontSize('medium')" id="fs-medium" class="fs-btn fs-active" data-i18n="font_md">中</button>
+            <button onclick="setFontSize('large')" id="fs-large" class="fs-btn" data-i18n="font_lg">大</button>
+            <button onclick="setFontSize('xlarge')" id="fs-xlarge" class="fs-btn" data-i18n="font_xl">特大</button>
           </div>
         </div>
 
@@ -2849,8 +2849,8 @@ function applyProfile(p) {
   const statusBar = document.getElementById('home-status-bar');
   if (statusTxt && p) {
     // 初始用風險等級，之後 updateTodayStatus 會動態覆蓋
-    const initStatus = {low:'今日狀態：正常', mid:'今日狀態：需留意', high:'今日狀態：高風險'};
-    statusTxt.textContent = initStatus[p.risk] || '今日狀態：正常';
+    const initStatus = {low: t('status_normal'), mid: t('status_warn'), high: t('status_high')};
+    statusTxt.textContent = initStatus[p.risk] || t('status_normal');
     if (statusBar) {
       const dot = statusBar.querySelector('.h-dot');
       if (dot) dot.style.background = {low:'#68D391', mid:'#F6E05E', high:'#FC8181'}[p.risk] || '#68D391';
@@ -2925,7 +2925,7 @@ function confirmMedTaken() {
   if (row) {
     row.classList.add('taken-state');
     const tag = row.querySelector('.med-tag');
-    if (tag) { tag.textContent = '✅ 已服用'; tag.className = 'med-tag mt-ok'; }
+    if (tag) { tag.textContent = t('taken'); tag.className = 'med-tag mt-ok'; }
   }
   // Update home med card
   document.getElementById('home-med-sub').textContent = '今日 2/3 完成';
@@ -3292,7 +3292,7 @@ function renderMedPage() {
     const isPast = nowMinutes > medMinutes;
     const isNow  = !med.taken && isPast && (nowMinutes - medMinutes <= 30);
     const tagCls = med.taken ? 'mt-ok' : isPast ? 'mt-act' : 'mt-pend';
-    const tagTxt = med.taken ? '✅ 已服用' : isPast ? '確認服藥' : '⏳ 未到時間';
+    const tagTxt = med.taken ? t('taken') : isPast ? t('confirm_med') : t('not_yet');
     const icoCls = med.taken ? 'mi-g' : isPast ? 'mi-y' : '';
     const onclick = med.taken ? '' : isPast ? `onclick="openMedById(${med.id})"` : '';
     const nowBadge = isNow ? `<span style="background:var(--red);color:white;font-size:9px;font-weight:800;padding:1px 6px;border-radius:8px;margin-left:6px;">現在</span>` : '';
@@ -3873,7 +3873,7 @@ function calcTodayStatus() {
 
   // SOS 今日有觸發 → 直接高關注
   const todaySOS = (db.sos_logs||[]).filter(l => new Date(l._ts).toDateString() === today);
-  if (todaySOS.length > 0) return { level:'high', txt:'今日狀態：需高度關注 🆘', color:'#FC8181' };
+  if (todaySOS.length > 0) return { level:'high', txt: t('status_high') + ' 🆘', color:'#FC8181' };
 
   // 血壓今日危象或第二期高血壓 → 直接高關注
   const lastBP = bpLogs[bpLogs.length-1];
@@ -3906,9 +3906,9 @@ function calcTodayStatus() {
   }
 
   // 結果
-  if (score >= 3) return { level:'high', txt:'今日狀態：需高度關注', color:'#FC8181' };
-  if (score >= 1) return { level:'mid',  txt:'今日狀態：需留意',     color:'#F6E05E' };
-  return           { level:'low',  txt:'今日狀態：正常',       color:'#68D391' };
+  if (score >= 3) return { level:'high', txt: t('status_high'), color:'#FC8181' };
+  if (score >= 1) return { level:'mid',  txt: t('status_warn'),  color:'#F6E05E' };
+  return           { level:'low',  txt: t('status_normal'),  color:'#68D391' };
 }
 
 function updateTodayStatus() {
@@ -4998,6 +4998,12 @@ const LANGS = {
     morning_shift: '早班', afternoon_shift: '午班', night_shift: '夜班',
     stress_submit: '提交今日狀態', menu_btn: '選單',
     alert_log: '⚠️ 異常紀錄', clear_log: '清除紀錄', no_alert: '目前無異常紀錄',
+    status_bp: '今日狀態：血壓異常 ⚠️',
+    med_history: '查看服藥歷史', med_progress: '完成',
+    menu_care: '照護管理', menu_switch: '切換照護對象',
+    menu_lang: '語言切換', menu_reassess: '重新評估', menu_family: '家屬視角',
+    font_size_label: '🔤 字體大小', font_sm: '小', font_md: '中', font_lg: '大', font_xl: '特大',
+    app_version: '銀安APP v1.0 · 讓照護更安心', contacts_set: '已設定',
     add_med: '＋ 新增藥物', quick_features: '快捷功能',
   },
   'zh-CN': {
@@ -5020,6 +5026,12 @@ const LANGS = {
     morning_shift: '早班', afternoon_shift: '午班', night_shift: '夜班',
     stress_submit: '提交今日状态', menu_btn: '选单',
     alert_log: '⚠️ 异常记录', clear_log: '清除记录', no_alert: '暂无异常记录',
+    status_bp: '今日状态：血压异常 ⚠️',
+    med_history: '查看服药历史', med_progress: '完成',
+    menu_care: '护理管理', menu_switch: '切换护理对象',
+    menu_lang: '语言切换', menu_reassess: '重新评估', menu_family: '家属视角',
+    font_size_label: '🔤 字体大小', font_sm: '小', font_md: '中', font_lg: '大', font_xl: '特大',
+    app_version: '银安APP v1.0 · 让照护更安心', contacts_set: '已设定',
     add_med: '＋ 新增药物', quick_features: '快捷功能',
   },
   'id': {
@@ -5042,6 +5054,12 @@ const LANGS = {
     morning_shift: 'Pagi', afternoon_shift: 'Siang', night_shift: 'Malam',
     stress_submit: 'Kirim Status Hari Ini', menu_btn: 'Menu',
     alert_log: '⚠️ Catatan Abnormal', clear_log: 'Hapus catatan', no_alert: 'Tidak ada catatan abnormal',
+    status_bp: 'Status: Tekanan darah abnormal ⚠️',
+    med_history: 'Lihat riwayat obat', med_progress: 'selesai',
+    menu_care: 'Manajemen Perawatan', menu_switch: 'Ganti Pasien',
+    menu_lang: 'Bahasa', menu_reassess: 'Evaluasi Ulang', menu_family: 'Tampilan Keluarga',
+    font_size_label: '🔤 Ukuran Font', font_sm: 'Kecil', font_md: 'Sedang', font_lg: 'Besar', font_xl: 'Sangat Besar',
+    app_version: 'YinanAPP v1.0 · Perawatan lebih mudah', contacts_set: 'Sudah diatur',
     add_med: '＋ Tambah Obat', quick_features: 'Fitur Cepat',
   },
   'vi': {
@@ -5064,6 +5082,12 @@ const LANGS = {
     morning_shift: 'Ca sáng', afternoon_shift: 'Ca chiều', night_shift: 'Ca tối',
     stress_submit: 'Gửi trạng thái hôm nay', menu_btn: 'Menu',
     alert_log: '⚠️ Nhật ký bất thường', clear_log: 'Xóa nhật ký', no_alert: 'Không có ghi chú bất thường',
+    status_bp: 'Trạng thái: Huyết áp bất thường ⚠️',
+    med_history: 'Xem lịch sử uống thuốc', med_progress: 'hoàn thành',
+    menu_care: 'Quản lý chăm sóc', menu_switch: 'Chuyển người được chăm sóc',
+    menu_lang: 'Ngôn ngữ', menu_reassess: 'Đánh giá lại', menu_family: 'Góc nhìn gia đình',
+    font_size_label: '🔤 Cỡ chữ', font_sm: 'Nhỏ', font_md: 'Vừa', font_lg: 'Lớn', font_xl: 'Rất lớn',
+    app_version: 'YinanAPP v1.0 · Chăm sóc dễ dàng hơn', contacts_set: 'Đã thiết lập',
     add_med: '＋ Thêm thuốc', quick_features: 'Tính năng nhanh',
   },
   'fil': {
@@ -5086,6 +5110,12 @@ const LANGS = {
     morning_shift: 'Umaga', afternoon_shift: 'Tanghali', night_shift: 'Gabi',
     stress_submit: 'I-submit ang status', menu_btn: 'Menu',
     alert_log: '⚠️ Abnormal Log', clear_log: 'I-clear ang log', no_alert: 'Walang abnormal na talaan',
+    status_bp: 'Status: Abnormal ang presyon ⚠️',
+    med_history: 'Tingnan ang kasaysayan ng gamot', med_progress: 'kumpleto',
+    menu_care: 'Pamamahala ng Pag-aalaga', menu_switch: 'Palitan ang pasyente',
+    menu_lang: 'Wika', menu_reassess: 'Muling suriin', menu_family: 'View ng Pamilya',
+    font_size_label: '🔤 Laki ng Font', font_sm: 'Maliit', font_md: 'Katamtaman', font_lg: 'Malaki', font_xl: 'Napakalaki',
+    app_version: 'YinanAPP v1.0 · Mas madaling pag-aalaga', contacts_set: 'Naitakda na',
     add_med: '＋ Dagdag Gamot', quick_features: 'Mabilis na Feature',
   }
 };
@@ -5108,7 +5138,7 @@ function applyLang() {
   if (genBtn) genBtn.innerHTML = t('ai_btn');
   const familyBtn   = document.getElementById('btn-send-family');
   const handoverBtn = document.getElementById('handover-send-btn');
-  if (familyBtn)   familyBtn.textContent   = t('send_family');
+  if (familyBtn)   familyBtn.textContent = t('send_family');
   if (handoverBtn) handoverBtn.textContent = t('send_handover');
 
   // 班別按鈕
@@ -5116,9 +5146,28 @@ function applyLang() {
   const shiftKeys = ['morning_shift','afternoon_shift','night_shift'];
   shiftBtns.forEach((el, i) => { if (shiftKeys[i]) el.textContent = t(shiftKeys[i]); });
 
+  // 壓力提交
+  const stressBtn = document.querySelector('.sub-btn');
+  if (stressBtn && !stressBtn.textContent.includes('✅')) stressBtn.textContent = t('stress_submit');
+
+  // 日誌頁籤
+  const jDaily    = document.getElementById('jmode-daily');
+  const jHandover = document.getElementById('jmode-handover');
+  const jHistory  = document.getElementById('jmode-history');
+  if (jDaily)    jDaily.textContent    = t('daily_tab');
+  if (jHandover) jHandover.textContent = t('handover_tab');
+  if (jHistory)  jHistory.textContent  = t('history_tab');
+
+  // 用藥頁動態內容重新渲染
+  if (document.getElementById('med-list')) renderMedPage();
+
+  // 首頁卡片動態內容重新渲染
+  updateHomeCards();
+
   // 問候語
   updateClock();
 }
+
 
 function setLang(lang) {
   currentLang = lang;
