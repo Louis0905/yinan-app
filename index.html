@@ -3149,8 +3149,10 @@ function submitStress() {
   dot.style.background = levelMap[selectedStress.level]; dot.style.fontSize = '15px'; dot.textContent = selectedStress.emoji;
   if (alertStrip) alertStrip.style.display = selectedStress.level === 'red' ? 'flex' : 'none';
   syncStressUI(selectedStress.emoji, selectedStress.level, true);
-  // 自動異常偵測推播
-  if (selectedStress.level === 'red') autoAlertAI('stress_red', { emoji: selectedStress.emoji, note, user: window.userProfile?.name });
+  // 本地異常紀錄（server 端會自動發 LINE）
+  if (selectedStress.level === 'red') {
+    pushAlertLog('stress_red', '🧠 壓力偏高', selectedStress.emoji, true);
+  }
   showToast('✅ 今日壓力狀態已記錄！');
 }
 
@@ -3518,16 +3520,17 @@ function saveBP() {
   postToServer('/bp', { sys, dia, hr: savedHr, user: window.userProfile?.name });
   updateHomeCards();
 
-  // 自動異常偵測 → AI分析 → LINE推播
-  if (s?.level === 'crisis') {
-    autoAlertAI('bp_crisis', { sys, dia, hr: savedHr, user: window.userProfile?.name });
-  } else if (s?.level === 'high2' || s?.level === 'high1') {
-    autoAlertAI('bp_high', { sys, dia, hr: savedHr, user: window.userProfile?.name });
+  // 本地異常紀錄（server 端會自動發 LINE，這裡只記錄）
+  const s2 = getBPStatus(sys, dia);
+  if (s2?.level === 'crisis') {
+    pushAlertLog('bp_crisis', '🚨 血壓危象', `${sys}/${dia} mmHg`, true);
+  } else if (s2?.level === 'high2' || s2?.level === 'high1') {
+    pushAlertLog('bp_high', '⚠️ 血壓偏高', `${sys}/${dia} mmHg`, true);
   }
   if (savedHr && savedHr > 120) {
-    autoAlertAI('hr_high', { hr: savedHr, sys, dia, user: window.userProfile?.name });
+    pushAlertLog('hr_high', '💗 心跳偏快', `${savedHr} bpm`, true);
   } else if (savedHr && savedHr < 50) {
-    autoAlertAI('hr_low', { hr: savedHr, sys, dia, user: window.userProfile?.name });
+    pushAlertLog('hr_low', '🔵 心跳偏慢', `${savedHr} bpm`, true);
   }
 
   document.getElementById('input-sys').value = '';
@@ -4933,32 +4936,36 @@ async function autoAlertAI(triggerType, data) {
   if (!trigger) return;
 
   const valueStr = data.sys ? `${data.sys}/${data.dia} mmHg` : data.hr ? `${data.hr} bpm` : data.emoji || '';
-  const hasContacts = emergencyContacts.filter(c => c.userId).length > 0;
+  const contacts = emergencyContacts.filter(c => c.userId);
+  pushAlertLog(triggerType, trigger.label, valueStr, contacts.length > 0);
+  if (contacts.length === 0) return;
 
-  // 記錄異常（不管有沒有聯絡人）
-  pushAlertLog(triggerType, trigger.label, valueStr, hasContacts);
-
-  if (!hasContacts) {
-    console.log(`  ℹ️ 無聯絡人，已記錄異常：${trigger.label}`);
-    return;
-  }
-
-  // 直接透過 /sos 端點發送（server 端自動篩選聯絡人）
   try {
-    const location = data.sys
-      ? `${trigger.label}｜血壓：${data.sys}/${data.dia} mmHg${data.hr ? `，心跳：${data.hr} bpm` : ''}`
-      : data.hr ? `${trigger.label}｜心跳：${data.hr} bpm`
-      : data.emoji ? `${trigger.label}｜壓力：${data.emoji}` : trigger.label;
-
-    await fetch(SERVER_URL + '/sos', {
+    // 呼叫 AI 生成分析摘要
+    const r = await fetch(SERVER_URL + '/ai-journal', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        user: window.userProfile?.name || '照顧者',
-        location,
-        lat: null, lng: null, gps_real: false,
+        text: `偵測到異常：${trigger.label}。數值：${valueStr}。照護對象：${window.userProfile?.name || '長輩'}。`,
+        profile: window.userProfile,
+        date: new Date().toLocaleString('zh-TW'),
+        mode: 'auto-alert',
+        autoAlert: true,
+      }),
+      signal: AbortSignal.timeout(20000)
+    });
+    const result = await r.json();
+    const report = result.ok ? result.report : `${trigger.label}\n數值：${valueStr}\n\n建議持續監測並告知醫師。`;
+
+    // 傳送給所有有 userId 的聯絡人
+    await fetch(SERVER_URL + '/send-journal', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        report: `${trigger.label}\n\n${report}`,
+        contacts,
+        profileName: window.userProfile?.name,
         isAutoAlert: true,
-        contacts: emergencyContacts,
       }),
       signal: AbortSignal.timeout(10000)
     });
