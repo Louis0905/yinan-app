@@ -212,7 +212,17 @@ const server = http.createServer(async (req, res) => {
     console.log(`🧠 [${now()}] ${body.user} 壓力:${body.emoji}(${body.level})`);
     if (body.level === 'red') {
       const contacts = body.contacts?.length ? body.contacts : savedContacts;
-      const msg = [`⚠️【銀安APP 壓力警示】`, ``, `📋 照護對象：${body.user}`, `⏰ 時間：${now()}`, `🧠 狀態：壓力偏高 ${body.emoji}`, body.note ? `📝 備註：${body.note}` : '', ``, `請關心照護對象的狀況。`].filter(Boolean).join('\n');
+      let report = `壓力偏高 ${body.emoji}${body.note ? `，備註：${body.note}` : ''}。建議適時休息並關心照顧者狀況。`;
+      try {
+        const aiResult = await callAI(
+          `你是長照照護異常分析助理。根據照顧者的壓力狀態生成簡短的家屬通知摘要（繁體中文，不超過80字）。語氣溫和關懷。`,
+          `照護對象：${body.user}，時間：${now()}，照顧者壓力狀態：${body.emoji}（紅燈）${body.note ? `，備註：${body.note}` : ''}。請生成通知摘要。`
+        );
+        report = aiResult;
+      } catch(e) {
+        console.log(`  ⚠️ AI 分析失敗，使用固定文字`);
+      }
+      const msg = `📋【銀安APP 照護日誌】\n\n照護對象：${body.user}\n時間：${now()}\n\n🧠 壓力偏高\n\n${report}`;
       broadcast(contacts, 'stress', msg);
     }
     res.writeHead(200);
@@ -229,25 +239,44 @@ const server = http.createServer(async (req, res) => {
     saveDB(db);
     console.log(`❤️  [${now()}] ${body.user} 血壓:${body.sys}/${body.dia} 心跳:${body.hr||'--'}`);
 
-    // APP 傳來的聯絡人（最新的，不受 Railway 重啟影響）
-    const contacts = body.contacts?.length ? body.contacts : savedContacts;
-
+    // 血壓異常 → AI 分析 → LINE
+    let alertMsg = null;
+    let alertLevel = null;
     if (body.sys >= 180 || body.dia >= 120) {
-      const msg = `🚨【銀安APP 血壓危象】\n\n📋 照護對象：${body.user}\n⏰ 時間：${now()}\n❤️ 血壓：${body.sys}/${body.dia} mmHg\n\n請立即協助就醫！`;
-      broadcast(contacts, 'bp', msg);
+      alertLevel = 'crisis';
+      alertMsg = `🚨 血壓危象｜${body.sys}/${body.dia} mmHg`;
     } else if (body.sys >= 160 || body.dia >= 100) {
-      const msg = `⚠️【銀安APP 血壓警示】\n\n📋 照護對象：${body.user}\n⏰ 時間：${now()}\n❤️ 血壓：${body.sys}/${body.dia} mmHg（第二期高血壓）\n\n建議盡快就醫確認。`;
-      broadcast(contacts, 'bp', msg);
+      alertLevel = 'high2';
+      alertMsg = `⚠️ 血壓偏高（第二期）｜${body.sys}/${body.dia} mmHg`;
     } else if (body.sys >= 140 || body.dia >= 90) {
-      const msg = `⚠️【銀安APP 血壓警示】\n\n📋 照護對象：${body.user}\n⏰ 時間：${now()}\n❤️ 血壓：${body.sys}/${body.dia} mmHg（第一期高血壓）\n\n建議與醫師討論用藥。`;
+      alertLevel = 'high1';
+      alertMsg = `⚠️ 血壓偏高（第一期）｜${body.sys}/${body.dia} mmHg`;
+    }
+
+    if (alertLevel) {
+      const contacts = body.contacts?.length ? body.contacts : savedContacts;
+      // 嘗試用 AI 生成分析，失敗則用固定文字
+      let report = alertMsg + `\n\n建議持續監測並告知醫師。`;
+      try {
+        const aiResult = await callAI(
+          `你是長照照護異常分析助理。根據血壓數值生成簡短的家屬通知摘要（繁體中文，不超過80字）。說明異常狀況並給出建議行動。語氣溫和但明確。`,
+          `照護對象：${body.user}，時間：${now()}，血壓：${body.sys}/${body.dia} mmHg${body.hr ? `，心跳：${body.hr} bpm` : ''}。請生成通知摘要。`
+        );
+        report = aiResult;
+      } catch(e) {
+        console.log(`  ⚠️ AI 分析失敗，使用固定文字`);
+      }
+      const msg = `📋【銀安APP 照護日誌】\n\n照護對象：${body.user}\n時間：${now()}\n\n${alertMsg.split('｜')[0]}\n\n${report}`;
       broadcast(contacts, 'bp', msg);
     }
 
     // 心跳異常
     if (body.hr && body.hr > 120) {
+      const contacts = body.contacts?.length ? body.contacts : savedContacts;
       const msg = `💗【銀安APP 心跳警示】\n\n📋 照護對象：${body.user}\n⏰ 時間：${now()}\n💗 心跳：${body.hr} bpm（偏快）\n\n建議休息並告知醫師。`;
       broadcast(contacts, 'bp', msg);
     } else if (body.hr && body.hr < 50) {
+      const contacts = body.contacts?.length ? body.contacts : savedContacts;
       const msg = `🔵【銀安APP 心跳警示】\n\n📋 照護對象：${body.user}\n⏰ 時間：${now()}\n🔵 心跳：${body.hr} bpm（偏慢）\n\n建議告知醫師。`;
       broadcast(contacts, 'bp', msg);
     }
