@@ -3141,7 +3141,7 @@ function submitStress() {
     });
     return;
   }
-  const payload = { emoji: selectedStress.emoji, level: selectedStress.level, user: window.userProfile?.name || '未知' };
+  const payload = { emoji: selectedStress.emoji, level: selectedStress.level, note, user: window.userProfile?.name || '未知', contacts: emergencyContacts };
   dbPush('stress_logs', payload);
   postToServer('/stress', payload);
   const dot = document.getElementById('today-trend-dot');
@@ -3517,7 +3517,7 @@ function saveBP() {
 
   renderBPChart();
   dbPush('bp_logs', { sys, dia, hr: savedHr });
-  postToServer('/bp', { sys, dia, hr: savedHr, user: window.userProfile?.name });
+  postToServer('/bp', { sys, dia, hr: savedHr, user: window.userProfile?.name, contacts: emergencyContacts });
   updateHomeCards();
 
   // 本地異常紀錄（server 端會自動發 LINE，這裡只記錄）
