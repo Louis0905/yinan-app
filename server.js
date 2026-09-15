@@ -10,7 +10,7 @@ const LINE_TOKEN = 'ltvwoo7FoPeILJfjVxxu6xt60G2vaULO0BmYqmGYOVK+iSx1NuzMHfTlEZIQ
 
 // ── 自架 AI 設定 ──────────────────────────────────
 const AI_API_KEY  = 'Louis@0905';
-const AI_BASE_URL = 'http://60.251.180.157:8000/v1';
+const AI_BASE_URL = 'http://60.251.180.157:8001/v1';
 const AI_MODEL    = 'gpt-oss-20b-MXFP4-Q8';
 
 async function callAI(systemPrompt, userContent) {
