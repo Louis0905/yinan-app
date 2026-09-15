@@ -1328,6 +1328,17 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
         <button class="rpt-btn" onclick="showToast('📄 PDF 匯出中…')">📄 匯出 PDF</button>
         <button class="rpt-btn" onclick="showToast('💬 分享至 LINE')">💬 分享 LINE</button>
       </div>
+
+      <!-- 異常事件紀錄 -->
+      <div style="padding:0 22px 24px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <div class="sec-t" style="padding:0;font-size:13px;font-weight:800;color:var(--g500);" data-i18n="alert_log">⚠️ 異常紀錄</div>
+          <button onclick="clearAlertLog()" style="font-size:11px;color:var(--g400);background:none;border:none;cursor:pointer;font-family:var(--font);" data-i18n="clear_log">清除紀錄</button>
+        </div>
+        <div id="alert-log-list" style="display:flex;flex-direction:column;gap:6px;">
+          <div style="font-size:12px;color:var(--g400);text-align:center;padding:12px;" data-i18n="no_alert">目前無異常紀錄</div>
+        </div>
+      </div>
     </div>
 
     <!-- STRESS -->
@@ -4815,12 +4826,106 @@ function sendJournalHandover() {
 }
 
 // ════════════════════════════════════════
-// 🤖 異常自動偵測→AI分析→LINE推播
+// ⚠️ 異常事件紀錄
 // ════════════════════════════════════════
+let alertLog = [];
+
+function loadAlertLog() {
+  try {
+    const s = localStorage.getItem(`yinan_alertlog_${activeProfileIdx}`);
+    alertLog = s ? JSON.parse(s) : [];
+  } catch(e) { alertLog = []; }
+  renderAlertLog();
+  restoreAlerts(); // 重新整理後恢復警示橫幅
+}
+
+function saveAlertLog() {
+  localStorage.setItem(`yinan_alertlog_${activeProfileIdx}`, JSON.stringify(alertLog.slice(-30)));
+}
+
+function pushAlertLog(type, label, value, notified) {
+  alertLog.push({
+    _ts: new Date().toISOString(),
+    type, label, value,
+    notified: notified || false,
+  });
+  saveAlertLog();
+  renderAlertLog();
+}
+
+function renderAlertLog() {
+  const el = document.getElementById('alert-log-list');
+  if (!el) return;
+  if (alertLog.length === 0) {
+    el.innerHTML = `<div style="font-size:12px;color:var(--g400);text-align:center;padding:12px;" data-i18n="no_alert">${t('no_alert')}</div>`;
+    return;
+  }
+  const colorMap = {
+    bp_crisis: '#FFF5F5', bp_high: '#FFFBEB',
+    hr_high: '#FFF5F5', hr_low: '#EBF8FF',
+    stress_red: '#F5F0FF', med_missed: '#FFFBEB', silence: '#FFF5F5'
+  };
+  el.innerHTML = alertLog.slice().reverse().slice(0, 10).map(a => {
+    const d = new Date(a._ts).toLocaleString('zh-TW', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
+    const bg = colorMap[a.type] || '#F7F7F7';
+    const notifBadge = a.notified
+      ? `<span style="font-size:10px;background:#E6FFF2;color:var(--green);padding:1px 7px;border-radius:6px;font-weight:700;">已通知</span>`
+      : `<span style="font-size:10px;background:var(--g100);color:var(--g400);padding:1px 7px;border-radius:6px;font-weight:700;">未通知</span>`;
+    return `<div style="background:${bg};border-radius:10px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <div style="font-size:12px;font-weight:800;color:var(--g700);">${a.label}</div>
+        <div style="font-size:11px;color:var(--g500);margin-top:2px;">${a.value || ''}</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:10px;color:var(--g400);">${d}</div>
+        <div style="margin-top:3px;">${notifBadge}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function clearAlertLog() {
+  alertLog = [];
+  saveAlertLog();
+  renderAlertLog();
+  showToast('✅ 異常紀錄已清除');
+}
+
+// 重新整理後恢復警示橫幅（從最新的 bpLogs 讀取）
+function restoreAlerts() {
+  const last = bpLogs[bpLogs.length - 1];
+  if (!last || last.date !== '今') return;
+  const s = getBPStatus(last.sys, last.dia);
+  const alert = document.getElementById('rpt-alert');
+  const alertTxt = document.getElementById('rpt-alert-txt');
+  const alertSub = document.getElementById('rpt-alert-sub');
+  const hrAlertEl  = document.getElementById('hr-alert');
+  const hrAlertTxt = document.getElementById('hr-alert-txt');
+  if (alert && alertTxt && s && s.level !== 'normal') {
+    alert.style.display = 'flex';
+    alertTxt.textContent = s.label + `（${last.sys}/${last.dia} mmHg）`;
+    if (alertSub) alertSub.textContent = s.level === 'crisis' ? '請立即就醫！' : s.level === 'high2' ? '建議盡快就醫' : '建議與醫師討論';
+    alert.style.background = (s.level === 'crisis' || s.level === 'high2') ? 'var(--red-l)' : '#FFFBEB';
+  }
+  if (hrAlertEl && hrAlertTxt && last.hr) {
+    if (last.hr > 100) {
+      hrAlertEl.style.display = 'flex';
+      hrAlertEl.style.background = '#FFF5F5';
+      hrAlertTxt.textContent = `💗 心跳偏快（${last.hr} bpm）`;
+    } else if (last.hr < 60) {
+      hrAlertEl.style.display = 'flex';
+      hrAlertEl.style.background = '#EBF8FF';
+      hrAlertTxt.textContent = `🔵 心跳偏慢（${last.hr} bpm）`;
+    }
+  }
+}
 async function autoAlertAI(triggerType, data) {
   // 不依賴人工，自動生成摘要並推播
   const contacts = emergencyContacts.filter(c => c.userId);
-  if (contacts.length === 0) return;
+  if (contacts.length === 0) {
+    console.log(`  ℹ️ 無${trigger.notifyType}通知聯絡人，已記錄異常`);
+    return;
+  }
 
   const triggerMap = {
     bp_crisis:  { label:'🚨 血壓危象', notifyType:'bp' },
@@ -4833,6 +4938,12 @@ async function autoAlertAI(triggerType, data) {
   };
   const trigger = triggerMap[triggerType];
   if (!trigger) return;
+
+  const alertContacts = emergencyContacts.filter(c => c.userId && (c.notifyTypes||['sos']).includes(trigger.notifyType));
+  const valueStr = data.sys ? `${data.sys}/${data.dia} mmHg` : data.hr ? `${data.hr} bpm` : data.emoji || '';
+
+  // 先記錄到異常紀錄（不管有沒有聯絡人）
+  pushAlertLog(triggerType, trigger.label, valueStr, alertContacts.length > 0);
 
   try {
     // 呼叫 AI 生成簡短分析
@@ -4857,7 +4968,7 @@ async function autoAlertAI(triggerType, data) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         report: `${trigger.label}\n\n${result.report}`,
-        contacts: contacts.filter(c => (c.notifyTypes||['sos']).includes(trigger.notifyType)),
+        contacts: alertContacts,
         profileName: window.userProfile?.name,
         isAutoAlert: true,
       }),
@@ -4891,6 +5002,7 @@ const LANGS = {
     fall_risk: '⚠️ 跌倒風險', need_doctor: '🏥 需要回診', unstable: '😟 情緒不穩',
     morning_shift: '早班', afternoon_shift: '午班', night_shift: '夜班',
     stress_submit: '提交今日狀態', menu_btn: '選單',
+    alert_log: '⚠️ 異常紀錄', clear_log: '清除紀錄', no_alert: '目前無異常紀錄',
     add_med: '＋ 新增藥物', quick_features: '快捷功能',
   },
   'zh-CN': {
@@ -4912,6 +5024,7 @@ const LANGS = {
     fall_risk: '⚠️ 跌倒风险', need_doctor: '🏥 需要复诊', unstable: '😟 情绪不稳',
     morning_shift: '早班', afternoon_shift: '午班', night_shift: '夜班',
     stress_submit: '提交今日状态', menu_btn: '选单',
+    alert_log: '⚠️ 异常记录', clear_log: '清除记录', no_alert: '暂无异常记录',
     add_med: '＋ 新增药物', quick_features: '快捷功能',
   },
   'id': {
@@ -4933,6 +5046,7 @@ const LANGS = {
     fall_risk: '⚠️ Risiko jatuh', need_doctor: '🏥 Perlu dokter', unstable: '😟 Emosi tidak stabil',
     morning_shift: 'Pagi', afternoon_shift: 'Siang', night_shift: 'Malam',
     stress_submit: 'Kirim Status Hari Ini', menu_btn: 'Menu',
+    alert_log: '⚠️ Catatan Abnormal', clear_log: 'Hapus catatan', no_alert: 'Tidak ada catatan abnormal',
     add_med: '＋ Tambah Obat', quick_features: 'Fitur Cepat',
   },
   'vi': {
@@ -4954,6 +5068,7 @@ const LANGS = {
     fall_risk: '⚠️ Nguy cơ ngã', need_doctor: '🏥 Cần khám BS', unstable: '😟 Cảm xúc không ổn',
     morning_shift: 'Ca sáng', afternoon_shift: 'Ca chiều', night_shift: 'Ca tối',
     stress_submit: 'Gửi trạng thái hôm nay', menu_btn: 'Menu',
+    alert_log: '⚠️ Nhật ký bất thường', clear_log: 'Xóa nhật ký', no_alert: 'Không có ghi chú bất thường',
     add_med: '＋ Thêm thuốc', quick_features: 'Tính năng nhanh',
   },
   'fil': {
@@ -4975,6 +5090,7 @@ const LANGS = {
     fall_risk: '⚠️ Panganib mahulog', need_doctor: '🏥 Kailangan ng doktor', unstable: '😟 Hindi stable',
     morning_shift: 'Umaga', afternoon_shift: 'Tanghali', night_shift: 'Gabi',
     stress_submit: 'I-submit ang status', menu_btn: 'Menu',
+    alert_log: '⚠️ Abnormal Log', clear_log: 'I-clear ang log', no_alert: 'Walang abnormal na talaan',
     add_med: '＋ Dagdag Gamot', quick_features: 'Mabilis na Feature',
   }
 };
@@ -5274,6 +5390,7 @@ function onPageEnter(id) {
   if (id === 'p-family') renderFamilyDashboard();
   if (id === 'p-home') updateHomeCards();
   if (id === 'p-stress') { renderWeeklyTrend(); renderStressCalendar(); }
+  if (id === 'p-report')   { renderBPChart(); loadAlertLog(); }
   if (id === 'p-contacts') { renderContactsList(); }
   if (id === 'p-journal')  { loadJournalHistory(); }
 }
