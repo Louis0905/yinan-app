@@ -1026,6 +1026,15 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
               <span class="ai-check">✓</span>
             </div>
             <div class="acct-divider"></div>
+            <div style="padding:8px 14px 4px;font-size:10px;font-weight:800;color:var(--g400);letter-spacing:1px;">🌐 語言 / LANGUAGE</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;padding:4px 14px 10px;">
+              <button onclick="setLang('zh-TW')" style="padding:4px 10px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);border:1px solid var(--g200);background:white;">🇹🇼 繁中</button>
+              <button onclick="setLang('zh-CN')" style="padding:4px 10px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);border:1px solid var(--g200);background:white;">🇨🇳 简中</button>
+              <button onclick="setLang('id')"    style="padding:4px 10px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);border:1px solid var(--g200);background:white;">🇮🇩 IND</button>
+              <button onclick="setLang('vi')"    style="padding:4px 10px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);border:1px solid var(--g200);background:white;">🇻🇳 VIE</button>
+              <button onclick="setLang('fil')"   style="padding:4px 10px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);border:1px solid var(--g200);background:white;">🇵🇭 FIL</button>
+            </div>
+            <div class="acct-divider"></div>
             <div class="acct-item" onclick="navTo('p-settings','fwd');closeAcctMenu()">
               <div class="ai-av">⚙️</div>
               <div class="ai-info"><div class="ai-name">設定</div><div class="ai-role">深色模式、字體大小</div></div>
@@ -1054,30 +1063,30 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
       <div class="sos-wrap">
         <button class="sos-big" onclick="navTo('p-sos','fwd')">
           <span class="sos-emoji">🆘</span>
-          <div><div class="sos-label">SOS</div><div class="sos-sub">緊急求助</div></div>
+          <div><div class="sos-label" data-i18n="sos_label">SOS</div><div class="sos-sub" data-i18n="sos_sub">緊急求助</div></div>
         </button>
       </div>
-      <div class="sec-t">快捷功能</div>
+      <div class="sec-t" data-i18n="quick_features">快捷功能</div>
       <div class="grid2">
         <button class="fcard" onclick="navTo('p-med','fwd')">
           <div class="fc-bar" style="background:var(--green-m)"></div>
-          <span class="fc-icon">💊</span><div class="fc-t">用藥提醒</div>
+          <span class="fc-icon">💊</span><div class="fc-t" data-i18n="med">用藥提醒</div>
           <div class="fc-s" id="home-med-sub">今日 0/3 完成</div>
           <div id="home-med-bar" style="margin-top:6px;height:4px;border-radius:2px;background:var(--g100);overflow:hidden;"><div id="home-med-bar-fill" style="height:100%;width:0%;background:var(--green-m);transition:width 0.4s;border-radius:2px;"></div></div>
         </button>
         <button class="fcard" onclick="navTo('p-report','fwd')">
           <div class="fc-bar" style="background:var(--blue-m)"></div>
-          <span class="fc-icon">📊</span><div class="fc-t">健康報表</div>
+          <span class="fc-icon">📊</span><div class="fc-t" data-i18n="report">健康報表</div>
           <div class="fc-s" id="home-bp-sub">血壓 <span class="badge-r" id="home-bp-badge">尚未量測</span></div>
         </button>
         <button class="fcard" onclick="navTo('p-stress','fwd')">
           <div class="fc-bar" style="background:var(--purple)"></div>
-          <span class="fc-icon">🧠</span><div class="fc-t">壓力燈號</div>
+          <span class="fc-icon">🧠</span><div class="fc-t" data-i18n="stress">壓力燈號</div>
           <div class="fc-s" id="home-stress-sub">今日未填</div>
         </button>
         <button class="fcard" onclick="navTo('p-respite','fwd')">
           <div class="fc-bar" style="background:var(--orange)"></div>
-          <span class="fc-icon">📅</span><div class="fc-t">喘息計畫</div>
+          <span class="fc-icon">📅</span><div class="fc-t" data-i18n="respite">喘息計畫</div>
           <div class="fc-s" id="home-respite-sub">明日：日照</div>
         </button>
       </div>
@@ -1183,7 +1192,7 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
       <div class="hero-block">
         <div class="hb-row">
           <button class="back-btn" onclick="goBack()">←</button>
-          <div><div class="hb-title">💊 用藥提醒</div><div class="hb-sub">今天記得按時服藥！</div></div>
+          <div><div class="hb-title" data-i18n="med_title">💊 用藥提醒</div><div class="hb-sub" data-i18n="med_sub">今天記得按時服藥！</div></div>
         </div>
         <div style="display:flex;gap:10px;margin-top:12px;">
           <div class="hb-badge" id="med-date-badge">📅 今天載入中…</div>
@@ -1259,7 +1268,7 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
       <div class="hero-block">
         <div class="hb-row">
           <button class="back-btn" onclick="goBack()">←</button>
-          <div><div class="hb-title">📊 健康報表</div><div class="hb-sub">過去 7 天記錄</div></div>
+          <div><div class="hb-title" data-i18n="report_title">📊 健康報表</div><div class="hb-sub" data-i18n="report_sub">過去 7 天記錄</div></div>
         </div>
         <div class="rpt-stats">
           <div class="rpt-st"><div class="rpt-v" id="rpt-bp-today">--/--</div><div class="rpt-l">今日血壓</div></div>
@@ -1326,7 +1335,7 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
       <div class="hero-block">
         <div class="hb-row">
           <button class="back-btn" onclick="goBack()">←</button>
-          <div><div class="hb-title">🧠 壓力燈號</div><div class="hb-sub">今天感覺如何？</div></div>
+          <div><div class="hb-title" data-i18n="stress_title">🧠 壓力燈號</div><div class="hb-sub" data-i18n="stress_sub">今天感覺如何？</div></div>
         </div>
       </div>
       <div class="sec-t" style="padding-top:14px;">今天壓力幾分？</div>
@@ -1343,7 +1352,7 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
         <textarea id="stress-note" placeholder="今天發生了什麼？（選填）" style="width:100%;padding:12px 14px;border-radius:12px;border:2px solid var(--g200);font-size:14px;font-family:var(--font);color:var(--g700);outline:none;resize:none;height:72px;transition:border-color 0.2s;" onfocus="this.style.borderColor='var(--purple)'" onblur="this.style.borderColor='var(--g200)'"></textarea>
       </div>
 
-      <button class="sub-btn" onclick="submitStress()">提交今日狀態</button>
+      <button class="sub-btn" onclick="submitStress()" data-i18n="stress_submit">提交今日狀態</button>
 
       <!-- 本週趨勢 -->
       <div class="trend-card">
@@ -1386,7 +1395,7 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
       <div class="hero-block">
         <div class="hb-row">
           <button class="back-btn" onclick="goBack()">←</button>
-          <div><div class="hb-title">📅 喘息計畫</div><div class="hb-sub" id="respite-sub">本週照護安排</div></div>
+          <div><div class="hb-title" data-i18n="respite_title">📅 喘息計畫</div><div class="hb-sub" id="respite-sub">本週照護安排</div></div>
         </div>
       </div>
       <!-- Week strip: rendered by JS -->
@@ -1528,7 +1537,7 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
       <div class="hero-block" style="background:linear-gradient(135deg,#2d3748,#4a5568 60%,#718096);min-height:168px;">
         <div class="hb-row">
           <button class="back-btn" onclick="goBack()">←</button>
-          <div><div class="hb-title">⚙️ 設定</div><div class="hb-sub">個人化調整</div></div>
+          <div><div class="hb-title" data-i18n="settings_title">⚙️ 設定</div><div class="hb-sub" data-i18n="settings_sub">個人化調整</div></div>
         </div>
       </div>
       <div style="padding:14px 22px 24px;display:flex;flex-direction:column;gap:10px;">
@@ -1586,7 +1595,7 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
       <div class="hero-block" style="background:linear-gradient(135deg,#702459,#97266D 60%,#B83280);min-height:168px;">
         <div class="hb-row">
           <button class="back-btn" onclick="goBack()">←</button>
-          <div><div class="hb-title">📞 緊急聯絡人</div><div class="hb-sub">SOS 時自動發送 LINE 通知</div></div>
+          <div><div class="hb-title" data-i18n="contacts_title">📞 緊急聯絡人</div><div class="hb-sub">SOS 時自動發送 LINE 通知</div></div>
         </div>
         <div style="display:flex;gap:8px;margin-top:10px;align-items:center;">
           <span id="contacts-count-badge" style="background:rgba(255,255,255,0.2);color:white;padding:3px 12px;border-radius:12px;font-size:12px;font-weight:700;">0 位聯絡人</span>
@@ -1805,56 +1814,135 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
 
     <!-- JOURNAL PAGE -->
     <div class="page" id="p-journal">
-      <div class="hero-block" style="background:linear-gradient(135deg,#1a365d,#2b6cb0 60%,#4299e1);min-height:168px;">
+      <div class="hero-block" style="background:linear-gradient(135deg,#1a365d,#2b6cb0 60%,#4299e1);min-height:178px;">
         <div class="hb-row">
           <button class="back-btn" onclick="goBack()">←</button>
-          <div><div class="hb-title">📝 照護日誌</div><div class="hb-sub">語音或文字記錄，AI 自動整理</div></div>
+          <div><div class="hb-title">📝 照護日誌</div><div class="hb-sub">語音記錄・AI整理・交接傳承</div></div>
         </div>
+        <div id="journal-today-summary" style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;"></div>
       </div>
 
       <div style="padding:14px 22px 0;">
+
+        <!-- 三個頁籤 -->
+        <div style="display:flex;gap:6px;margin-bottom:14px;">
+          <button onclick="setJournalMode('daily')" id="jmode-daily"
+            style="flex:1;padding:10px;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:var(--font);background:var(--blue-m);color:white;border:none;">
+            📋 每日記錄
+          </button>
+          <button onclick="setJournalMode('handover')" id="jmode-handover"
+            style="flex:1;padding:10px;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:var(--font);background:var(--g100);color:var(--g600);border:none;">
+            🔄 交接班
+          </button>
+          <button onclick="setJournalMode('history')" id="jmode-history"
+            style="flex:1;padding:10px;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:var(--font);background:var(--g100);color:var(--g600);border:none;">
+            📚 歷史
+          </button>
+        </div>
+
+        <div id="journal-input-panel">
+        <!-- 交接班資訊 -->
+        <div id="handover-info" style="display:none;background:#FFF5F5;border-radius:12px;padding:12px 14px;margin-bottom:12px;border-left:3px solid var(--red);">
+          <div style="font-size:12px;font-weight:800;color:var(--red-d);margin-bottom:8px;">🔄 交接班資訊</div>
+          <div style="display:flex;gap:8px;margin-bottom:8px;">
+            <div style="flex:1;">
+              <div style="font-size:11px;color:var(--g500);margin-bottom:3px;">交班人員</div>
+              <input id="handover-from" type="text" placeholder="您的姓名" style="width:100%;padding:7px 10px;border-radius:8px;border:1px solid var(--g200);font-size:13px;font-family:var(--font);box-sizing:border-box;">
+            </div>
+            <div style="flex:1;">
+              <div style="font-size:11px;color:var(--g500);margin-bottom:3px;">接班人員</div>
+              <input id="handover-to" type="text" placeholder="下一班姓名" style="width:100%;padding:7px 10px;border-radius:8px;border:1px solid var(--g200);font-size:13px;font-family:var(--font);box-sizing:border-box;">
+            </div>
+          </div>
+          <div style="font-size:11px;color:var(--g500);margin-bottom:4px;">班別時段</div>
+          <div style="display:flex;gap:6px;">
+            <button onclick="selectShift(this,'早班 07:00-15:00')" class="shift-btn" style="flex:1;padding:6px;border-radius:8px;border:1px solid var(--g200);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);background:white;">早班</button>
+            <button onclick="selectShift(this,'午班 15:00-23:00')" class="shift-btn" style="flex:1;padding:6px;border-radius:8px;border:1px solid var(--g200);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);background:white;">午班</button>
+            <button onclick="selectShift(this,'夜班 23:00-07:00')" class="shift-btn" style="flex:1;padding:6px;border-radius:8px;border:1px solid var(--g200);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);background:white;">夜班</button>
+          </div>
+        </div>
+
+        <!-- 自動帶入今日數據 -->
+        <div id="journal-auto-data" style="display:none;background:var(--blue-l);border-radius:12px;padding:12px 14px;margin-bottom:12px;border-left:3px solid var(--blue-m);">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <div style="font-size:12px;font-weight:800;color:var(--blue-m);">📊 今日數據（自動帶入）</div>
+            <button onclick="insertAutoData()" style="font-size:11px;font-weight:800;color:var(--blue-m);background:white;border:1px solid var(--blue-m);border-radius:8px;padding:3px 10px;cursor:pointer;font-family:var(--font);">插入文字</button>
+          </div>
+          <div id="journal-auto-content" style="font-size:12px;color:var(--g600);line-height:1.8;"></div>
+        </div>
+
         <!-- 輸入區 -->
         <div style="background:white;border-radius:16px;padding:16px;box-shadow:var(--sh);margin-bottom:14px;">
-          <div style="font-size:13px;font-weight:800;color:var(--g600);margin-bottom:10px;">🎙️ 今日照護記錄</div>
-          <textarea id="journal-input" placeholder="用語音或文字描述今天的照護狀況，例如：&#10;「阿嬤今天早上吃了一碗粥，精神不錯，有去散步，下午血壓偏高量到148，晚上說腳有點麻…」"
-            style="width:100%;height:140px;padding:12px;border-radius:12px;border:2px solid var(--g200);font-size:14px;font-family:var(--font);color:var(--g700);outline:none;resize:none;line-height:1.7;box-sizing:border-box;"
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <div style="font-size:13px;font-weight:800;color:var(--g600);">🎙️ 照護記錄內容</div>
+            <div style="font-size:11px;color:var(--g400);" id="journal-char-count">0 字</div>
+          </div>
+          <textarea id="journal-input"
+            placeholder="說話或輸入今日照護狀況…&#10;&#10;例：阿嬤今天早上吃了一碗粥，精神不錯，有去散步，下午血壓148偏高，晚上說腳有點麻，心情還好。"
+            style="width:100%;height:130px;padding:12px;border-radius:12px;border:2px solid var(--g200);font-size:14px;font-family:var(--font);color:var(--g700);outline:none;resize:none;line-height:1.7;box-sizing:border-box;"
             onfocus="this.style.borderColor='var(--blue-m)'"
-            onblur="this.style.borderColor='var(--g200)'"></textarea>
+            onblur="this.style.borderColor='var(--g200)'"
+            oninput="updateJournalCount()"></textarea>
 
-          <!-- 語音輸入按鈕 -->
+          <!-- 快速標籤 -->
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;">
+            <div style="font-size:11px;color:var(--g400);width:100%;margin-bottom:2px;">快速插入：</div>
+            <button onclick="insertTag('精神良好')" class="j-tag">😊 精神良好</button>
+            <button onclick="insertTag('食慾正常')" class="j-tag">🍚 食慾正常</button>
+            <button onclick="insertTag('排便正常')" class="j-tag">✅ 排便正常</button>
+            <button onclick="insertTag('有跌倒風險')" class="j-tag" style="color:var(--red-d);background:var(--red-l);">⚠️ 跌倒風險</button>
+            <button onclick="insertTag('需要回診')" class="j-tag" style="color:var(--red-d);background:var(--red-l);">🏥 需要回診</button>
+            <button onclick="insertTag('情緒不穩')" class="j-tag" style="color:#744210;background:#FFFBEB;">😟 情緒不穩</button>
+          </div>
+
+          <!-- 語音輸入 -->
           <div style="display:flex;gap:10px;margin-top:10px;">
-            <button id="voice-btn" onclick="toggleVoice()" style="flex:1;padding:11px;border-radius:12px;background:var(--g100);border:none;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:6px;">
+            <button id="voice-btn" onclick="toggleVoice()"
+              style="flex:1;padding:11px;border-radius:12px;background:var(--g100);border:none;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:6px;">
               🎙️ 語音輸入
             </button>
             <button onclick="clearJournal()" style="padding:11px 14px;border-radius:12px;background:var(--g100);border:none;font-size:14px;cursor:pointer;">🗑️</button>
           </div>
-          <div id="voice-status" style="font-size:11px;color:var(--g400);text-align:center;margin-top:6px;display:none;">🔴 錄音中…說完後再按一次停止</div>
+          <div id="voice-status" style="font-size:11px;color:var(--red);text-align:center;margin-top:6px;display:none;">🔴 錄音中…說完後再按一次停止</div>
         </div>
 
         <!-- 生成按鈕 -->
         <button onclick="generateJournal()" id="journal-gen-btn"
           style="width:100%;padding:15px;border-radius:14px;background:linear-gradient(135deg,#2b6cb0,#3182CE);color:white;border:none;font-size:16px;font-weight:900;cursor:pointer;font-family:var(--font);margin-bottom:14px;display:flex;align-items:center;justify-content:center;gap:8px;">
-          ✨ AI 整理成報表
+          ✨ AI 整理成照護報表
         </button>
 
         <!-- 報表結果 -->
         <div id="journal-result" style="display:none;">
           <div style="background:white;border-radius:16px;padding:16px;box-shadow:var(--sh);margin-bottom:12px;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
               <div style="font-size:14px;font-weight:800;color:var(--g700);">📋 照護報表</div>
               <div style="font-size:11px;color:var(--g400);" id="journal-date"></div>
             </div>
+            <div id="journal-mode-badge" style="margin-bottom:10px;"></div>
             <div id="journal-report-text" style="font-size:13px;color:var(--g700);line-height:1.9;white-space:pre-wrap;"></div>
           </div>
-          <div style="display:flex;gap:10px;margin-bottom:24px;">
-            <button onclick="sendJournalLINE()" style="flex:1;padding:12px;border-radius:12px;background:#06C755;color:white;border:none;font-size:14px;font-weight:800;cursor:pointer;font-family:var(--font);">💬 傳送給家屬</button>
-            <button onclick="copyJournal()" style="flex:1;padding:12px;border-radius:12px;background:var(--g100);color:var(--g700);border:none;font-size:14px;font-weight:800;cursor:pointer;font-family:var(--font);">📋 複製</button>
+          <div style="display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap;">
+            <!-- 每日記錄：傳給家屬 -->
+            <button onclick="sendJournalLINE()" id="btn-send-family" style="flex:1;min-width:100px;padding:12px;border-radius:12px;background:#06C755;color:white;border:none;font-size:13px;font-weight:800;cursor:pointer;font-family:var(--font);">💬 傳給家屬</button>
+            <!-- 交接班：傳給接班人（有 LINE ID 才顯示） -->
+            <button onclick="sendJournalHandover()" id="handover-send-btn" style="flex:1;min-width:100px;padding:12px;border-radius:12px;background:var(--blue-m);color:white;border:none;font-size:13px;font-weight:800;cursor:pointer;font-family:var(--font);display:none;">🔄 傳給接班人</button>
+            <button onclick="copyJournal()" style="padding:12px 16px;border-radius:12px;background:var(--g100);color:var(--g700);border:none;font-size:13px;font-weight:800;cursor:pointer;font-family:var(--font);">📋</button>
           </div>
         </div>
 
-        <!-- 歷史日誌 -->
-        <div style="margin-bottom:24px;">
-          <div style="font-size:13px;font-weight:800;color:var(--g500);margin-bottom:10px;">📚 歷史日誌</div>
+        </div><!-- /journal-input-panel -->
+
+        <!-- 歷史頁籤內容 -->
+        <div id="journal-history-panel" style="display:none;margin-bottom:24px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <div style="font-size:13px;font-weight:800;color:var(--g500);">📚 歷史日誌</div>
+            <div style="display:flex;gap:5px;">
+              <button onclick="filterJournal('all')" id="jfilter-all" style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:8px;border:none;cursor:pointer;font-family:var(--font);background:var(--blue-m);color:white;">全部</button>
+              <button onclick="filterJournal('daily')" id="jfilter-daily" style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:8px;border:none;cursor:pointer;font-family:var(--font);background:var(--g100);color:var(--g600);">每日</button>
+              <button onclick="filterJournal('handover')" id="jfilter-handover" style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:8px;border:none;cursor:pointer;font-family:var(--font);background:var(--g100);color:var(--g600);">交接</button>
+            </div>
+          </div>
           <div id="journal-history" style="display:flex;flex-direction:column;gap:8px;">
             <div style="font-size:13px;color:var(--g400);text-align:center;padding:16px;">尚無歷史日誌</div>
           </div>
@@ -1907,12 +1995,12 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
 
   <!-- Bottom nav -->
   <nav class="bnav">
-    <button class="nbtn on" data-pg="p-home" onclick="navTo('p-home')"><span class="ni">🏠</span><span class="nl">首頁</span></button>
+    <button class="nbtn on" data-pg="p-home" onclick="navTo('p-home')"><span class="ni">🏠</span><span class="nl" data-i18n="home">首頁</span></button>
     <button class="nbtn" onclick="navTo('p-journal','fwd')" style="display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:6px;">
       <div style="width:58px;height:58px;background:linear-gradient(135deg,#2b6cb0,#3182CE);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:white;box-shadow:0 6px 20px rgba(49,130,206,0.55);margin-top:-28px;border:4px solid white;">＋</div>
       <span class="nl" style="margin-top:4px;font-weight:800;color:var(--blue-m);">日誌</span>
     </button>
-    <button class="nbtn" data-pg="p-settings" onclick="navTo('p-settings')"><span class="ni">⚙️</span><span class="nl">設定</span></button>
+    <button class="nbtn" data-pg="p-settings" onclick="navTo('p-settings')"><span class="ni">⚙️</span><span class="nl" data-i18n="settings">設定</span></button>
   </nav>
 
   <div class="toast" id="toast"></div>
@@ -1999,7 +2087,8 @@ document.addEventListener('DOMContentLoaded', () => {
   renderStressCalendar();
   renderWeeklyTrend();
   renderRespite();
-  updateClock(); // 立即更新時鐘
+  updateClock();
+  applyLang(); // 套用語言設定
   // 啟動時顯示照護對象列表
   loadCareProfiles();
   if (careProfiles.length > 0) {
@@ -3049,6 +3138,8 @@ function submitStress() {
   dot.style.background = levelMap[selectedStress.level]; dot.style.fontSize = '15px'; dot.textContent = selectedStress.emoji;
   if (alertStrip) alertStrip.style.display = selectedStress.level === 'red' ? 'flex' : 'none';
   syncStressUI(selectedStress.emoji, selectedStress.level, true);
+  // 自動異常偵測推播
+  if (selectedStress.level === 'red') autoAlertAI('stress_red', { emoji: selectedStress.emoji, note, user: window.userProfile?.name });
   showToast('✅ 今日壓力狀態已記錄！');
 }
 
@@ -3134,13 +3225,13 @@ function updateClock() {
   if (mainClock) mainClock.textContent = timeStr;
   document.querySelectorAll('.sbar-clock').forEach(el => el.textContent = timeStr);
 
-  // 問候語隨時間變化
+  // 問候語隨時間變化（支援多語言）
   const greetEl = document.getElementById('home-greet');
   if (greetEl) {
-    if (hr >= 5 && hr < 12)       greetEl.textContent = '☀️ 早安';
-    else if (hr >= 12 && hr < 18) greetEl.textContent = '🌤️ 午安';
-    else if (hr >= 18 && hr < 22) greetEl.textContent = '🌙 晚安';
-    else                           greetEl.textContent = '🌛 深夜了';
+    if (hr >= 5 && hr < 12)       greetEl.textContent = t('greet_morning');
+    else if (hr >= 12 && hr < 18) greetEl.textContent = t('greet_noon');
+    else if (hr >= 18 && hr < 22) greetEl.textContent = t('greet_evening');
+    else                           greetEl.textContent = t('greet_night');
   }
 
   // 同步用藥頁
@@ -3401,6 +3492,9 @@ function saveBP() {
   dbPush('bp_logs', { sys, dia, hr: savedHr });
   postToServer('/bp', { sys, dia, hr: savedHr, user: window.userProfile?.name });
   updateHomeCards();
+  // 自動異常偵測推播
+  if (s?.level === 'crisis') autoAlertAI('bp_crisis', { sys, dia, user: window.userProfile?.name });
+  else if (s?.level === 'high2' || s?.level === 'high1') autoAlertAI('bp_high', { sys, dia, user: window.userProfile?.name });
   document.getElementById('input-sys').value='';
   document.getElementById('input-dia').value='';
   document.getElementById('input-hr').value='';
@@ -3979,6 +4073,45 @@ async function testLINE() {
 loadContacts();
 renderContactsList();
 renderSOSContacts();
+let voiceRecognition = null;
+let isRecording = false;
+
+function toggleVoice() {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    showToast('⚠️ 此瀏覽器不支援語音輸入，請改用 Chrome'); return;
+  }
+  if (isRecording) { voiceRecognition?.stop(); return; }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  voiceRecognition = new SR();
+  voiceRecognition.lang = 'zh-TW'; voiceRecognition.continuous = true; voiceRecognition.interimResults = true;
+  const textarea = document.getElementById('journal-input');
+  const btn = document.getElementById('voice-btn');
+  const status = document.getElementById('voice-status');
+  let finalText = textarea.value;
+  voiceRecognition.onstart = () => {
+    isRecording = true; btn.style.background = 'var(--red-l)'; btn.style.color = 'var(--red-d)';
+    btn.innerHTML = '⏹️ 停止錄音'; if(status) status.style.display = 'block';
+  };
+  voiceRecognition.onresult = (e) => {
+    let interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) finalText += e.results[i][0].transcript;
+      else interim = e.results[i][0].transcript;
+    }
+    textarea.value = finalText + interim; updateJournalCount();
+  };
+  voiceRecognition.onend = () => {
+    isRecording = false; btn.style.background = ''; btn.style.color = '';
+    btn.innerHTML = '🎙️ 語音輸入'; if(status) status.style.display = 'none';
+    textarea.value = finalText; updateJournalCount();
+  };
+  voiceRecognition.onerror = () => {
+    isRecording = false; btn.innerHTML = '🎙️ 語音輸入'; if(status) status.style.display = 'none';
+    showToast('⚠️ 語音識別失敗，請再試一次');
+  };
+  voiceRecognition.start();
+}
+
 let careProfiles    = [];
 let activeProfileIdx = 0;
 
@@ -4317,11 +4450,12 @@ function renderFamilyDashboard() {
 }
 
 // ════════════════════════════════════════
-// 📝 照護日誌
+// 📝 照護日誌（完整版）
 // ════════════════════════════════════════
-let voiceRecognition = null;
-let isRecording = false;
 let journalHistory = [];
+let journalMode = 'daily'; // 'daily' | 'handover'
+let selectedShift = '';
+let journalFilter = 'all';
 
 function loadJournalHistory() {
   try {
@@ -4330,134 +4464,285 @@ function loadJournalHistory() {
     else journalHistory = [];
   } catch(e) { journalHistory = []; }
   renderJournalHistory();
+  loadJournalTodaySummary();
 }
 
 function saveJournalHistory() {
   localStorage.setItem(`yinan_journals_${activeProfileIdx}`, JSON.stringify(journalHistory.slice(-20)));
 }
 
-function renderJournalHistory() {
-  const el = document.getElementById('journal-history');
-  if (!el) return;
-  if (journalHistory.length === 0) {
-    el.innerHTML = '<div style="font-size:13px;color:var(--g400);text-align:center;padding:16px;">尚無歷史日誌</div>';
-    return;
+// 今日數據摘要（Hero區）
+function loadJournalTodaySummary() {
+  const wrap = document.getElementById('journal-today-summary');
+  if (!wrap) return;
+  const done = medList.filter(m => m.taken).length;
+  const total = medList.length;
+  const lastBP = bpLogs[bpLogs.length-1];
+  const db = dbLoad();
+  const today = new Date().toDateString();
+  const todayStress = (db.stress_logs||[]).find(l => new Date(l._ts).toDateString() === today);
+  const badges = [
+    { icon:'💊', text: total > 0 ? `用藥 ${done}/${total}` : '未設定藥物', warn: done < total && new Date().getHours() >= 13 },
+    { icon:'❤️', text: lastBP?.date === '今' ? `血壓 ${lastBP.sys}/${lastBP.dia}` : '未量血壓', warn: lastBP?.date === '今' && (lastBP.sys >= 140 || lastBP.dia >= 90) },
+    { icon:'🧠', text: todayStress ? `心情 ${todayStress.emoji}` : '未填心情', warn: todayStress?.level === 'red' },
+  ];
+  wrap.innerHTML = badges.map(b =>
+    `<span style="background:${b.warn?'rgba(254,215,215,0.4)':'rgba(255,255,255,0.2)'};color:white;padding:4px 10px;border-radius:12px;font-size:11px;font-weight:700;">${b.icon} ${b.text}</span>`
+  ).join('');
+
+  // 自動帶入區
+  const autoArea = document.getElementById('journal-auto-data');
+  const autoContent = document.getElementById('journal-auto-content');
+  if (autoArea && autoContent) {
+    const lines = [];
+    if (total > 0) lines.push(`💊 用藥：今日 ${done}/${total} 完成${done < total ? '（尚有未服）' : '（全部完成）'}`);
+    if (lastBP?.date === '今') lines.push(`❤️ 血壓：${lastBP.sys}/${lastBP.dia} mmHg，心跳 ${lastBP.hr} bpm${lastBP.sys >= 140 ? '（偏高）' : '（正常）'}`);
+    if (todayStress) lines.push(`🧠 心情：${todayStress.emoji}${todayStress.note ? '，備註：' + todayStress.note.slice(0,15) : ''}`);
+    if (lines.length > 0) {
+      autoContent.innerHTML = lines.join('<br>');
+      autoArea.style.display = 'block';
+    } else {
+      autoArea.style.display = 'none';
+    }
   }
-  el.innerHTML = journalHistory.slice().reverse().slice(0, 5).map((j, i) => {
-    const d = new Date(j._ts).toLocaleString('zh-TW', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
-    return `<div style="background:white;border-radius:12px;padding:12px 14px;box-shadow:var(--sh);cursor:pointer;" onclick="showHistoryJournal(${journalHistory.length-1-i})">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-        <div style="font-size:13px;font-weight:800;color:var(--g700);">📋 ${j.profileName || '長輩'} 的照護日誌</div>
-        <div style="font-size:11px;color:var(--g400);">${d}</div>
-      </div>
-      <div style="font-size:12px;color:var(--g500);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">${j.rawText.slice(0, 50)}…</div>
-    </div>`;
-  }).join('');
 }
 
-function showHistoryJournal(idx) {
-  const j = journalHistory[idx];
-  if (!j) return;
-  document.getElementById('journal-input').value = j.rawText;
-  document.getElementById('journal-report-text').textContent = j.report;
-  document.getElementById('journal-date').textContent = new Date(j._ts).toLocaleString('zh-TW');
-  document.getElementById('journal-result').style.display = 'block';
+function insertAutoData() {
+  const content = document.getElementById('journal-auto-content');
+  if (!content) return;
+  const btn = document.querySelector('[onclick="insertAutoData()"]');
+  if (btn?.dataset.inserted === 'true') return;
+  const textarea = document.getElementById('journal-input');
+  const text = content.innerText || content.textContent;
+  textarea.value = (textarea.value ? textarea.value + '\n' : '') + text;
+  updateJournalCount();
+  textarea.focus();
+  if (btn) {
+    btn.dataset.inserted = 'true';
+    btn.textContent = '✅ 已插入';
+    btn.style.color = 'var(--green)';
+    btn.style.borderColor = 'var(--green)';
+    btn.style.opacity = '0.6';
+    btn.style.pointerEvents = 'none';
+  }
+  showToast('✅ 今日數據已插入');
+}
+
+function setJournalMode(mode) {
+  journalMode = mode;
+  const tabs = ['daily','handover','history'];
+
+  // 重置所有頁籤樣式
+  tabs.forEach(t => {
+    const btn = document.getElementById(`jmode-${t}`);
+    if (btn) { btn.style.background = 'var(--g100)'; btn.style.color = 'var(--g600)'; }
+  });
+  const activeBtn = document.getElementById(`jmode-${mode}`);
+  if (activeBtn) { activeBtn.style.background = 'var(--blue-m)'; activeBtn.style.color = 'white'; }
+
+  // 顯示/隱藏各區塊
+  const inputPanel  = document.getElementById('journal-input-panel');
+  const historyPanel = document.getElementById('journal-history-panel');
+  const handoverInfo = document.getElementById('handover-info');
+  const autoData    = document.getElementById('journal-auto-data');
+  const familyBtn   = document.getElementById('btn-send-family');
+  const handoverBtn = document.getElementById('handover-send-btn');
+  const result      = document.getElementById('journal-result');
+  const textarea    = document.getElementById('journal-input');
+
+  if (mode === 'history') {
+    if (inputPanel)   inputPanel.style.display   = 'none';
+    if (historyPanel) historyPanel.style.display = 'block';
+    renderJournalHistory();
+    return;
+  }
+
+  if (inputPanel)   inputPanel.style.display   = 'block';
+  if (historyPanel) historyPanel.style.display = 'none';
+  if (result)       result.style.display       = 'none';
+  if (textarea)     { textarea.value = ''; updateJournalCount(); }
+
+  if (mode === 'daily') {
+    if (handoverInfo) handoverInfo.style.display = 'none';
+    // 重新計算今日數據並決定是否顯示
+    loadJournalTodaySummary();
+    if (familyBtn)    familyBtn.style.display = 'flex';
+    if (handoverBtn)  handoverBtn.style.display = 'none';
+    if (textarea)     textarea.placeholder = '說話或輸入今日照護狀況…\n\n例：阿嬤今天早上吃了一碗粥，精神不錯，下午血壓148偏高，晚上說腳有點麻。';
+  } else {
+    if (handoverInfo) handoverInfo.style.display = 'block';
+    if (autoData)     autoData.style.display = 'none';
+    if (familyBtn)    familyBtn.style.display = 'none';
+    if (handoverBtn)  handoverBtn.style.display = 'none';
+    if (textarea)     textarea.placeholder = '記錄這班的照護重點…\n\n例：李阿公今天下午精神較差，血壓偏高148/95，已服降壓藥。晚餐吃七分，有排便。注意：右腳水腫，請繼續觀察。';
+  }
+}
+
+function selectShift(btn, shift) {
+  document.querySelectorAll('.shift-btn').forEach(b => {
+    b.style.background = 'white'; b.style.color = 'var(--g700)'; b.style.borderColor = 'var(--g200)';
+  });
+  btn.style.background = 'var(--blue-m)'; btn.style.color = 'white'; btn.style.borderColor = 'var(--blue-m)';
+  selectedShift = shift;
+  showToast('✅ 已選擇' + shift.split(' ')[0]);
+}
+
+
+function insertTag(text) {
+  const textarea = document.getElementById('journal-input');
+  textarea.value = (textarea.value ? textarea.value + '，' : '') + text;
+  updateJournalCount();
+  textarea.focus();
+}
+
+function updateJournalCount() {
+  const textarea = document.getElementById('journal-input');
+  const counter = document.getElementById('journal-char-count');
+  if (counter) counter.textContent = (textarea.value.length) + ' 字';
 }
 
 function clearJournal() {
   document.getElementById('journal-input').value = '';
   document.getElementById('journal-result').style.display = 'none';
+  updateJournalCount();
+  // 重置插入按鈕
+  const btn = document.querySelector('[onclick="insertAutoData()"]');
+  if (btn) {
+    btn.dataset.inserted = 'false';
+    btn.textContent = '插入文字';
+    btn.style.color = 'var(--blue-m)';
+    btn.style.borderColor = 'var(--blue-m)';
+    btn.style.pointerEvents = 'auto';
+  }
 }
 
-function toggleVoice() {
-  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-    showToast('⚠️ 此瀏覽器不支援語音輸入，請改用 Chrome');
+function renderJournalHistory() {
+  const el = document.getElementById('journal-history');
+  if (!el) return;
+  let list = journalHistory.slice().reverse();
+  if (journalFilter === 'daily') list = list.filter(j => j.mode !== 'handover');
+  else if (journalFilter === 'handover') list = list.filter(j => j.mode === 'handover');
+  if (list.length === 0) {
+    el.innerHTML = '<div style="font-size:13px;color:var(--g400);text-align:center;padding:16px;">尚無歷史日誌</div>';
     return;
   }
-  if (isRecording) {
-    voiceRecognition?.stop();
-    return;
-  }
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  voiceRecognition = new SR();
-  voiceRecognition.lang = 'zh-TW';
-  voiceRecognition.continuous = true;
-  voiceRecognition.interimResults = true;
-  const textarea = document.getElementById('journal-input');
-  const btn = document.getElementById('voice-btn');
-  const status = document.getElementById('voice-status');
-  let finalText = textarea.value;
+  el.innerHTML = list.slice(0, 8).map((j, i) => {
+    const d = new Date(j._ts).toLocaleString('zh-TW', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
+    const badge = j.mode === 'handover'
+      ? `<span style="background:var(--blue-l);color:var(--blue-m);padding:1px 7px;border-radius:8px;font-size:10px;font-weight:800;">交接</span>`
+      : `<span style="background:var(--green-l);color:var(--green);padding:1px 7px;border-radius:8px;font-size:10px;font-weight:800;">每日</span>`;
+    return `<div style="background:white;border-radius:12px;padding:12px 14px;box-shadow:var(--sh);cursor:pointer;" onclick="showHistoryJournal(${journalHistory.length-1-i})">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+        <div style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:800;color:var(--g700);">${badge} ${j.profileName||'長輩'} 的照護日誌</div>
+        <div style="font-size:11px;color:var(--g400);">${d}</div>
+      </div>
+      <div style="font-size:12px;color:var(--g500);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">${(j.rawText||'').slice(0,40)}…</div>
+    </div>`;
+  }).join('');
+}
 
-  voiceRecognition.onstart = () => {
-    isRecording = true;
-    btn.style.background = 'var(--red-l)';
-    btn.style.color = 'var(--red-d)';
-    btn.innerHTML = '⏹️ 停止錄音';
-    status.style.display = 'block';
-  };
-  voiceRecognition.onresult = (e) => {
-    let interim = '';
-    for (let i = e.resultIndex; i < e.results.length; i++) {
-      if (e.results[i].isFinal) finalText += e.results[i][0].transcript;
-      else interim = e.results[i][0].transcript;
-    }
-    textarea.value = finalText + interim;
-  };
-  voiceRecognition.onend = () => {
-    isRecording = false;
-    btn.style.background = '';
-    btn.style.color = '';
-    btn.innerHTML = '🎙️ 語音輸入';
-    status.style.display = 'none';
-    textarea.value = finalText;
-  };
-  voiceRecognition.onerror = () => {
-    isRecording = false;
-    btn.innerHTML = '🎙️ 語音輸入';
-    status.style.display = 'none';
-    showToast('⚠️ 語音識別失敗，請再試一次');
-  };
-  voiceRecognition.start();
+function filterJournal(f) {
+  journalFilter = f;
+  ['all','daily','handover'].forEach(t => {
+    const btn = document.getElementById(`jfilter-${t}`);
+    if (btn) { btn.style.background = t === f ? 'var(--blue-m)' : 'var(--g100)'; btn.style.color = t === f ? 'white' : 'var(--g600)'; }
+  });
+  renderJournalHistory();
+}
+
+function showHistoryJournal(idx) {
+  const j = journalHistory[idx];
+  if (!j) return;
+  document.getElementById('journal-input').value = j.rawText || '';
+  document.getElementById('journal-report-text').textContent = j.report;
+  document.getElementById('journal-date').textContent = new Date(j._ts).toLocaleString('zh-TW');
+  const modeBadge = document.getElementById('journal-mode-badge');
+  if (modeBadge) modeBadge.innerHTML = j.mode === 'handover'
+    ? `<span style="background:var(--blue-l);color:var(--blue-m);padding:2px 10px;border-radius:8px;font-size:11px;font-weight:800;">🔄 交接班記錄 ${j.shift||''}</span>`
+    : `<span style="background:var(--green-l);color:var(--green);padding:2px 10px;border-radius:8px;font-size:11px;font-weight:800;">📋 每日照護記錄</span>`;
+  document.getElementById('journal-result').style.display = 'block';
+  updateJournalCount();
 }
 
 async function generateJournal() {
   const text = document.getElementById('journal-input').value.trim();
   if (!text) { showToast('⚠️ 請先輸入或錄音照護記錄'); return; }
-
   const btn = document.getElementById('journal-gen-btn');
   btn.innerHTML = '⏳ AI 整理中…';
   btn.disabled = true;
   btn.style.opacity = '0.7';
+
+  // 組合額外資訊
+  const db = dbLoad();
+  const today = new Date().toDateString();
+  const todayStress = (db.stress_logs||[]).find(l => new Date(l._ts).toDateString() === today);
+  const lastBP = bpLogs[bpLogs.length-1];
+  const medDone = medList.filter(m => m.taken).length;
+
+  // 加入交接班資訊
+  let extraContext = '';
+  if (journalMode === 'handover') {
+    const from = document.getElementById('handover-from')?.value || '';
+    const to   = document.getElementById('handover-to')?.value || '';
+    extraContext = `\n【交接班資訊】班別：${selectedShift||'未選擇'}，交班人：${from||'未填'}，接班人：${to||'未填'}`;
+  }
 
   try {
     const r = await fetch(SERVER_URL + '/ai-journal', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        text,
+        text: text + extraContext,
         profile: window.userProfile,
-        date: new Date().toLocaleString('zh-TW')
+        date: new Date().toLocaleString('zh-TW'),
+        mode: journalMode,
+        shift: selectedShift,
+        todayData: {
+          bp: lastBP?.date === '今' ? `${lastBP.sys}/${lastBP.dia}` : null,
+          stress: todayStress ? todayStress.emoji : null,
+          medDone, medTotal: medList.length,
+        }
       }),
       signal: AbortSignal.timeout(30000)
     });
     const data = await r.json();
     if (!data.ok) throw new Error(data.message);
 
-    // 顯示報表
     document.getElementById('journal-report-text').textContent = data.report;
     document.getElementById('journal-date').textContent = new Date().toLocaleString('zh-TW');
+    const modeBadge = document.getElementById('journal-mode-badge');
+    if (modeBadge) modeBadge.innerHTML = journalMode === 'handover'
+      ? `<span style="background:var(--blue-l);color:var(--blue-m);padding:2px 10px;border-radius:8px;font-size:11px;font-weight:800;">🔄 交接班記錄 ${selectedShift||''}</span>`
+      : `<span style="background:var(--green-l);color:var(--green);padding:2px 10px;border-radius:8px;font-size:11px;font-weight:800;">📋 每日照護記錄</span>`;
     document.getElementById('journal-result').style.display = 'block';
     document.getElementById('journal-result').scrollIntoView({ behavior:'smooth' });
 
-    // 儲存歷史
-    journalHistory.push({ _ts: new Date().toISOString(), rawText: text, report: data.report, profileName: window.userProfile?.name });
+    // 根據模式顯示對應按鈕
+    const familyBtn = document.getElementById('btn-send-family');
+    const handoverBtn = document.getElementById('handover-send-btn');
+    if (journalMode === 'handover') {
+      if (familyBtn) familyBtn.style.display = 'none';
+      // 檢查接班人是否有 LINE
+      const toName = document.getElementById('handover-to')?.value.trim();
+      const hasContact = toName && emergencyContacts.find(c => c.userId && (c.name.includes(toName) || toName.includes(c.name)));
+      if (handoverBtn) handoverBtn.style.display = hasContact ? 'flex' : 'none';
+      if (!hasContact && toName) showToast(`⚠️ 找不到「${toName}」的 LINE，報表已儲存於歷史日誌`);
+    } else {
+      if (familyBtn) familyBtn.style.display = 'flex';
+      if (handoverBtn) handoverBtn.style.display = 'none';
+    }
+
+    journalHistory.push({
+      _ts: new Date().toISOString(), rawText: text, report: data.report,
+      profileName: window.userProfile?.name, mode: journalMode, shift: selectedShift
+    });
     saveJournalHistory();
     renderJournalHistory();
     showToast('✅ 報表生成完成！');
   } catch(e) {
     showToast('❌ AI 服務失敗：' + e.message);
   } finally {
-    btn.innerHTML = '✨ AI 整理成報表';
+    btn.innerHTML = '✨ AI 整理成照護報表';
     btn.disabled = false;
     btn.style.opacity = '1';
   }
@@ -4473,18 +4758,240 @@ function sendJournalLINE() {
   if (!report) return;
   const contacts = emergencyContacts.filter(c => c.userId);
   if (contacts.length === 0) { showToast('⚠️ 請先設定家屬 LINE User ID'); return; }
-
+  showToast('📲 傳送中…');
   fetch(SERVER_URL + '/send-journal', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ report, contacts, profileName: window.userProfile?.name }),
     signal: AbortSignal.timeout(10000)
   }).then(r => r.json()).then(data => {
-    if (data.ok) showToast(`✅ 日誌已傳送給 ${contacts.length} 位家屬`);
+    if (data.ok) showToast(`✅ 日誌已傳給 ${contacts.length} 位家屬`);
     else showToast('❌ 傳送失敗');
   }).catch(() => showToast('❌ 連線失敗'));
 }
-let currentRole = 'caregiver'; // 'caregiver' | 'family'
+
+function sendJournalHandover() {
+  const report = document.getElementById('journal-report-text').textContent;
+  if (!report) return;
+  const toName = document.getElementById('handover-to')?.value.trim();
+  if (!toName) { showToast('⚠️ 請填寫接班人姓名'); return; }
+  // 找對應的聯絡人
+  const contact = emergencyContacts.find(c => c.name.includes(toName) || toName.includes(c.name));
+  if (!contact?.userId) { showToast(`⚠️ 找不到「${toName}」的 LINE，請確認緊急聯絡人設定`); return; }
+  showToast('📲 傳送交接報表中…');
+  fetch(SERVER_URL + '/send-journal', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ report, contacts: [contact], profileName: window.userProfile?.name }),
+    signal: AbortSignal.timeout(10000)
+  }).then(r => r.json()).then(data => {
+    if (data.ok) showToast(`✅ 交接報表已傳給 ${toName}`);
+    else showToast('❌ 傳送失敗');
+  }).catch(() => showToast('❌ 連線失敗'));
+}
+
+// ════════════════════════════════════════
+// 🤖 異常自動偵測→AI分析→LINE推播
+// ════════════════════════════════════════
+async function autoAlertAI(triggerType, data) {
+  // 不依賴人工，自動生成摘要並推播
+  const contacts = emergencyContacts.filter(c => c.userId);
+  if (contacts.length === 0) return;
+
+  const triggerMap = {
+    bp_crisis:  { label:'🚨 血壓危象', notifyType:'bp' },
+    bp_high:    { label:'⚠️ 血壓偏高', notifyType:'bp' },
+    stress_red: { label:'🧠 壓力偏高', notifyType:'stress' },
+    med_missed: { label:'💊 未服藥警示', notifyType:'med' },
+    silence:    { label:'⏰ 異常沉默', notifyType:'sos' },
+  };
+  const trigger = triggerMap[triggerType];
+  if (!trigger) return;
+
+  try {
+    // 呼叫 AI 生成簡短分析
+    const r = await fetch(SERVER_URL + '/ai-journal', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text: `自動偵測到異常：${trigger.label}。${JSON.stringify(data)}`,
+        profile: window.userProfile,
+        date: new Date().toLocaleString('zh-TW'),
+        mode: 'auto-alert',
+        autoAlert: true,
+      }),
+      signal: AbortSignal.timeout(20000)
+    });
+    const result = await r.json();
+    if (!result.ok) throw new Error(result.message);
+
+    // 自動推播
+    await fetch(SERVER_URL + '/send-journal', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        report: `${trigger.label}\n\n${result.report}`,
+        contacts: contacts.filter(c => (c.notifyTypes||['sos']).includes(trigger.notifyType)),
+        profileName: window.userProfile?.name,
+        isAutoAlert: true,
+      }),
+      signal: AbortSignal.timeout(10000)
+    });
+    console.log(`✅ 自動推播：${trigger.label}`);
+  } catch(e) {
+    console.log(`❌ 自動推播失敗：${e.message}`);
+  }
+}
+// ════════════════════════════════════════
+// 🌐 多語言支援
+// ════════════════════════════════════════
+const LANGS = {
+  'zh-TW': {
+    name: '繁體中文', flag: '🇹🇼',
+    greet_morning: '☀️ 早安', greet_noon: '🌤️ 午安', greet_evening: '🌙 晚安', greet_night: '🌛 深夜了',
+    home: '首頁', settings: '設定', journal: '日誌',
+    sos_label: 'SOS', sos_sub: '緊急求助',
+    med: '用藥提醒', report: '健康報表', stress: '壓力燈號', respite: '喘息計畫',
+    med_title: '💊 用藥提醒', med_sub: '今天記得按時服藥！',
+    report_title: '📊 健康報表', report_sub: '過去 7 天記錄',
+    stress_title: '🧠 壓力燈號', stress_sub: '今天感覺如何？',
+    respite_title: '📅 喘息計畫', settings_title: '⚙️ 設定', settings_sub: '個人化調整',
+    contacts_title: '📞 緊急聯絡人',
+    daily_tab: '📋 每日記錄', handover_tab: '🔄 交接班', history_tab: '📚 歷史',
+    voice_btn: '🎙️ 語音輸入', ai_btn: '✨ AI 整理成照護報表',
+    send_family: '💬 傳給家屬', send_handover: '🔄 傳給接班人',
+    insert_btn: '插入文字', inserted_btn: '✅ 已插入',
+    good_spirit: '😊 精神良好', good_food: '🍚 食慾正常', good_toilet: '✅ 排便正常',
+    fall_risk: '⚠️ 跌倒風險', need_doctor: '🏥 需要回診', unstable: '😟 情緒不穩',
+    morning_shift: '早班', afternoon_shift: '午班', night_shift: '夜班',
+    stress_submit: '提交今日狀態', menu_btn: '選單',
+    add_med: '＋ 新增藥物', quick_features: '快捷功能',
+  },
+  'zh-CN': {
+    name: '简体中文', flag: '🇨🇳',
+    greet_morning: '☀️ 早安', greet_noon: '🌤️ 午安', greet_evening: '🌙 晚安', greet_night: '🌛 深夜了',
+    home: '首页', settings: '设置', journal: '日志',
+    sos_label: 'SOS', sos_sub: '紧急求助',
+    med: '用药提醒', report: '健康报表', stress: '压力信号', respite: '喘息计划',
+    med_title: '💊 用药提醒', med_sub: '今天记得按时服药！',
+    report_title: '📊 健康报表', report_sub: '过去 7 天记录',
+    stress_title: '🧠 压力信号', stress_sub: '今天感觉如何？',
+    respite_title: '📅 喘息计划', settings_title: '⚙️ 设置', settings_sub: '个人化调整',
+    contacts_title: '📞 紧急联系人',
+    daily_tab: '📋 每日记录', handover_tab: '🔄 交接班', history_tab: '📚 历史',
+    voice_btn: '🎙️ 语音输入', ai_btn: '✨ AI 整理成护理报表',
+    send_family: '💬 发给家属', send_handover: '🔄 发给接班人',
+    insert_btn: '插入文字', inserted_btn: '✅ 已插入',
+    good_spirit: '😊 精神良好', good_food: '🍚 食欲正常', good_toilet: '✅ 排便正常',
+    fall_risk: '⚠️ 跌倒风险', need_doctor: '🏥 需要复诊', unstable: '😟 情绪不稳',
+    morning_shift: '早班', afternoon_shift: '午班', night_shift: '夜班',
+    stress_submit: '提交今日状态', menu_btn: '选单',
+    add_med: '＋ 新增药物', quick_features: '快捷功能',
+  },
+  'id': {
+    name: 'Bahasa Indonesia', flag: '🇮🇩',
+    greet_morning: '☀️ Selamat Pagi', greet_noon: '🌤️ Selamat Siang', greet_evening: '🌙 Selamat Malam', greet_night: '🌛 Malam larut',
+    home: 'Beranda', settings: 'Pengaturan', journal: 'Jurnal',
+    sos_label: 'SOS', sos_sub: 'Bantuan Darurat',
+    med: 'Pengingat Obat', report: 'Lap. Kesehatan', stress: 'Sinyal Stres', respite: 'Jadwal',
+    med_title: '💊 Pengingat Obat', med_sub: 'Ingat minum obat tepat waktu!',
+    report_title: '📊 Laporan Kesehatan', report_sub: 'Catatan 7 hari terakhir',
+    stress_title: '🧠 Sinyal Stres', stress_sub: 'Bagaimana perasaan Anda hari ini?',
+    respite_title: '📅 Jadwal Perawatan', settings_title: '⚙️ Pengaturan', settings_sub: 'Pengaturan pribadi',
+    contacts_title: '📞 Kontak Darurat',
+    daily_tab: '📋 Harian', handover_tab: '🔄 Serah Terima', history_tab: '📚 Riwayat',
+    voice_btn: '🎙️ Input Suara', ai_btn: '✨ AI Buat Laporan',
+    send_family: '💬 Kirim ke Keluarga', send_handover: '🔄 Kirim ke Pengganti',
+    insert_btn: 'Masukkan data', inserted_btn: '✅ Sudah dimasukkan',
+    good_spirit: '😊 Semangat baik', good_food: '🍚 Nafsu makan baik', good_toilet: '✅ BAB normal',
+    fall_risk: '⚠️ Risiko jatuh', need_doctor: '🏥 Perlu dokter', unstable: '😟 Emosi tidak stabil',
+    morning_shift: 'Pagi', afternoon_shift: 'Siang', night_shift: 'Malam',
+    stress_submit: 'Kirim Status Hari Ini', menu_btn: 'Menu',
+    add_med: '＋ Tambah Obat', quick_features: 'Fitur Cepat',
+  },
+  'vi': {
+    name: 'Tiếng Việt', flag: '🇻🇳',
+    greet_morning: '☀️ Chào buổi sáng', greet_noon: '🌤️ Chào buổi trưa', greet_evening: '🌙 Chào buổi tối', greet_night: '🌛 Đêm khuya rồi',
+    home: 'Trang chủ', settings: 'Cài đặt', journal: 'Nhật ký',
+    sos_label: 'SOS', sos_sub: 'Khẩn cấp',
+    med: 'Nhắc thuốc', report: 'Báo cáo SK', stress: 'Tín hiệu stress', respite: 'Kế hoạch',
+    med_title: '💊 Nhắc uống thuốc', med_sub: 'Nhớ uống thuốc đúng giờ!',
+    report_title: '📊 Báo cáo sức khỏe', report_sub: 'Ghi chép 7 ngày qua',
+    stress_title: '🧠 Tín hiệu stress', stress_sub: 'Hôm nay bạn cảm thấy thế nào?',
+    respite_title: '📅 Kế hoạch chăm sóc', settings_title: '⚙️ Cài đặt', settings_sub: 'Tùy chỉnh cá nhân',
+    contacts_title: '📞 Liên hệ khẩn cấp',
+    daily_tab: '📋 Hàng ngày', handover_tab: '🔄 Bàn giao ca', history_tab: '📚 Lịch sử',
+    voice_btn: '🎙️ Nhập giọng nói', ai_btn: '✨ AI Tạo báo cáo',
+    send_family: '💬 Gửi gia đình', send_handover: '🔄 Gửi ca sau',
+    insert_btn: 'Chèn dữ liệu', inserted_btn: '✅ Đã chèn',
+    good_spirit: '😊 Tinh thần tốt', good_food: '🍚 Ăn ngon', good_toilet: '✅ Đại tiện BT',
+    fall_risk: '⚠️ Nguy cơ ngã', need_doctor: '🏥 Cần khám BS', unstable: '😟 Cảm xúc không ổn',
+    morning_shift: 'Ca sáng', afternoon_shift: 'Ca chiều', night_shift: 'Ca tối',
+    stress_submit: 'Gửi trạng thái hôm nay', menu_btn: 'Menu',
+    add_med: '＋ Thêm thuốc', quick_features: 'Tính năng nhanh',
+  },
+  'fil': {
+    name: 'Filipino', flag: '🇵🇭',
+    greet_morning: '☀️ Magandang umaga', greet_noon: '🌤️ Magandang tanghali', greet_evening: '🌙 Magandang gabi', greet_night: '🌛 Hatinggabi na',
+    home: 'Home', settings: 'Settings', journal: 'Journal',
+    sos_label: 'SOS', sos_sub: 'Emergency',
+    med: 'Paalala Gamot', report: 'Ulat Kalusugan', stress: 'Stress Signal', respite: 'Plano',
+    med_title: '💊 Paalala ng Gamot', med_sub: 'Huwag kalimutang uminom ng gamot!',
+    report_title: '📊 Ulat ng Kalusugan', report_sub: 'Talaan ng nakaraang 7 araw',
+    stress_title: '🧠 Stress Signal', stress_sub: 'Kumusta ka ngayon?',
+    respite_title: '📅 Plano ng Pag-aalaga', settings_title: '⚙️ Settings', settings_sub: 'Personal na pagbabago',
+    contacts_title: '📞 Emergency Contacts',
+    daily_tab: '📋 Araw-araw', handover_tab: '🔄 Handover', history_tab: '📚 Kasaysayan',
+    voice_btn: '🎙️ Voice Input', ai_btn: '✨ AI Gumawa ng Ulat',
+    send_family: '💬 Sa Pamilya', send_handover: '🔄 Sa susunod na staff',
+    insert_btn: 'I-insert data', inserted_btn: '✅ Na-insert na',
+    good_spirit: '😊 Masayang espiritu', good_food: '🍚 Normal ang gana', good_toilet: '✅ Normal ang dumi',
+    fall_risk: '⚠️ Panganib mahulog', need_doctor: '🏥 Kailangan ng doktor', unstable: '😟 Hindi stable',
+    morning_shift: 'Umaga', afternoon_shift: 'Tanghali', night_shift: 'Gabi',
+    stress_submit: 'I-submit ang status', menu_btn: 'Menu',
+    add_med: '＋ Dagdag Gamot', quick_features: 'Mabilis na Feature',
+  }
+};
+
+let currentLang = localStorage.getItem('yinan_lang') || 'zh-TW';
+function t(key) { return LANGS[currentLang]?.[key] || LANGS['zh-TW'][key] || key; }
+
+function applyLang() {
+  // 掃描所有 data-i18n 元素統一替換
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.dataset.i18n;
+    const val = t(key);
+    if (val) el.textContent = val;
+  });
+
+  // 特殊元素（含 HTML 的按鈕）
+  const voiceBtn = document.getElementById('voice-btn');
+  if (voiceBtn && !isRecording) voiceBtn.innerHTML = t('voice_btn');
+  const genBtn = document.getElementById('journal-gen-btn');
+  if (genBtn) genBtn.innerHTML = t('ai_btn');
+  const familyBtn   = document.getElementById('btn-send-family');
+  const handoverBtn = document.getElementById('handover-send-btn');
+  if (familyBtn)   familyBtn.textContent   = t('send_family');
+  if (handoverBtn) handoverBtn.textContent = t('send_handover');
+
+  // 班別按鈕
+  const shiftBtns = document.querySelectorAll('.shift-btn');
+  const shiftKeys = ['morning_shift','afternoon_shift','night_shift'];
+  shiftBtns.forEach((el, i) => { if (shiftKeys[i]) el.textContent = t(shiftKeys[i]); });
+
+  // 問候語
+  updateClock();
+}
+
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('yinan_lang', lang);
+  applyLang();
+  closeAcctMenu();
+  showToast(`🌐 ${LANGS[lang].flag} ${LANGS[lang].name}`);
+}
+
+let currentRole = 'caregiver';
 
 function toggleRoleView() {
   if (currentRole === 'caregiver') {
