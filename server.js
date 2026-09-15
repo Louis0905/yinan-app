@@ -211,7 +211,7 @@ const server = http.createServer(async (req, res) => {
     saveDB(db);
     console.log(`🧠 [${now()}] ${body.user} 壓力:${body.emoji}(${body.level})`);
     if (body.level === 'red') {
-      const contacts = savedContacts;
+      const contacts = body.contacts?.length ? body.contacts : savedContacts;
       const msg = [`⚠️【銀安APP 壓力警示】`, ``, `📋 照護對象：${body.user}`, `⏰ 時間：${now()}`, `🧠 狀態：壓力偏高 ${body.emoji}`, body.note ? `📝 備註：${body.note}` : '', ``, `請關心照護對象的狀況。`].filter(Boolean).join('\n');
       broadcast(contacts, 'stress', msg);
     }
@@ -227,11 +227,31 @@ const server = http.createServer(async (req, res) => {
     if (!db.bp_logs) db.bp_logs = [];
     db.bp_logs.push(ts(body));
     saveDB(db);
-    console.log(`❤️  [${now()}] ${body.user} 血壓:${body.sys}/${body.dia}`);
+    console.log(`❤️  [${now()}] ${body.user} 血壓:${body.sys}/${body.dia} 心跳:${body.hr||'--'}`);
+
+    // APP 傳來的聯絡人（最新的，不受 Railway 重啟影響）
+    const contacts = body.contacts?.length ? body.contacts : savedContacts;
+
     if (body.sys >= 180 || body.dia >= 120) {
       const msg = `🚨【銀安APP 血壓危象】\n\n📋 照護對象：${body.user}\n⏰ 時間：${now()}\n❤️ 血壓：${body.sys}/${body.dia} mmHg\n\n請立即協助就醫！`;
-      broadcast(savedContacts, 'bp', msg);
+      broadcast(contacts, 'bp', msg);
+    } else if (body.sys >= 160 || body.dia >= 100) {
+      const msg = `⚠️【銀安APP 血壓警示】\n\n📋 照護對象：${body.user}\n⏰ 時間：${now()}\n❤️ 血壓：${body.sys}/${body.dia} mmHg（第二期高血壓）\n\n建議盡快就醫確認。`;
+      broadcast(contacts, 'bp', msg);
+    } else if (body.sys >= 140 || body.dia >= 90) {
+      const msg = `⚠️【銀安APP 血壓警示】\n\n📋 照護對象：${body.user}\n⏰ 時間：${now()}\n❤️ 血壓：${body.sys}/${body.dia} mmHg（第一期高血壓）\n\n建議與醫師討論用藥。`;
+      broadcast(contacts, 'bp', msg);
     }
+
+    // 心跳異常
+    if (body.hr && body.hr > 120) {
+      const msg = `💗【銀安APP 心跳警示】\n\n📋 照護對象：${body.user}\n⏰ 時間：${now()}\n💗 心跳：${body.hr} bpm（偏快）\n\n建議休息並告知醫師。`;
+      broadcast(contacts, 'bp', msg);
+    } else if (body.hr && body.hr < 50) {
+      const msg = `🔵【銀安APP 心跳警示】\n\n📋 照護對象：${body.user}\n⏰ 時間：${now()}\n🔵 心跳：${body.hr} bpm（偏慢）\n\n建議告知醫師。`;
+      broadcast(contacts, 'bp', msg);
+    }
+
     res.writeHead(200);
     res.end(JSON.stringify({ ok: true }));
     return;
@@ -439,13 +459,17 @@ ${text}`;
   // 📨 傳送日誌給家屬
   if (req.method === 'POST' && url === '/send-journal') {
     const body = await readBody(req);
-    const { report, contacts, profileName } = body;
+    const { report, contacts, profileName, isAutoAlert } = body;
     if (!report || !contacts?.length) { res.writeHead(400); res.end(JSON.stringify({ ok: false })); return; }
-    const msg = `📋【銀安APP 照護日誌】\n\n照護對象：${profileName||'長輩'}\n時間：${now()}\n\n${report}`;
+    const msg = isAutoAlert
+      ? `🚨【銀安APP 自動警示】\n\n照護對象：${profileName||'長輩'}\n時間：${now()}\n\n${report}`
+      : `📋【銀安APP 照護日誌】\n\n照護對象：${profileName||'長輩'}\n時間：${now()}\n\n${report}`;
+    let sent = 0;
     for (const c of contacts) {
-      if (c.userId) await sendLINE(c.userId, msg);
+      if (c.userId) { await sendLINE(c.userId, msg); sent++; }
     }
-    res.writeHead(200); res.end(JSON.stringify({ ok: true })); return;
+    console.log(`  📲 傳送${isAutoAlert?'警示':'日誌'}給 ${sent} 位聯絡人`);
+    res.writeHead(200); res.end(JSON.stringify({ ok: true, sent })); return;
   }
 
   // 清空
