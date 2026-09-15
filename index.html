@@ -4920,57 +4920,45 @@ function restoreAlerts() {
   }
 }
 async function autoAlertAI(triggerType, data) {
-  // 不依賴人工，自動生成摘要並推播
-  const contacts = emergencyContacts.filter(c => c.userId);
-  if (contacts.length === 0) {
-    console.log(`  ℹ️ 無${trigger.notifyType}通知聯絡人，已記錄異常`);
-    return;
-  }
-
   const triggerMap = {
-    bp_crisis:  { label:'🚨 血壓危象', notifyType:'bp' },
-    bp_high:    { label:'⚠️ 血壓偏高', notifyType:'bp' },
-    hr_high:    { label:'💗 心跳偏快', notifyType:'bp' },
-    hr_low:     { label:'🔵 心跳偏慢', notifyType:'bp' },
-    stress_red: { label:'🧠 壓力偏高', notifyType:'stress' },
-    med_missed: { label:'💊 未服藥警示', notifyType:'med' },
-    silence:    { label:'⏰ 異常沉默', notifyType:'sos' },
+    bp_crisis:  { label:'🚨 血壓危象' },
+    bp_high:    { label:'⚠️ 血壓偏高' },
+    hr_high:    { label:'💗 心跳偏快' },
+    hr_low:     { label:'🔵 心跳偏慢' },
+    stress_red: { label:'🧠 壓力偏高' },
+    med_missed: { label:'💊 未服藥警示' },
+    silence:    { label:'⏰ 異常沉默' },
   };
   const trigger = triggerMap[triggerType];
   if (!trigger) return;
 
-  const alertContacts = emergencyContacts.filter(c => c.userId && (c.notifyTypes||['sos']).includes(trigger.notifyType));
   const valueStr = data.sys ? `${data.sys}/${data.dia} mmHg` : data.hr ? `${data.hr} bpm` : data.emoji || '';
+  const hasContacts = emergencyContacts.filter(c => c.userId).length > 0;
 
-  // 先記錄到異常紀錄（不管有沒有聯絡人）
-  pushAlertLog(triggerType, trigger.label, valueStr, alertContacts.length > 0);
+  // 記錄異常（不管有沒有聯絡人）
+  pushAlertLog(triggerType, trigger.label, valueStr, hasContacts);
 
+  if (!hasContacts) {
+    console.log(`  ℹ️ 無聯絡人，已記錄異常：${trigger.label}`);
+    return;
+  }
+
+  // 直接透過 /sos 端點發送（server 端自動篩選聯絡人）
   try {
-    // 呼叫 AI 生成簡短分析
-    const r = await fetch(SERVER_URL + '/ai-journal', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        text: `自動偵測到異常：${trigger.label}。${JSON.stringify(data)}`,
-        profile: window.userProfile,
-        date: new Date().toLocaleString('zh-TW'),
-        mode: 'auto-alert',
-        autoAlert: true,
-      }),
-      signal: AbortSignal.timeout(20000)
-    });
-    const result = await r.json();
-    if (!result.ok) throw new Error(result.message);
+    const location = data.sys
+      ? `${trigger.label}｜血壓：${data.sys}/${data.dia} mmHg${data.hr ? `，心跳：${data.hr} bpm` : ''}`
+      : data.hr ? `${trigger.label}｜心跳：${data.hr} bpm`
+      : data.emoji ? `${trigger.label}｜壓力：${data.emoji}` : trigger.label;
 
-    // 自動推播
-    await fetch(SERVER_URL + '/send-journal', {
+    await fetch(SERVER_URL + '/sos', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        report: `${trigger.label}\n\n${result.report}`,
-        contacts: alertContacts,
-        profileName: window.userProfile?.name,
+        user: window.userProfile?.name || '照顧者',
+        location,
+        lat: null, lng: null, gps_real: false,
         isAutoAlert: true,
+        contacts: emergencyContacts,
       }),
       signal: AbortSignal.timeout(10000)
     });
