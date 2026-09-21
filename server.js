@@ -24,7 +24,7 @@ const LANG_NAMES = {
   'fil': 'Filipino（菲律賓文/他加祿語）',
 };
 
-async function callAI(systemPrompt, userContent) {
+async function callAI(systemPrompt, userContent, maxTokens = 1500) {
   return new Promise((resolve, reject) => {
     const body = JSON.stringify({
       model: AI_MODEL,
@@ -33,7 +33,7 @@ async function callAI(systemPrompt, userContent) {
         { role: 'user',   content: userContent  }
       ],
       temperature: 0.7,
-      max_tokens: 1500
+      max_tokens: maxTokens
     });
 
     // 解析 URL
@@ -462,9 +462,25 @@ const server = http.createServer(async (req, res) => {
     console.log(`\n🤖 [${now()}] AI 日誌生成 (${text.length} 字)${lang && lang !== 'zh-TW' ? `，目標語言:${lang}` : ''}`);
 
     const isAutoAlert = body.autoAlert === true;
+    // 自架的落地 AI 模型（20B，跑在自己機器上）本來生成一次報表就要一點時間，
+    // 如果拆成「先生成中文、再呼叫一次翻譯」兩次獨立的 API 呼叫，等於要排隊處理兩次、
+    // 而且第二次還要重新讀一次上下文，很容易兩次加起來超過前端 30 秒的等待時間而 timeout。
+    // 改成一次請求就同時要求 AI 輸出「中文報表」+ 分隔符號 + 「翻譯版報表」，只跑一次推論，
+    // 省掉第二次的排隊與上下文重讀時間。
+    const targetLangName = lang && lang !== 'zh-TW' ? LANG_NAMES[lang] : null;
+    const TRANSLATION_DELIMITER = '===TRANSLATION===';
+
+    const baseFormatRules = `格式要求：1.簡潔清楚方便家屬閱讀 2.自動分類：身體狀況、情緒狀態、飲食記錄、活動記錄、異常事項、待追蹤事項 3.沒提到的項目直接略過 4.若為交接班記錄加上【交接重點】段落 5.結尾加上照顧者建議（如有需要）6.輸出純文字用emoji輔助分類`;
+
     const systemPrompt = isAutoAlert
       ? `你是長照照護異常分析助理。根據偵測到的異常事件，生成簡短的家屬通知摘要（繁體中文，不超過150字）。先說明異常狀況，再給出建議行動。語氣溫和但明確。`
-      : `你是一位專業的長照照護記錄助理。請將照顧者提供的口語記錄整理成結構化的照護日誌報表，使用繁體中文。格式要求：1.簡潔清楚方便家屬閱讀 2.自動分類：身體狀況、情緒狀態、飲食記錄、活動記錄、異常事項、待追蹤事項 3.沒提到的項目直接略過 4.若為交接班記錄加上【交接重點】段落 5.結尾加上照顧者建議（如有需要）6.輸出純文字用emoji輔助分類`;
+      : targetLangName
+        ? `你是一位專業的長照照護記錄助理，同時精通${targetLangName}翻譯。請依序完成兩個步驟並照順序輸出：
+【步驟一】將照顧者提供的口語記錄整理成結構化的照護日誌報表，使用繁體中文。${baseFormatRules}
+【步驟二】另起一行，只輸出這個分隔符號：${TRANSLATION_DELIMITER}
+【步驟三】接著把步驟一產生的完整繁體中文報表，完整翻譯成${targetLangName}，保留段落結構、條列與 emoji，不要增加、省略或評論內容。
+請務必依「中文報表 → 分隔符號 → 翻譯報表」的順序輸出，不要附加任何其他說明文字。`
+        : `你是一位專業的長照照護記錄助理。請將照顧者提供的口語記錄整理成結構化的照護日誌報表，使用繁體中文。${baseFormatRules}`;
 
     const userContent = `照護對象：${profile?.name || '長輩'}
 記錄日期：${date || now()}
@@ -472,25 +488,22 @@ const server = http.createServer(async (req, res) => {
 ${text}`;
 
     try {
-      // 報表一律先用繁體中文生成——這份「中文版」會拿去傳給家屬/接班人的 LINE 通知
-      // （家屬多半只看得懂中文，所以送出去的訊息不能跟著 APP 介面語言變動）。
-      const reportZh = await callAI(systemPrompt, userContent);
-      console.log(`  ✅ AI 生成完成（中文，${reportZh.length} 字）`);
+      // 有翻譯需求時，輸出內容變成兩份報表疊在一起，長度接近兩倍，max_tokens 也要跟著放寬，
+      // 避免翻譯的部分被截斷。
+      const result = await callAI(systemPrompt, userContent, targetLangName ? 2600 : 1500);
+      console.log(`  ✅ AI 生成完成 (${result.length} 字)`);
 
-      // 若照顧者目前的 APP 介面不是繁體中文，另外把中文版翻譯成該語言，
-      // 這份「翻譯版」只用來在 APP 裡顯示給照顧者自己看，不會拿去發送。
-      let report = reportZh;
-      const targetLangName = lang && lang !== 'zh-TW' ? LANG_NAMES[lang] : null;
+      // 拆分中文版／翻譯版；如果 AI 沒有照格式輸出分隔符號（模型偶爾不聽話），
+      // 就整份當作中文版使用，畫面上退回顯示中文，至少不會整個失敗。
+      let reportZh = result;
+      let report = result;
       if (targetLangName) {
-        try {
-          report = await callAI(
-            `你是專業的翻譯員。請將使用者提供的繁體中文長照照護日誌報表，完整翻譯成${targetLangName}。保留原本的段落結構、條列與 emoji 標示，不要增加、省略或評論內容，只輸出翻譯後的文字，不要附上任何說明。`,
-            reportZh
-          );
-          console.log(`  ✅ 翻譯完成（${lang}，${report.length} 字）`);
-        } catch(e) {
-          console.log(`  ⚠️ 翻譯失敗，改用中文版顯示: ${e.message}`);
-          report = reportZh;
+        const idx = result.indexOf(TRANSLATION_DELIMITER);
+        if (idx !== -1) {
+          reportZh = result.slice(0, idx).trim();
+          report = result.slice(idx + TRANSLATION_DELIMITER.length).trim() || reportZh;
+        } else {
+          console.log(`  ⚠️ AI 沒有輸出分隔符號，退回顯示中文版`);
         }
       }
 
