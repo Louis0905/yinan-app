@@ -4518,9 +4518,6 @@ let journalHistory = [];
 let journalMode = 'daily'; // 'daily' | 'handover'
 let selectedShift = '';
 let journalFilter = 'all';
-// AI 報表的「繁體中文版」——用來傳給家屬/接班人的 LINE 通知一律用中文，
-// 跟畫面上顯示給照顧者看的版本（可能已翻譯成其他語言）分開存，避免家屬收到看不懂的語言。
-let currentReportZh = '';
 
 function loadJournalHistory() {
   try {
@@ -4734,7 +4731,6 @@ function showHistoryJournal(idx) {
   setJournalMode(j.mode === 'handover' ? 'handover' : 'daily');
   document.getElementById('journal-input').value = j.rawText || '';
   document.getElementById('journal-report-text').textContent = j.report;
-  currentReportZh = j.reportZh || j.report; // 舊資料沒有 reportZh 欄位時，原本存的 report 本來就是中文
   document.getElementById('journal-date').textContent = new Date(j._ts).toLocaleString(localeCode());
   const modeBadge = document.getElementById('journal-mode-badge');
   if (modeBadge) modeBadge.innerHTML = j.mode === 'handover'
@@ -4790,7 +4786,6 @@ async function generateJournal() {
     if (!data.ok) throw new Error(data.message);
 
     document.getElementById('journal-report-text').textContent = data.report;
-    currentReportZh = data.reportZh || data.report; // 傳給家屬/接班人用的中文版，跟畫面顯示版分開存
     document.getElementById('journal-date').textContent = new Date().toLocaleString(localeCode());
     const modeBadge = document.getElementById('journal-mode-badge');
     if (modeBadge) modeBadge.innerHTML = journalMode === 'handover'
@@ -4815,7 +4810,7 @@ async function generateJournal() {
     }
 
     journalHistory.push({
-      _ts: new Date().toISOString(), rawText: text, report: data.report, reportZh: data.reportZh || data.report,
+      _ts: new Date().toISOString(), rawText: text, report: data.report,
       profileName: window.userProfile?.name, mode: journalMode, shift: selectedShift
     });
     saveJournalHistory();
@@ -4836,9 +4831,7 @@ function copyJournal() {
 }
 
 function sendJournalLINE() {
-  // 傳給家屬一律用中文版（currentReportZh），不用畫面上可能已翻譯成其他語言的顯示版，
-  // 避免家屬收到自己看不懂的語言。
-  const report = currentReportZh || document.getElementById('journal-report-text').textContent;
+  const report = document.getElementById('journal-report-text').textContent;
   if (!report) return;
   const contacts = emergencyContacts.filter(c => c.userId);
   if (contacts.length === 0) { showToast(t('no_line_userid_toast')); return; }
@@ -4855,8 +4848,7 @@ function sendJournalLINE() {
 }
 
 function sendJournalHandover() {
-  // 同樣傳中文版給接班人（跟 sendJournalLINE 邏輯一致）
-  const report = currentReportZh || document.getElementById('journal-report-text').textContent;
+  const report = document.getElementById('journal-report-text').textContent;
   if (!report) return;
   const toName = document.getElementById('handover-to')?.value.trim();
   if (!toName) { showToast(t('fill_handover_name_toast')); return; }
@@ -5818,7 +5810,7 @@ const LANGS = {
     menu_care: 'Manajemen Perawatan', menu_switch: 'Ganti Pasien',
     menu_lang: 'Bahasa', menu_reassess: 'Evaluasi Ulang', menu_family: 'Tampilan Keluarga',
     font_size_label: '🔤 Ukuran Font', font_sm: 'Kecil', font_md: 'Sedang', font_lg: 'Besar', font_xl: 'Sangat Besar',
-    app_version: YinanAPP v1.5.2 · Perawatan lebih mudah', contacts_set: 'Sudah diatur',
+    app_version: 'YinanAPP v1.0 · Perawatan lebih mudah', contacts_set: 'Sudah diatur',
     today_label: 'Hari ini', tomorrow_label: 'Besok', tomorrow_none: 'Tidak ada jadwal besok',
     med_done: 'selesai', med_label: 'Obat', med_remaining: 'ada yang belum diminum', med_all_done: 'semua selesai',
     bp_high_badge: 'Tinggi', bp_low_badge: 'Rendah', bp_normal_badge: 'Normal',
@@ -6342,7 +6334,7 @@ const LANGS = {
     menu_care: 'Quản lý chăm sóc', menu_switch: 'Chuyển người được chăm sóc',
     menu_lang: 'Ngôn ngữ', menu_reassess: 'Đánh giá lại', menu_family: 'Góc nhìn gia đình',
     font_size_label: '🔤 Cỡ chữ', font_sm: 'Nhỏ', font_md: 'Vừa', font_lg: 'Lớn', font_xl: 'Rất lớn',
-    app_version: 'YinanAPP v1.5.2 · Chăm sóc dễ dàng hơn', contacts_set: 'Đã thiết lập',
+    app_version: 'YinanAPP v1.0 · Chăm sóc dễ dàng hơn', contacts_set: 'Đã thiết lập',
     today_label: 'Hôm nay', tomorrow_label: 'Ngày mai', tomorrow_none: 'Không có lịch ngày mai',
     med_done: 'hoàn thành', med_label: 'Thuốc', med_remaining: 'còn chưa uống', med_all_done: 'tất cả xong',
     bp_high_badge: 'Cao', bp_low_badge: 'Thấp', bp_normal_badge: 'Bình thường',
@@ -6701,7 +6693,7 @@ const LANGS = {
     menu_care: 'Pamamahala ng Pag-aalaga', menu_switch: 'Palitan ang pasyente',
     menu_lang: 'Wika', menu_reassess: 'Muling suriin', menu_family: 'View ng Pamilya',
     font_size_label: '🔤 Laki ng Font', font_sm: 'Maliit', font_md: 'Katamtaman', font_lg: 'Malaki', font_xl: 'Napakalaki',
-    app_version: 'YinanAPP v1.5.2 · Mas madaling pag-aalaga', contacts_set: 'Naitakda na',
+    app_version: 'YinanAPP v1.0 · Mas madaling pag-aalaga', contacts_set: 'Naitakda na',
     today_label: 'Ngayon', tomorrow_label: 'Bukas', tomorrow_none: 'Walang iskedyul bukas',
     med_done: 'kumpleto', med_label: 'Gamot', med_remaining: 'may hindi pa naiinom', med_all_done: 'lahat kumpleto',
     bp_high_badge: 'Mataas', bp_low_badge: 'Mababa', bp_normal_badge: 'Normal',
