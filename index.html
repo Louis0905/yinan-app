@@ -1875,9 +1875,9 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
           </div>
           <div style="font-size:11px;color:var(--g500);margin-bottom:4px;" data-i18n="shift_label">班別時段</div>
           <div style="display:flex;gap:6px;">
-            <button onclick="selectShift(this,'早班 07:00-15:00')" class="shift-btn" style="flex:1;padding:6px;border-radius:8px;border:1px solid var(--g200);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);background:white;">早班</button>
-            <button onclick="selectShift(this,'午班 15:00-23:00')" class="shift-btn" style="flex:1;padding:6px;border-radius:8px;border:1px solid var(--g200);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);background:white;">午班</button>
-            <button onclick="selectShift(this,'夜班 23:00-07:00')" class="shift-btn" style="flex:1;padding:6px;border-radius:8px;border:1px solid var(--g200);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);background:white;">夜班</button>
+            <button onclick="selectShift(this,'morning','07:00-15:00')" class="shift-btn" style="flex:1;padding:6px;border-radius:8px;border:1px solid var(--g200);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);background:white;">早班</button>
+            <button onclick="selectShift(this,'afternoon','15:00-23:00')" class="shift-btn" style="flex:1;padding:6px;border-radius:8px;border:1px solid var(--g200);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);background:white;">午班</button>
+            <button onclick="selectShift(this,'night','23:00-07:00')" class="shift-btn" style="flex:1;padding:6px;border-radius:8px;border:1px solid var(--g200);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);background:white;">夜班</button>
           </div>
         </div>
 
@@ -4518,6 +4518,9 @@ let journalHistory = [];
 let journalMode = 'daily'; // 'daily' | 'handover'
 let selectedShift = '';
 let journalFilter = 'all';
+// AI 報表的「繁體中文版」——用來傳給家屬/接班人的 LINE 通知一律用中文，
+// 跟畫面上顯示給照顧者看的版本（可能已翻譯成其他語言）分開存，避免家屬收到看不懂的語言。
+let currentReportZh = '';
 
 function loadJournalHistory() {
   try {
@@ -4640,13 +4643,25 @@ function setJournalMode(mode) {
   }
 }
 
-function selectShift(btn, shift) {
+function selectShift(btn, type, time) {
   document.querySelectorAll('.shift-btn').forEach(b => {
     b.style.background = 'white'; b.style.color = 'var(--g700)'; b.style.borderColor = 'var(--g200)';
   });
   btn.style.background = 'var(--blue-m)'; btn.style.color = 'white'; btn.style.borderColor = 'var(--blue-m)';
-  selectedShift = shift;
-  showToast(t('shift_selected_toast') + shift.split(' ')[0]);
+  // 只存語言無關的班別類型（type）與時段（time），顯示時才即時查目前語言的翻譯，
+  // 不要把當下語言翻好的文字直接存起來——否則之後切換語言，這裡的文字不會跟著變
+  // （跟異常紀錄 pushAlertLog 的修法是同樣道理）。
+  selectedShift = { type, time };
+  showToast(t('shift_selected_toast') + t(type + '_shift'));
+}
+
+// 把 selectedShift／journalHistory 內存的班別資料格式化成目前語言的顯示文字。
+// 相容舊資料：早期版本把已翻譯好的文字直接存成字串，這裡遇到字串就原樣顯示（無法回頭翻譯），
+// 新資料一律是 {type, time} 物件，可以隨語言即時查表。
+function formatShiftDisplay(shift) {
+  if (!shift) return '';
+  if (typeof shift === 'object') return `${t(shift.type + '_shift')} ${shift.time || ''}`.trim();
+  return shift;
 }
 
 
@@ -4719,10 +4734,11 @@ function showHistoryJournal(idx) {
   setJournalMode(j.mode === 'handover' ? 'handover' : 'daily');
   document.getElementById('journal-input').value = j.rawText || '';
   document.getElementById('journal-report-text').textContent = j.report;
+  currentReportZh = j.reportZh || j.report; // 舊資料沒有 reportZh 欄位時，原本存的 report 本來就是中文
   document.getElementById('journal-date').textContent = new Date(j._ts).toLocaleString(localeCode());
   const modeBadge = document.getElementById('journal-mode-badge');
   if (modeBadge) modeBadge.innerHTML = j.mode === 'handover'
-    ? `<span style="background:var(--blue-l);color:var(--blue-m);padding:2px 10px;border-radius:8px;font-size:11px;font-weight:800;">🔄 ${t('handover_record')} ${j.shift||''}</span>`
+    ? `<span style="background:var(--blue-l);color:var(--blue-m);padding:2px 10px;border-radius:8px;font-size:11px;font-weight:800;">🔄 ${t('handover_record')} ${formatShiftDisplay(j.shift)}</span>`
     : `<span style="background:var(--green-l);color:var(--green);padding:2px 10px;border-radius:8px;font-size:11px;font-weight:800;">📋 ${t('daily_record')}</span>`;
   document.getElementById('journal-result').style.display = 'block';
   updateJournalCount();
@@ -4748,7 +4764,7 @@ async function generateJournal() {
   if (journalMode === 'handover') {
     const from = document.getElementById('handover-from')?.value || '';
     const to   = document.getElementById('handover-to')?.value || '';
-    extraContext = `\n【交接班資訊】班別：${selectedShift||'未選擇'}，交班人：${from||'未填'}，接班人：${to||'未填'}`;
+    extraContext = `\n【交接班資訊】班別：${formatShiftDisplay(selectedShift)||'未選擇'}，交班人：${from||'未填'}，接班人：${to||'未填'}`;
   }
 
   try {
@@ -4760,7 +4776,8 @@ async function generateJournal() {
         profile: window.userProfile,
         date: new Date().toLocaleString('zh-TW'),
         mode: journalMode,
-        shift: selectedShift,
+        shift: formatShiftDisplay(selectedShift),
+        lang: currentLang,
         todayData: {
           bp: lastBP?.date === '今' ? `${lastBP.sys}/${lastBP.dia}` : null,
           stress: todayStress ? todayStress.emoji : null,
@@ -4773,10 +4790,11 @@ async function generateJournal() {
     if (!data.ok) throw new Error(data.message);
 
     document.getElementById('journal-report-text').textContent = data.report;
+    currentReportZh = data.reportZh || data.report; // 傳給家屬/接班人用的中文版，跟畫面顯示版分開存
     document.getElementById('journal-date').textContent = new Date().toLocaleString(localeCode());
     const modeBadge = document.getElementById('journal-mode-badge');
     if (modeBadge) modeBadge.innerHTML = journalMode === 'handover'
-      ? `<span style="background:var(--blue-l);color:var(--blue-m);padding:2px 10px;border-radius:8px;font-size:11px;font-weight:800;">🔄 ${t('handover_record')} ${selectedShift||''}</span>`
+      ? `<span style="background:var(--blue-l);color:var(--blue-m);padding:2px 10px;border-radius:8px;font-size:11px;font-weight:800;">🔄 ${t('handover_record')} ${formatShiftDisplay(selectedShift)}</span>`
       : `<span style="background:var(--green-l);color:var(--green);padding:2px 10px;border-radius:8px;font-size:11px;font-weight:800;">📋 ${t('daily_record')}</span>`;
     document.getElementById('journal-result').style.display = 'block';
     document.getElementById('journal-result').scrollIntoView({ behavior:'smooth' });
@@ -4797,7 +4815,7 @@ async function generateJournal() {
     }
 
     journalHistory.push({
-      _ts: new Date().toISOString(), rawText: text, report: data.report,
+      _ts: new Date().toISOString(), rawText: text, report: data.report, reportZh: data.reportZh || data.report,
       profileName: window.userProfile?.name, mode: journalMode, shift: selectedShift
     });
     saveJournalHistory();
@@ -4818,7 +4836,9 @@ function copyJournal() {
 }
 
 function sendJournalLINE() {
-  const report = document.getElementById('journal-report-text').textContent;
+  // 傳給家屬一律用中文版（currentReportZh），不用畫面上可能已翻譯成其他語言的顯示版，
+  // 避免家屬收到自己看不懂的語言。
+  const report = currentReportZh || document.getElementById('journal-report-text').textContent;
   if (!report) return;
   const contacts = emergencyContacts.filter(c => c.userId);
   if (contacts.length === 0) { showToast(t('no_line_userid_toast')); return; }
@@ -4835,7 +4855,8 @@ function sendJournalLINE() {
 }
 
 function sendJournalHandover() {
-  const report = document.getElementById('journal-report-text').textContent;
+  // 同樣傳中文版給接班人（跟 sendJournalLINE 邏輯一致）
+  const report = currentReportZh || document.getElementById('journal-report-text').textContent;
   if (!report) return;
   const toName = document.getElementById('handover-to')?.value.trim();
   if (!toName) { showToast(t('fill_handover_name_toast')); return; }
@@ -4902,7 +4923,7 @@ function renderAlertLog() {
       : `<span style="font-size:10px;background:var(--g100);color:var(--g400);padding:1px 7px;border-radius:6px;font-weight:700;">${t('not_notified_word')}</span>`;
     return `<div style="background:${bg};border-radius:10px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;">
       <div>
-        <div style="font-size:12px;font-weight:800;color:var(--g700);">${a.label}</div>
+        <div style="font-size:12px;font-weight:800;color:var(--g700);">${a.type ? t('alert_label_' + a.type) : a.label}</div>
         <div style="font-size:11px;color:var(--g500);margin-top:2px;">${a.value || ''}</div>
       </div>
       <div style="text-align:right;">
