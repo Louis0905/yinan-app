@@ -2329,7 +2329,7 @@ function sendLine(contactId, name) {
 
   // Set notification name
   document.getElementById('ln-name-1').textContent = name;
-  document.getElementById('ln-msg-1').textContent = t('sos_notify_msg').replace('{name}', window.userProfile?.name || t('journal_elder_fallback'));
+  document.getElementById('ln-msg-1').textContent = t('sos_notify_msg').replace('{name}', trName(window.userProfile?.name) || t('journal_elder_fallback'));
 
   // Show overlay
   const overlay = document.getElementById('line-overlay');
@@ -2821,8 +2821,8 @@ function applyProfile(p) {
 
   if (heroCard)  heroCard.style.display  = 'block';
   if (heroEmpty) heroEmpty.style.display = 'none';
-  if (heroName)  heroName.textContent  = p.name;
-  if (acctName)  acctName.textContent  = p.name;
+  if (heroName)  heroName.textContent  = trName(p.name);
+  if (acctName)  acctName.textContent  = trName(p.name);
   if (acctSub)   acctSub.textContent   = r.label + t('view_profile_suffix');
 
   const femaleKW = ['媽','奶','婆','姨','嬤','外婆'];
@@ -3293,6 +3293,22 @@ const SEED_TEXT_MAP = {
 function trSeed(raw) {
   if (raw == null) return raw;
   const key = SEED_TEXT_MAP[raw];
+  return key ? t(key) : raw;
+}
+
+// 照護對象「姓名」欄位很常被填成親屬稱謂（爸爸／媽媽／阿公／阿嬤…）而不是真正的姓名，
+// 這種稱謂其實是可以翻譯的字彙，所以切換語言時應該跟著變。
+// 但這裡只認得這幾個固定稱謂——如果使用者填的是真正的姓名（例如「陳大文」），
+// 不在表裡就直接原樣顯示，不會被亂翻譯。
+const NAME_LABEL_MAP = {
+  '爸爸': 'name_dad', '媽媽': 'name_mom',
+  '爺爺': 'name_grandpa_p', '奶奶': 'name_grandma_p',
+  '外公': 'name_grandpa_m', '外婆': 'name_grandma_m',
+  '阿公': 'name_grandpa_casual', '阿嬤': 'name_grandma_casual',
+};
+function trName(raw) {
+  if (raw == null) return raw;
+  const key = NAME_LABEL_MAP[raw];
   return key ? t(key) : raw;
 }
 
@@ -3842,7 +3858,7 @@ function updateAcctDisplay() {
   const phoneEl = document.getElementById('acct-phone-display');
   const avEl    = document.getElementById('acct-av-display');
   const acctAvEl= document.getElementById('acct-avatar');
-  const name    = window.userProfile?.name || '照護對象';
+  const name    = window.userProfile?.name ? trName(window.userProfile.name) : t('care_person');
   const risk    = window.userProfile?.risk;
   const riskLabel = { low: t('risk_low'), mid: t('risk_mid'), high: t('risk_high') }[risk] || '';
   if (nameEl)  nameEl.textContent  = name;
@@ -4215,7 +4231,7 @@ function renderProfilesList() {
         <div style="width:48px;height:48px;border-radius:50%;background:${isActive?'#EBF8FF':'var(--g100)'};display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">${av}</div>
         <div style="flex:1;min-width:0;">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
-            <div style="font-size:17px;font-weight:900;color:var(--g700);">${p.name}</div>
+            <div style="font-size:17px;font-weight:900;color:var(--g700);">${trName(p.name)}</div>
             <span style="font-size:11px;font-weight:700;color:${riskColor[p.risk]||'#38A169'};">${riskLabel[p.risk]||''}</span>
           </div>
           <div style="display:flex;flex-wrap:wrap;gap:4px;">
@@ -4238,7 +4254,7 @@ function selectProfile(idx) {
   loadContacts();
   renderContactsList();
   updateAcctDisplay(); updateHomeCards();
-  setTimeout(() => showToast(t('switched_to_toast').replace('{name}', p.name)), 400);
+  setTimeout(() => showToast(t('switched_to_toast').replace('{name}', trName(p.name))), 400);
 }
 
 function deleteProfile(e, idx) {
@@ -4306,7 +4322,7 @@ function enterApp() {
   if (sbar) sbar.classList.remove('dark');
   updateAcctDisplay(); updateHomeCards();
   // 顯示介面切換按鈕
-  setTimeout(() => showToast(t('added_care_list_toast').replace('{name}', window.userProfile?.name)), 600);
+  setTimeout(() => showToast(t('added_care_list_toast').replace('{name}', trName(window.userProfile?.name))), 600);
 }
 
 function resetApp() { closeAcctMenu(); showProfilesScreen(); }
@@ -4518,6 +4534,9 @@ let journalHistory = [];
 let journalMode = 'daily'; // 'daily' | 'handover'
 let selectedShift = '';
 let journalFilter = 'all';
+// AI 報表的「繁體中文版」——用來傳給家屬/接班人的 LINE 通知一律用中文，
+// 跟畫面上顯示給照顧者看的版本（可能已翻譯成其他語言）分開存，避免家屬收到看不懂的語言。
+let currentReportZh = '';
 
 function loadJournalHistory() {
   try {
@@ -4731,6 +4750,7 @@ function showHistoryJournal(idx) {
   setJournalMode(j.mode === 'handover' ? 'handover' : 'daily');
   document.getElementById('journal-input').value = j.rawText || '';
   document.getElementById('journal-report-text').textContent = j.report;
+  currentReportZh = j.reportZh || j.report; // 舊資料沒有 reportZh 欄位時，原本存的 report 本來就是中文
   document.getElementById('journal-date').textContent = new Date(j._ts).toLocaleString(localeCode());
   const modeBadge = document.getElementById('journal-mode-badge');
   if (modeBadge) modeBadge.innerHTML = j.mode === 'handover'
@@ -4780,12 +4800,15 @@ async function generateJournal() {
           medDone, medTotal: medList.length,
         }
       }),
-      signal: AbortSignal.timeout(30000)
+      // 自架的落地 AI 需要多語言翻譯時，一次要多產生一份翻譯內容，耗時比純中文久，
+      // 30 秒常常來不及，容易誤判成失敗；放寬到 75 秒給它足夠時間。
+      signal: AbortSignal.timeout(75000)
     });
     const data = await r.json();
     if (!data.ok) throw new Error(data.message);
 
     document.getElementById('journal-report-text').textContent = data.report;
+    currentReportZh = data.reportZh || data.report; // 傳給家屬/接班人用的中文版，跟畫面顯示版分開存
     document.getElementById('journal-date').textContent = new Date().toLocaleString(localeCode());
     const modeBadge = document.getElementById('journal-mode-badge');
     if (modeBadge) modeBadge.innerHTML = journalMode === 'handover'
@@ -4810,7 +4833,7 @@ async function generateJournal() {
     }
 
     journalHistory.push({
-      _ts: new Date().toISOString(), rawText: text, report: data.report,
+      _ts: new Date().toISOString(), rawText: text, report: data.report, reportZh: data.reportZh || data.report,
       profileName: window.userProfile?.name, mode: journalMode, shift: selectedShift
     });
     saveJournalHistory();
@@ -4831,7 +4854,9 @@ function copyJournal() {
 }
 
 function sendJournalLINE() {
-  const report = document.getElementById('journal-report-text').textContent;
+  // 傳給家屬一律用中文版（currentReportZh），不用畫面上可能已翻譯成其他語言的顯示版，
+  // 避免家屬收到自己看不懂的語言。
+  const report = currentReportZh || document.getElementById('journal-report-text').textContent;
   if (!report) return;
   const contacts = emergencyContacts.filter(c => c.userId);
   if (contacts.length === 0) { showToast(t('no_line_userid_toast')); return; }
@@ -4848,7 +4873,8 @@ function sendJournalLINE() {
 }
 
 function sendJournalHandover() {
-  const report = document.getElementById('journal-report-text').textContent;
+  // 同樣傳中文版給接班人（跟 sendJournalLINE 邏輯一致）
+  const report = currentReportZh || document.getElementById('journal-report-text').textContent;
   if (!report) return;
   const toName = document.getElementById('handover-to')?.value.trim();
   if (!toName) { showToast(t('fill_handover_name_toast')); return; }
@@ -5442,6 +5468,8 @@ const LANGS = {
     journal_hero_title: '📝 照護日誌', journal_hero_sub: '語音記錄・AI整理・交接傳承',
     journal_filter_all: '全部', journal_filter_daily: '每日', journal_filter_handover: '交接',
     journal_elder_fallback: '長輩', journal_entry_suffix: '的照護日誌',
+    name_dad: '爸爸', name_mom: '媽媽', name_grandpa_p: '爺爺', name_grandma_p: '奶奶',
+    name_grandpa_m: '外公', name_grandma_m: '外婆', name_grandpa_casual: '阿公', name_grandma_casual: '阿嬤',
     journal_insert_btn: '插入文字', med_status_word: '用藥',
     tag_mood_good: '😊 精神良好', tag_mood_bad: '😔 情緒低落', tag_ate_well: '🍚 食慾佳', tag_ate_little: '🍚 食慾差',
     tag_slept_well: '😴 睡眠佳', tag_slept_bad: '😪 睡不好',
@@ -5665,6 +5693,8 @@ const LANGS = {
     journal_hero_title: '📝 照护日志', journal_hero_sub: '语音记录・AI整理・交接传承',
     journal_filter_all: '全部', journal_filter_daily: '每日', journal_filter_handover: '交接',
     journal_elder_fallback: '长辈', journal_entry_suffix: '的照护日志',
+    name_dad: '爸爸', name_mom: '妈妈', name_grandpa_p: '爷爷', name_grandma_p: '奶奶',
+    name_grandpa_m: '外公', name_grandma_m: '外婆', name_grandpa_casual: '阿公', name_grandma_casual: '阿嬷',
     journal_insert_btn: '插入文字', med_status_word: '用药',
     tag_mood_good: '😊 精神良好', tag_mood_bad: '😔 情绪低落', tag_ate_well: '🍚 食欲佳', tag_ate_little: '🍚 食欲差',
     tag_slept_well: '😴 睡眠佳', tag_slept_bad: '😪 睡不好',
@@ -6186,6 +6216,8 @@ const LANGS = {
     journal_hero_title: '📝 Jurnal Perawatan', journal_hero_sub: 'Rekaman Suara・Rangkuman AI・Serah Terima',
     journal_filter_all: 'Semua', journal_filter_daily: 'Harian', journal_filter_handover: 'Serah Terima',
     journal_elder_fallback: 'Lansia', journal_entry_suffix: 'Jurnal Perawatan',
+    name_dad: 'Ayah', name_mom: 'Ibu', name_grandpa_p: 'Kakek (pihak ayah)', name_grandma_p: 'Nenek (pihak ayah)',
+    name_grandpa_m: 'Kakek (pihak ibu)', name_grandma_m: 'Nenek (pihak ibu)', name_grandpa_casual: 'Kakek', name_grandma_casual: 'Nenek',
     journal_insert_btn: 'Sisipkan Teks', med_status_word: 'Obat',
     tag_mood_good: '😊 Semangat Baik', tag_mood_bad: '😔 Murung', tag_ate_well: '🍚 Nafsu Makan Baik', tag_ate_little: '🍚 Nafsu Makan Kurang',
     tag_slept_well: '😴 Tidur Nyenyak', tag_slept_bad: '😪 Tidur Kurang Nyenyak',
@@ -6545,6 +6577,8 @@ const LANGS = {
     journal_hero_title: '📝 Nhật ký chăm sóc', journal_hero_sub: 'Ghi âm・Tổng hợp AI・Bàn giao',
     journal_filter_all: 'Tất cả', journal_filter_daily: 'Hàng ngày', journal_filter_handover: 'Bàn giao',
     journal_elder_fallback: 'Người cao tuổi', journal_entry_suffix: 'Nhật ký chăm sóc',
+    name_dad: 'Bố', name_mom: 'Mẹ', name_grandpa_p: 'Ông nội', name_grandma_p: 'Bà nội',
+    name_grandpa_m: 'Ông ngoại', name_grandma_m: 'Bà ngoại', name_grandpa_casual: 'Ông', name_grandma_casual: 'Bà',
     journal_insert_btn: 'Chèn văn bản', med_status_word: 'Thuốc',
     tag_mood_good: '😊 Tinh thần tốt', tag_mood_bad: '😔 Tâm trạng buồn', tag_ate_well: '🍚 Ăn ngon miệng', tag_ate_little: '🍚 Ăn kém',
     tag_slept_well: '😴 Ngủ ngon', tag_slept_bad: '😪 Ngủ không ngon',
@@ -6771,6 +6805,8 @@ const LANGS = {
     journal_hero_title: '📝 Journal ng Pangangalaga', journal_hero_sub: 'Voice Recording・AI Summary・Handover',
     journal_filter_all: 'Lahat', journal_filter_daily: 'Araw-araw', journal_filter_handover: 'Handover',
     journal_elder_fallback: 'Matanda', journal_entry_suffix: 'Journal ng Pangangalaga',
+    name_dad: 'Tatay', name_mom: 'Nanay', name_grandpa_p: 'Lolo (sa ama)', name_grandma_p: 'Lola (sa ama)',
+    name_grandpa_m: 'Lolo (sa ina)', name_grandma_m: 'Lola (sa ina)', name_grandpa_casual: 'Lolo', name_grandma_casual: 'Lola',
     journal_insert_btn: 'Idagdag ang Teksto', med_status_word: 'Gamot',
     tag_mood_good: '😊 Maganda ang Loob', tag_mood_bad: '😔 Malungkot', tag_ate_well: '🍚 Mabuti ang Gana', tag_ate_little: '🍚 Kulang ang Gana',
     tag_slept_well: '😴 Mahimbing na Tulog', tag_slept_bad: '😪 Hindi Mahimbing',
@@ -7077,7 +7113,7 @@ function renderFamilyView() {
 
   // Title
   const titleEl = document.getElementById('fv-title');
-  if (titleEl && p) titleEl.textContent = p.name + t('care_overview_suffix');
+  if (titleEl && p) titleEl.textContent = trName(p.name) + t('care_overview_suffix');
 
   // Badges
   const badges = document.getElementById('fv-badges');
@@ -7100,7 +7136,7 @@ function renderFamilyView() {
     const lastMed    = (db.med_logs||[]).slice(-1)[0];
     subj.innerHTML = `<div style="display:flex;align-items:center;gap:12px;">
       <div style="width:48px;height:48px;border-radius:50%;background:var(--blue-l);display:flex;align-items:center;justify-content:center;font-size:26px;">${av}</div>
-      <div><div style="font-size:17px;font-weight:900;color:var(--g700);">${p.name}</div>
+      <div><div style="font-size:17px;font-weight:900;color:var(--g700);">${trName(p.name)}</div>
       <div style="font-size:12px;color:var(--g500);margin-top:2px;">${riskLabel[p.risk]||''}</div></div>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
