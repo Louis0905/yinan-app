@@ -13,6 +13,17 @@ const AI_API_KEY  = 'Louis@0905';
 const AI_BASE_URL = 'http://60.251.180.157:8001/v1';
 const AI_MODEL    = 'gpt-oss-20b-MXFP4-Q8';
 
+// APP 介面語言代碼 → 給 AI 翻譯指示用的語言名稱
+// （照護日誌報表要依外籍照顧者當下選擇的 APP 語言顯示，方便他們自己看懂；
+//   但傳給家屬/接班人的 LINE 通知，仍固定用繁體中文，見 /ai-journal 與 /send-journal）
+const LANG_NAMES = {
+  'zh-TW': '繁體中文',
+  'zh-CN': '簡體中文',
+  'id': 'Bahasa Indonesia（印尼文）',
+  'vi': 'Tiếng Việt（越南文）',
+  'fil': 'Filipino（菲律賓文/他加祿語）',
+};
+
 async function callAI(systemPrompt, userContent) {
   return new Promise((resolve, reject) => {
     const body = JSON.stringify({
@@ -445,10 +456,10 @@ const server = http.createServer(async (req, res) => {
   // 🤖 AI 照護日誌生成
   if (req.method === 'POST' && url === '/ai-journal') {
     const body = await readBody(req);
-    const { text, profile, date } = body;
+    const { text, profile, date, lang } = body;
     if (!text) { res.writeHead(400); res.end(JSON.stringify({ ok: false, message: '請提供日誌內容' })); return; }
 
-    console.log(`\n🤖 [${now()}] AI 日誌生成 (${text.length} 字)`);
+    console.log(`\n🤖 [${now()}] AI 日誌生成 (${text.length} 字)${lang && lang !== 'zh-TW' ? `，目標語言:${lang}` : ''}`);
 
     const isAutoAlert = body.autoAlert === true;
     const systemPrompt = isAutoAlert
@@ -461,22 +472,43 @@ const server = http.createServer(async (req, res) => {
 ${text}`;
 
     try {
-      const result = await callAI(systemPrompt, userContent);
-      console.log(`  ✅ AI 生成完成 (${result.length} 字)`);
+      // 報表一律先用繁體中文生成——這份「中文版」會拿去傳給家屬/接班人的 LINE 通知
+      // （家屬多半只看得懂中文，所以送出去的訊息不能跟著 APP 介面語言變動）。
+      const reportZh = await callAI(systemPrompt, userContent);
+      console.log(`  ✅ AI 生成完成（中文，${reportZh.length} 字）`);
 
-      // 儲存日誌
+      // 若照顧者目前的 APP 介面不是繁體中文，另外把中文版翻譯成該語言，
+      // 這份「翻譯版」只用來在 APP 裡顯示給照顧者自己看，不會拿去發送。
+      let report = reportZh;
+      const targetLangName = lang && lang !== 'zh-TW' ? LANG_NAMES[lang] : null;
+      if (targetLangName) {
+        try {
+          report = await callAI(
+            `你是專業的翻譯員。請將使用者提供的繁體中文長照照護日誌報表，完整翻譯成${targetLangName}。保留原本的段落結構、條列與 emoji 標示，不要增加、省略或評論內容，只輸出翻譯後的文字，不要附上任何說明。`,
+            reportZh
+          );
+          console.log(`  ✅ 翻譯完成（${lang}，${report.length} 字）`);
+        } catch(e) {
+          console.log(`  ⚠️ 翻譯失敗，改用中文版顯示: ${e.message}`);
+          report = reportZh;
+        }
+      }
+
+      // 儲存日誌（中文版與顯示版都留存，方便之後查閱/除錯）
       const db = loadDB();
       if (!db.journals) db.journals = [];
       db.journals.push({
         _ts: new Date().toISOString(),
         rawText: text,
-        report: result,
+        report: reportZh,
+        reportTranslated: report !== reportZh ? report : undefined,
+        lang: lang || 'zh-TW',
         profileName: profile?.name || '長輩'
       });
       saveDB(db);
 
       res.writeHead(200);
-      res.end(JSON.stringify({ ok: true, report: result }));
+      res.end(JSON.stringify({ ok: true, report, reportZh }));
     } catch(e) {
       console.log(`  ❌ AI 失敗: ${e.message}`);
       res.writeHead(500);
