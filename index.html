@@ -61,7 +61,7 @@ html,body{height:100%;width:100%;font-family:var(--font);background:#0f1117;disp
 .nbtn.on::after{width:24px;}
 
 /* Shared hero */
-.hero-block{padding:18px 22px 26px;color:white;position:relative;overflow:hidden;min-height:168px;}
+.hero-block{padding:18px 22px 26px;color:white;position:relative;overflow:hidden;min-height:168px;flex-shrink:0;}
 .hero-block::before{content:'';position:absolute;top:-50px;right:-50px;width:200px;height:200px;
   border-radius:50%;background:rgba(255,255,255,0.06);}
 .hb-row{display:flex;align-items:center;gap:10px;}
@@ -356,8 +356,8 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
 .fc-bar{position:absolute;top:0;left:0;right:0;height:4px;border-radius:16px 16px 0 0;}
 .fc-icon{font-size:29px;margin-bottom:8px;display:block;}
 .fc-t{font-size:14px;font-weight:800;color:var(--g700);}
-.fc-s{font-size:11px;color:var(--g500);margin-top:3px;}
-.badge-r{background:var(--red);color:white;font-size:9px;font-weight:800;padding:2px 5px;border-radius:6px;margin-left:3px;}
+.fc-s{font-size:11px;color:var(--g500);margin-top:3px;display:flex;flex-wrap:wrap;align-items:center;gap:2px 4px;}
+.badge-r{background:var(--red);color:white;font-size:9px;font-weight:800;padding:2px 6px;border-radius:6px;margin-left:0;white-space:nowrap;}
 
 /* ── Account switcher ── */
 .acct-btn{display:flex;align-items:center;gap:5px;background:rgba(255,255,255,0.18);
@@ -493,8 +493,8 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
   display:flex;align-items:center;gap:12px;box-shadow:var(--sh);margin-bottom:8px;cursor:pointer;}
 .med-ico{width:44px;height:44px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:21px;flex-shrink:0;}
 .mi-g{background:var(--green-l);}.mi-y{background:#FFFFF0;}.mi-r{background:var(--red-l);}
-.med-n{font-size:14px;font-weight:800;color:var(--g700);}.med-d{font-size:11px;color:var(--g500);margin-top:2px;}
-.med-tag{padding:7px 12px;border-radius:20px;font-size:11px;font-weight:700;border:none;cursor:pointer;font-family:var(--font);white-space:nowrap;}
+.med-n{font-size:14px;font-weight:800;color:var(--g700);overflow-wrap:break-word;}.med-d{font-size:11px;color:var(--g500);margin-top:2px;overflow-wrap:break-word;}
+.med-tag{padding:7px 10px;border-radius:14px;font-size:10.5px;font-weight:700;border:none;cursor:pointer;font-family:var(--font);white-space:normal;line-height:1.25;text-align:center;max-width:92px;flex-shrink:0;}
 .mt-ok{background:var(--green-l);color:var(--green);}
 .mt-act{background:var(--green-m);color:white;}
 .mt-pend{background:#FFFFF0;color:var(--yellow);}
@@ -831,7 +831,7 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
         <button onclick="setLang('zh-CN')" style="padding:4px 10px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);border:none;background:rgba(255,255,255,0.22);color:white;">🇨🇳 简中</button>
         <button onclick="setLang('id')"    style="padding:4px 10px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);border:none;background:rgba(255,255,255,0.22);color:white;">🇮🇩 IND</button>
         <button onclick="setLang('vi')"    style="padding:4px 10px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);border:none;background:rgba(255,255,255,0.22);color:white;">🇻🇳 VIE</button>
-        <button onclick="setLang('fil')"   style="padding:4px 10px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);border:none;background:rgba(255,255,255,0.22);color:white;">🇵🇭 FIL</button>
+        <!-- 菲律賓語暫時隱藏：翻譯資料仍有大量錯誤（被印尼語內容覆蓋），待修正後再開放 -->
       </div>
     </div>
 
@@ -1040,7 +1040,7 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
               <button onclick="setLang('zh-CN')" style="padding:4px 10px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);border:1px solid var(--g200);background:white;">🇨🇳 简中</button>
               <button onclick="setLang('id')"    style="padding:4px 10px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);border:1px solid var(--g200);background:white;">🇮🇩 IND</button>
               <button onclick="setLang('vi')"    style="padding:4px 10px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);border:1px solid var(--g200);background:white;">🇻🇳 VIE</button>
-              <button onclick="setLang('fil')"   style="padding:4px 10px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);border:1px solid var(--g200);background:white;">🇵🇭 FIL</button>
+              <!-- 菲律賓語暫時隱藏：翻譯資料仍有大量錯誤（被印尼語內容覆蓋），待修正後再開放 -->
             </div>
             <div class="acct-divider"></div>
             <div class="acct-item" onclick="navTo('p-settings','fwd');closeAcctMenu()">
@@ -2018,7 +2018,7 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
     <button class="nbtn on" data-pg="p-home" onclick="navTo('p-home')"><span class="ni">🏠</span><span class="nl" data-i18n="home">首頁</span></button>
     <button class="nbtn" onclick="navTo('p-journal','fwd')" style="display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:6px;">
       <div style="width:58px;height:58px;background:linear-gradient(135deg,#2b6cb0,#3182CE);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:white;box-shadow:0 6px 20px rgba(49,130,206,0.55);margin-top:-28px;border:4px solid white;">＋</div>
-      <span class="nl" style="margin-top:4px;font-weight:800;color:var(--blue-m);">日誌</span>
+      <span class="nl" style="margin-top:4px;font-weight:800;color:var(--blue-m);" data-i18n="journal">日誌</span>
     </button>
     <button class="nbtn" data-pg="p-settings" onclick="navTo('p-settings')"><span class="ni">⚙️</span><span class="nl" data-i18n="settings">設定</span></button>
   </nav>
@@ -3324,7 +3324,7 @@ function renderMedPage() {
       <div class="time-lbl">⏰ ${med.time}${nowBadge}</div>
       <div class="med-row" ${onclick} style="${med.taken?'opacity:0.6':''}${isNow?';border-left:3px solid var(--red);':''}">
         <div class="med-ico ${icoCls}">💊</div>
-        <div style="flex:1"><div class="med-n">${trSeed(med.name)}</div><div class="med-d">${trSeed(med.dose)}</div></div>
+        <div style="flex:1;min-width:0;"><div class="med-n">${trSeed(med.name)}</div><div class="med-d">${trSeed(med.dose)}</div></div>
         <div style="display:flex;gap:6px;align-items:center;">
           <button class="med-tag ${tagCls}" ${onclick} style="pointer-events:${med.taken?'none':'auto'}">${tagTxt}</button>
           <button onclick="deleteMed(${med.id},event)" style="width:24px;height:24px;border-radius:50%;background:var(--red-l);border:none;color:var(--red);font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
@@ -5596,11 +5596,6 @@ const LANGS = {
     'gps_getting': '📍 取得 GPS 位置中…',
     'line_preparing': '📲 准备发送 LINE 通知',
     'stress_recorded': '✅ 已记录・点此修改',
-    'stress_done_prefix': '✅ 今日已完成',
-    'bp_not_measured': '尚未量測',
-    'gps_getting': '📍 取得 GPS 位置中…',
-    'line_preparing': '📲 準備發送 LINE 通知',
-    'stress_recorded': '✅ 已記錄・點此修改',
     'profile_title': '个人评估资料',
     'profile_edit_sub': '可随时更新护理信息',
     'profile_name': '护理对象姓名',
@@ -5616,43 +5611,6 @@ const LANGS = {
     'today_activity': '今日活动',
     'week_summary': '本周摘要',
     'silence_alert': '异常沉默警示',
-    'privacy_title': '隱私權政策',
-    'privacy_sub': '使用前請閱讀並同意以下條款',
-    'privacy_agree': '✅ 我已閱讀並同意',
-    'privacy_decline': '不同意',
-    'profile_sub': '選擇或新增照護對象',
-    'start_assess': '開始評估 →',
-    'next_btn': '繼續 →',
-    'prev_btn': '← 上一步',
-    'enter_app': '✅ 進入銀安APP',
-    'view_location': '📍 查看位置',
-    'back_home': '返回首頁',
-    'sos_done': '已通知家人！',
-    'stress_done_prefix': '✅ 今日已完成',
-    'bp_not_measured': '尚未测量',
-    'gps_getting': '📍 取得 GPS 位置中…',
-    'line_preparing': '📲 准备发送 LINE 通知',
-    'stress_recorded': '✅ 已记录・点此修改',
-    'stress_done_prefix': '✅ 今日已完成',
-    'bp_not_measured': '尚未量測',
-    'gps_getting': '📍 取得 GPS 位置中…',
-    'line_preparing': '📲 準備發送 LINE 通知',
-    'stress_recorded': '✅ 已記錄・點此修改',
-    'profile_title': '個人評估資料',
-    'profile_edit_sub': '可隨時更新照護資訊',
-    'profile_name': '照護對象名稱',
-    'age_range': '年齡範圍',
-    'mobility': '行動能力',
-    'save_update': '✅ 儲存更新',
-    'add_contact': '＋ 新增緊急聯絡人',
-    'test_send': '測試發送',
-    'save_bp': '儲存今日數值',
-    'bp_trend': '血壓趨勢（7天）',
-    'week_trend': '本週趨勢',
-    'calendar_view': '月曆視圖',
-    'today_activity': '今日活動',
-    'week_summary': '本週摘要',
-    'silence_alert': '異常沉默警示',
     add_med: '＋ 新增药物', quick_features: '快捷功能',
     'dark_mode': '🌙 深色模式',
     'dark_mode_sub': '切换深色界面',
@@ -6759,38 +6717,6 @@ const LANGS = {
     'today_activity': 'Aktibidad Ngayon',
     'week_summary': 'Buod ng Linggo',
     'silence_alert': 'Babala sa Abnormal na Katahimikan',
-    'privacy_title': 'Kebijakan Privasi',
-    'privacy_sub': 'Baca dan setujui syarat berikut sebelum menggunakan',
-    'privacy_agree': '✅ Saya sudah membaca dan setuju',
-    'privacy_decline': 'Tidak setuju',
-    'profile_sub': 'Pilih atau tambah pasien',
-    'start_assess': 'Mulai Evaluasi →',
-    'next_btn': 'Lanjut →',
-    'prev_btn': '← Kembali',
-    'enter_app': '✅ Masuk ke YinanAPP',
-    'view_location': '📍 Lihat Lokasi',
-    'back_home': 'Kembali ke Beranda',
-    'sos_done': 'Keluarga sudah diberitahu!',
-    'stress_done_prefix': '✅ Selesai hari ini',
-    'bp_not_measured': 'Belum diukur',
-    'gps_getting': '📍 Mendapatkan lokasi GPS…',
-    'line_preparing': '📲 Menyiapkan notifikasi LINE',
-    'stress_recorded': '✅ Sudah dicatat・ketuk untuk ubah',
-    'profile_title': 'Data Evaluasi Pribadi',
-    'profile_edit_sub': 'Dapat diperbarui kapan saja',
-    'profile_name': 'Nama Pasien',
-    'age_range': 'Rentang Usia',
-    'mobility': 'Kemampuan Bergerak',
-    'save_update': '✅ Simpan Pembaruan',
-    'add_contact': '＋ Tambah Kontak Darurat',
-    'test_send': 'Tes Kirim',
-    'save_bp': 'Simpan Data Hari Ini',
-    'bp_trend': 'Tren Tekanan Darah (7 hari)',
-    'week_trend': 'Tren Minggu Ini',
-    'calendar_view': 'Tampilan Kalender',
-    'today_activity': 'Aktivitas Hari Ini',
-    'week_summary': 'Ringkasan Mingguan',
-    'silence_alert': 'Peringatan Diam Abnormal',
     add_med: '＋ Dagdag Gamot', quick_features: 'Mabilis na Feature',
     'dark_mode': '🌙 Dark Mode',
     'dark_mode_sub': 'I-on ang dark na interface',
@@ -6958,6 +6884,7 @@ const LANGS = {
 };
 
 let currentLang = localStorage.getItem('yinan_lang') || 'zh-TW';
+if (currentLang === 'fil') { currentLang = 'zh-TW'; try { localStorage.setItem('yinan_lang', 'zh-TW'); } catch(e) {} } // 菲律賓語暫時隱藏，已選擇者自動改回繁中
 function t(key) {
   // LANGS 定義在檔案後段；若有程式在那之前就呼叫 t()（例如載入時同步執行的函式），
   // 直接存取 LANGS 會丟出 TDZ ReferenceError，導致整段 <script> 中斷、後面的初始化
