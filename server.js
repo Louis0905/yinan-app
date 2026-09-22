@@ -493,8 +493,7 @@ ${text}`;
       const result = await callAI(systemPrompt, userContent, targetLangName ? 2600 : 1500);
       console.log(`  ✅ AI 生成完成 (${result.length} 字)`);
 
-      // 拆分中文版／翻譯版；如果 AI 沒有照格式輸出分隔符號（模型偶爾不聽話），
-      // 就整份當作中文版使用，畫面上退回顯示中文，至少不會整個失敗。
+      // 拆分中文版／翻譯版
       let reportZh = result;
       let report = result;
       if (targetLangName) {
@@ -503,7 +502,28 @@ ${text}`;
           reportZh = result.slice(0, idx).trim();
           report = result.slice(idx + TRANSLATION_DELIMITER.length).trim() || reportZh;
         } else {
-          console.log(`  ⚠️ AI 沒有輸出分隔符號，退回顯示中文版`);
+          console.log(`  ⚠️ AI 沒有輸出分隔符號`);
+        }
+
+        // 保險機制：不管有沒有抓到分隔符號，都再確認一次 reportZh 是不是「真的」是中文。
+        // 落地小模型偶爾會不聽兩步驟指令，整段直接輸出翻譯後的外語內容、完全略過中文段落，
+        // 這種情況下如果照舊把整份輸出當成「中文版」，會導致傳給家屬的 LINE 訊息其實是
+        // 外語，家屬看不懂——這裡用中文字元比例判斷，太低就代表這份其實是外語，改成：
+        // 原始輸出當作看護畫面顯示用的翻譯版，另外單獨呼叫一次「純中文、不翻譯」確保
+        // 傳給家屬的一定是真的中文。
+        const hanCount = (reportZh.match(/[一-鿿]/g) || []).length;
+        const nonSpaceLen = reportZh.replace(/\s/g, '').length || 1;
+        const hanRatio = hanCount / nonSpaceLen;
+        if (hanRatio < 0.15) {
+          console.log(`  ⚠️ 中文版偵測到不像中文（中文字比例僅 ${(hanRatio*100).toFixed(0)}%），視為AI整段直接輸出了外語，改用原始輸出當翻譯版，另外重新產生中文版給家屬`);
+          report = result;
+          try {
+            const zhOnlyPrompt = `你是一位專業的長照照護記錄助理。請將照顧者提供的口語記錄整理成結構化的照護日誌報表，使用繁體中文。${baseFormatRules}`;
+            reportZh = await callAI(zhOnlyPrompt, userContent, 1500);
+          } catch (e2) {
+            console.log(`  ❌ 中文版備援呼叫也失敗: ${e2.message}，退回使用原始輸出（可能仍是外語，請留意）`);
+            reportZh = result;
+          }
         }
       }
 
