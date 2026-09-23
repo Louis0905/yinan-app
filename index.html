@@ -32,6 +32,16 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 html,body{height:100%;width:100%;font-family:var(--font);background:#0f1117;display:flex;align-items:center;justify-content:center;overflow:hidden;}
 
+/* 手機上點按鈕/選單文字沒反應：不是點擊範圍不夠大，是因為整個 App 都沒關閉文字選取，
+   iOS Safari 在「點在文字本身上」時，有機率會把這次點擊判斷成「選取文字」而跳出放大鏡/
+   複製選單，而不是觸發按鈕的 click（點在按鈕的留白/底色上則不會有文字可選，點擊照常生效）。
+   這就是為什麼「選單」文字點不太到、但按鈕旁邊點得到」的原因。整個 App 本來就是操作介面
+   不是文章內容，所以直接把整個 .phone 內文字選取關掉；輸入框/文字區塊/可編輯內容仍保留
+   正常選取，不影響打字、複製貼上。 */
+.phone,.phone *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
+.phone input,.phone textarea,.phone [contenteditable],.phone [contenteditable] *{
+  -webkit-user-select:text;user-select:text;-webkit-touch-callout:default;}
+
 /* Phone */
 .phone{width:390px;height:844px;background:var(--g50);border-radius:44px;overflow:hidden;
   box-shadow:0 0 0 10px #1c1c1e,0 0 0 12px #3a3a3c,0 32px 80px rgba(0,0,0,0.7);
@@ -84,9 +94,13 @@ html,body{height:100%;width:100%;font-family:var(--font);background:#0f1117;disp
 
 /* Bottom nav */
 .bnav{flex-shrink:0;height:82px;background:rgba(255,255,255,0.96);backdrop-filter:blur(20px);
-  border-top:1px solid var(--g200);display:flex;align-items:flex-start;padding-top:8px;position:relative;z-index:50;}
-.nbtn{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;
-  border:none;background:none;cursor:pointer;font-family:var(--font);padding:8px 4px;position:relative;}
+  border-top:1px solid var(--g200);display:flex;align-items:stretch;position:relative;z-index:50;}
+/* 底部選單原本 .bnav 用 align-items:flex-start，讓 .nbtn 只包住圖示+文字自己的高度（約62px），
+   下面還留了約 82-62=20px 的空白帶不能點；改成 stretch 讓每個 .nbtn 撐滿整條 82px 導覽列的高度，
+   點擊範圍變大很多（尤其手指常常會點到螢幕最下緣那一段），視覺位置用 justify-content:flex-start
+   + padding-top 維持跟原本一樣，不會看起來跑掉。 */
+.nbtn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:4px;
+  border:none;background:none;cursor:pointer;font-family:var(--font);padding:16px 4px 8px;position:relative;}
 .nbtn .ni{font-size:23px;transition:transform 0.2s;}
 .nbtn .nl{font-size:10px;font-weight:600;color:var(--g400);transition:color 0.2s;}
 .nbtn.on .nl{color:var(--blue-m);}
@@ -98,7 +112,14 @@ html,body{height:100%;width:100%;font-family:var(--font);background:#0f1117;disp
 /* Shared hero */
 .hero-block{padding:18px 22px 26px;color:white;position:relative;overflow:hidden;min-height:168px;flex-shrink:0;}
 .hero-block::before{content:'';position:absolute;top:-50px;right:-50px;width:200px;height:200px;
-  border-radius:50%;background:rgba(255,255,255,0.06);}
+  border-radius:50%;background:rgba(255,255,255,0.06);
+  /* 這是純裝飾用的光暈圓形，本身沒有加 position，瀏覽器仍會把它當成一個「有 position 的元素」
+     疊在後面加入的普通內容（例如右上角選單按鈕 .acct-btn）上面，因為沒設 z-index 時，
+     有 position 的元素預設會蓋過同層沒有 position 的一般內容，不管誰先誰後寫在 HTML 裡。
+     圓形的方框剛好整個蓋住右上角的選單按鈕，導致點在按鈕（尤其是文字）上時，點擊其實是
+     點到這個裝飾圓形、被它「吃掉」，才會出現「按鈕邊邊點得到、文字點不太到」的狀況。
+     裝飾用的東西本來就不該擋點擊，加 pointer-events:none 讓它完全不接收滑鼠/觸控事件即可。 */
+  pointer-events:none;}
 .hb-row{display:flex;align-items:center;gap:10px;}
 .back-btn{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.22);
   border:none;cursor:pointer;font-size:17px;display:flex;align-items:center;justify-content:center;
@@ -126,7 +147,14 @@ html,body{height:100%;width:100%;font-family:var(--font);background:#0f1117;disp
   display:none;align-items:flex-end;z-index:300;}
 .modal-bg.on{display:flex;}
 .modal-sheet{background:var(--white);border-radius:24px 24px 0 0;width:100%;padding:22px 22px 36px;
-  animation:slideUp 0.3s cubic-bezier(0.25,0.46,0.45,0.94);}
+  animation:slideUp 0.3s cubic-bezier(0.25,0.46,0.45,0.94);
+  /* 欄位較多的表單（例如新增緊急聯絡人：姓名+關係+LINE UID+LINE ID+電話+通知類型）
+     總高度會超過手機畫面扣掉底部導覽列後的可視高度，原本沒有限制最大高度也沒有可以捲動，
+     導致 modal-bg 用 align-items:flex-end 對齊時，超出的部分往「上方」被擠到畫面外，
+     使用者完全看不到、也點不到最上面幾個欄位（包含「關係」按鈕）。這裡限制最大高度
+     並讓內容本身可以上下捲動，確保不管欄位多長，全部都能捲到、點到。 */
+  max-height:80vh;max-height:80dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  box-sizing:border-box;}
 @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
 .m-handle{width:40px;height:4px;background:var(--g200);border-radius:2px;margin:0 auto 18px;}
 .m-title{font-size:19px;font-weight:900;color:var(--g700);}
@@ -2044,7 +2072,7 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
         <button class="icon-opt" data-ico="☕" onclick="pickIcon(this)">☕</button>
         <button class="icon-opt" data-ico="🎵" onclick="pickIcon(this)">🎵</button>
       </div>
-      <button class="ma-p" style="width:100%;margin-top:18px;" onclick="addPlan()">✅ 確認新增</button>
+      <button class="ma-p" style="width:100%;margin-top:18px;" onclick="addPlan()" data-i18n="confirm_add">✅ 確認新增</button>
     </div>
   </div>
 
@@ -5867,6 +5895,140 @@ const LANGS = {
     hr_fast_alert: '💗 心跳偏快（{hr} bpm）', hr_slow_alert: '🔵 心跳偏慢（{hr} bpm）',
     getting_location: '获取中…', confirm_question: '确认?',
     dark_mode_on_toast: '🌙 深色模式已开启', light_mode_on_toast: '☀️ 浅色模式已开启',
+    // ↓↓↓ 2026-09-23 補齊：原本這些鍵值被誤貼到 zh-TW 區塊裡（zh-TW 又有重複、順序較後的正確繁體版本覆蓋掉），
+    // 導致 zh-CN 完全沒有定義，切到簡體中文時全部 fallback 回顯示繁體字。這裡補回簡體版本。
+    'today_bp': '今日血压',
+    'heartrate_label': '心跳 bpm',
+    'spo2_label': '血氧',
+    'input_today_title': '📝 输入今日数值',
+    'bp_high_alert': '今日血压偏高',
+    'bp_alert_sub': '建议与医师讨论调整用药',
+    'hr_alert_sub': '建议休息并告知医师',
+    'export_pdf': '📄 导出 PDF',
+    'share_line': '💬 分享 LINE',
+    'legend_high': '偏高',
+    'legend_normal': '正常',
+    'legend_diastolic': '舒张压',
+    'stress_question': '今天压力几分？',
+    'week_trend_title': '📊 本周趋势',
+    'month_record': '📅 本月记录',
+    'stress_high_alert': '最近压力偏高',
+    'stress_high_sub': '👉 建议休息或寻求协助',
+    'med_reminder_title': '🔔 该吃药了！',
+    'med_taken_btn': '✅ 我已吃药',
+    'med_later': '⏳ 稍后',
+    'add_med_title': '➕ 新增药物',
+    'add_med_sub': '填写药物信息',
+    'med_name_label': '药物名称',
+    'med_dose_label': '剂量说明',
+    'med_time_label': '服药时间',
+    'confirm_add': '✅ 确认新增',
+    'cancel_btn': '取消',
+    'add_contact_title': '➕ 新增紧急联系人',
+    'add_contact_sub': '填写家属信息',
+    'name_label': '姓名',
+    'relation_label': '关系',
+    'notify_type_label': '通知类型',
+    'notify_stress': '🧠 压力偏高',
+    'notify_bp': '❤️ 血压异常',
+    'notify_med': '💊 未服药',
+    'phone_label': '电话号码（选填）',
+    'conditions_label': '特殊状况（可多选）',
+    'mob_independent': '可独立行动',
+    'mob_assisted': '需辅具协助',
+    'mob_bedridden': '卧床 / 轮椅',
+    'cond_alone': '独居',
+    'cond_dementia': '失智症',
+    'cond_needs_care': '日常需要协助',
+    'cond_chronic': '慢性病用药',
+    'sos_press': '按下求助',
+    'sending': '发送中…',
+    'recording_hint': '🔴 录音中…说完后再按一次停止',
+    'no_journal': '暂无历史日志',
+    'add_plan_title': '➕ 新增喘息计划',
+    'add_plan_sub': '填写计划内容',
+    'plan_name_label': '活动名称',
+    'plan_day_label': '选择星期',
+    'plan_time_label': '时间描述',
+    'plan_icon_label': '选择图示',
+    'family_view': '家属视角',
+    'care_overview': '护理总览',
+    'caregiver_view': '🏠 照护者视角',
+    'today_activity_title': '📋 今日活动',
+    'week_summary_title': '📊 本周摘要',
+    'week_respite': '📅 本周喘息计划',
+    'edit_btn': '编辑',
+    'step1_title': '📲 Step 1：让家属加 Bot 好友',
+    'step2_title': '📋 Step 2：新增联系人',
+    'add_line_friend': '💬 加 LINE 好友',
+    'send_test': '📲 发送测试消息给所有联系人',
+    'settings_desc': '深色模式、字体大小',
+    'contacts_set_one': '已设定 1 位家属通知',
+    'ltc_apply': '📋 申请资源',
+    'ltc_nearby': '📍 附近机构',
+    'ltc_search': '📍 搜索我附近的长照机构',
+    'q1of4': '第 1 题 · 共 4 题',
+    'q2of4': '第 2 题 · 共 4 题',
+    'q3of4': '第 3 题 · 共 4 题',
+    'q4of4': '第 4 题 · 共 4 题',
+    'assess_done': '评估完成',
+    'q_name': '护理对象叫什么名字？',
+    'q_name_sub': '系统会用这个名字称呼，让 APP 更有温度。',
+    'q_name_hint': '💡 昵称或姓名皆可',
+    'q_age': '年龄范围？',
+    'q_age_sub': '年龄会影响生理风险基准值的设定。',
+    'q_mobility': '行动能力？',
+    'q_mobility_sub': '影响 SOS 可用性与外出计划的提醒方式。',
+    'q_condition': '认知状态与居住方式？',
+    'q_condition_sub': '可多选，这是系统判断风险权重的关键信息。',
+    'q_result': '📋 初始建议设定',
+    'q_result_sub': '系统已根据评估结果产出个性化护理建议，可随时在设置中调整。',
+    'age_60': '60–69 岁',
+    'age_70': '70–79 岁',
+    'age_80': '80 岁以上',
+    'cond_dementia_full': '失智症（确诊或疑似）',
+    'cond_chronic_full': '有慢性病（需定期用药）',
+    'cond_none': '以上皆无',
+    'sos_title': '紧急求助',
+    'sos_getting_loc': '📍 正在获取您的位置 📲 发送 LINE 通知给家人',
+    'sos_sent': '👨‍👩‍👧 LINE 已发送 📍 位置已分享',
+    'current_loc': '📍 当前位置',
+    'dismiss_notif': '✓ 知道了，关闭通知',
+    'mute_btn': '静音',
+    'hangup_btn': '挂断',
+    'speaker_btn': '扬声器',
+    'med_modal_sub': '用药提醒',
+    'bp_trend_title': '📈 血压趋势（7天）',
+    'day_mon': '一',
+    'day_tue': '二',
+    'day_wed': '三',
+    'day_thu': '四',
+    'day_fri': '五',
+    'day_sat': '六',
+    'day_sun': '日',
+    'week_plan': '📌 本周计划',
+    'tomorrow_remind': '明日提醒',
+    'add_plan_btn': '＋ 新增计划',
+    'care_status': '👤 护理对象状态',
+    'today_activity_log': '📋 今日活动记录',
+    'silence_msg': '超过 4 小时无任何操作',
+    'join_bot': '📲 加入银安APP 通知 Bot',
+    'bot_desc': '加好友后可接收 SOS 紧急通知、压力警示等即时消息',
+    'scan_qr': '📷 扫描 QR Code',
+    'rel_daughter': '女儿',
+    'rel_son': '儿子',
+    'rel_spouse': '配偶',
+    'rel_caregiver': '居服员',
+    'rel_other': '其他',
+    'uid_label': 'LINE User ID（接收通知用）',
+    'uid_hint': '让家属加 Bot 好友后获取，用于 SOS 推播',
+    'lineid_label': 'LINE ID（发消息用，选填）',
+    'lineid_hint': 'LINE → 设置 → 个人资料 → LINE ID',
+    'step1_desc': '家属加好友后，Bot 会自动回复他们的 User ID，再填入下方联系人资料即可收到通知。',
+    'step2_desc': '填入家属姓名、关系与 Bot 回复的 User ID，选择要接收哪些通知类型。',
+    'care_person': '护理对象',
+    'view_profile': '点此查看评估资料',
+    'contacts_sub': '管理家属 LINE 通知名单',
   },
   'id': {
     name: 'Bahasa Indonesia', flag: '🇮🇩',
