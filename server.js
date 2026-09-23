@@ -475,11 +475,11 @@ const server = http.createServer(async (req, res) => {
     const systemPrompt = isAutoAlert
       ? `你是長照照護異常分析助理。根據偵測到的異常事件，生成簡短的家屬通知摘要（繁體中文，不超過150字）。先說明異常狀況，再給出建議行動。語氣溫和但明確。`
       : targetLangName
-        ? `你是一位專業的長照照護記錄助理，同時精通${targetLangName}翻譯。請依序完成兩個步驟並照順序輸出：
-【步驟一】將照顧者提供的口語記錄整理成結構化的照護日誌報表，使用繁體中文。${baseFormatRules}
+        ? `你是一位專業的長照照護記錄助理，同時精通${targetLangName}翻譯。照顧者提供的口述記錄可能是用${targetLangName}講的，請依序完成兩個步驟並照順序輸出：
+【步驟一】將照顧者提供的口語記錄整理成結構化的照護日誌報表，全部內容都必須是繁體中文。如果原始口述記錄中出現${targetLangName}或其他非中文的詞語、片語、句子，也要把它們翻譯成繁體中文寫進報表裡，不可以原封不動保留非中文的字詞（emoji 除外）。${baseFormatRules}
 【步驟二】另起一行，只輸出這個分隔符號：${TRANSLATION_DELIMITER}
 【步驟三】接著把步驟一產生的完整繁體中文報表，完整翻譯成${targetLangName}，保留段落結構、條列與 emoji，不要增加、省略或評論內容。
-請務必依「中文報表 → 分隔符號 → 翻譯報表」的順序輸出，不要附加任何其他說明文字。`
+請務必依「中文報表 → 分隔符號 → 翻譯報表」的順序輸出，不要附加任何其他說明文字，步驟一產生的報表裡絕對不能混雜非中文字詞。`
         : `你是一位專業的長照照護記錄助理。請將照顧者提供的口語記錄整理成結構化的照護日誌報表，使用繁體中文。${baseFormatRules}`;
 
     const userContent = `照護對象：${profile?.name || '長輩'}
@@ -524,6 +524,27 @@ ${text}`;
             console.log(`  ❌ 中文版備援呼叫也失敗: ${e2.message}，退回使用原始輸出（可能仍是外語，請留意）`);
             reportZh = result;
           }
+        }
+
+        // 保險機制二：這個落地模型有個習慣，即使被要求「全部中文」，還是會不時寫成
+        // 「中文短語（外語原文 / 另一語言原文）」這種雙語括號附註格式（例如
+        // 「情緒良好（Semangat baik / Tinh thần tốt）」），只把「標籤」翻成中文，
+        // 卻把每一項的內容原封不動用括號夾帶外語留著。這裡把中文版裡任何「括號內幾乎
+        // 沒有中文字、但有拉丁字母且像片語（有空格或斜線）」的括號附註整組剝掉，
+        // 只保留純中文本文，傳給家屬前再把關一次。
+        const beforeStrip = reportZh;
+        reportZh = reportZh.replace(/[（(]([^（）()]*)[）)]/g, (m, inner) => {
+          const hasHan = /[一-鿿]/.test(inner);
+          if (hasHan) return m;
+          const hasDigit = /\d/.test(inner);
+          if (hasDigit) return m; // 含數字，視為數值/讀數（如血壓 120/80 mmHg、劑量等），保留
+          const hasLetters = /[A-Za-zÀ-ɏ]/.test(inner);
+          if (!hasLetters) return m;
+          const looksLikePhrase = /[ \/]/.test(inner.trim());
+          return looksLikePhrase ? '' : m;
+        }).replace(/[ \t]+([，。、\n])/g, '$1').replace(/ {2,}/g, ' ').trim();
+        if (reportZh !== beforeStrip) {
+          console.log(`  ⚠️ 中文版偵測到括號夾帶外語附註（例如「中文（外語）」），已自動剝除`);
         }
       }
 
