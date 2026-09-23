@@ -28,6 +28,32 @@ html,body{height:100%;width:100%;font-family:var(--font);background:#0f1117;disp
   box-shadow:0 0 0 10px #1c1c1e,0 0 0 12px #3a3a3c,0 32px 80px rgba(0,0,0,0.7);
   display:flex;flex-direction:column;position:relative;}
 
+/* 手機外框只在「桌機展示」時顯示——這是刻意做的demo效果，方便在電腦上簡報時
+   讓畫面看起來像拿著手機操作。真正用手機瀏覽器打開，或包成APK後在手機上執行時，
+   viewport寬度本來就是手機的寬度（通常<=500px），這時候改成滿版鋪滿螢幕，
+   不會出現「手機殼裡面還有一支小手機」這種奇怪的巢狀畫面。*/
+@media (max-width:500px){
+  html,body{background:var(--g50);}
+  .phone{width:100vw;height:100dvh;height:100vh;border-radius:0;box-shadow:none;}
+  /* 手機/APK 上已經有真正的系統狀態列（時間、訊號、電量），
+     畫面裡自己畫的假狀態列（.sbar／.asmnt-sbar，含假瀏海 .notch）
+     只是桌面版手機外框示意圖用的裝飾，在真機上會跟系統狀態列重疊、
+     看起來像「兩條狀態列疊在一起」，所以在真機寬度下直接隱藏。 */
+  /* .sbar／.asmnt-sbar 的基本樣式定義在這個 media query 後面（CSS cascade 中後定義的規則
+     權重會贏過前面的），所以這裡要加 !important 才能確保在真機寬度下一定蓋得過去。 */
+  .sbar,.asmnt-sbar{display:none!important;}
+  /* 跟 .phone 同樣的問題：#assessment（初判表）、#privacy-screen、#login-screen、
+     #profiles-screen（照護對象）、#family-view-overlay 這幾個全螢幕覆蓋層，
+     各自都獨立寫了跟手機外殼一樣的 border-radius:44px（因為桌面示意圖裡，
+     它們要蓋滿整個 .phone、圓角也要跟外殼對齊）。真機上 .phone 已經改成方角滿版了，
+     但這幾層自己的圓角沒有一起改，所以看起來還是「這一塊藍色區塊角是圓的、沒有貼滿」。
+     這裡用 id 選擇器 + !important 統一蓋掉，inline style 只有在覆蓋規則沒加 !important
+     時才會贏，加了 !important 的 stylesheet 規則可以蓋過 plain inline style。 */
+  #assessment,#privacy-screen,#login-screen,#profiles-screen,#family-view-overlay{
+    border-radius:0!important;
+  }
+}
+
 /* Status bar - 顏色跟隨頁面 hero 背景自動調整 */
 .sbar{flex-shrink:0;height:48px;display:flex;align-items:center;justify-content:space-between;
   padding:0 28px;font-size:13px;font-weight:700;position:relative;z-index:10;
@@ -2575,7 +2601,7 @@ function addPlan() {
 // ════════════════════════════════════════
 // ASSESSMENT ONBOARDING
 // ════════════════════════════════════════
-const TOTAL_STEPS = 5; // 0=welcome,1=name,2=age,3=mobility,4=conditions,5=result
+const TOTAL_STEPS = 6; // 0=welcome,1=name,2=age,3=mobility,4=conditions,5=result（共6個狀態，4題問答）
 let asmntCurrent = 0;
 let asmntAnswers = { name:'', age:'', mobility:'', conditions:[] };
 
@@ -4156,6 +4182,24 @@ let voiceRecognition = null;
 let isRecording = false;
 
 function toggleVoice() {
+  // 銀安APP 安裝版（APK）：改用手機系統內建的原生語音辨識視窗
+  if (window.AndroidVoice && typeof window.AndroidVoice.startVoiceInput === 'function') {
+    const textarea = document.getElementById('journal-input');
+    const status = document.getElementById('voice-status');
+    window.__androidVoiceBaseText = textarea.value;
+    window.__androidVoiceDone = function(text) {
+      if (status) status.style.display = 'none';
+      if (!text) return;
+      const base = window.__androidVoiceBaseText || '';
+      const sep = base && !/[\s\n]$/.test(base) ? ' ' : '';
+      textarea.value = base + sep + text;
+      updateJournalCount();
+    };
+    if (status) status.style.display = 'block';
+    try { window.AndroidVoice.startVoiceInput(currentLang || 'zh-TW'); }
+    catch(e) { if (status) status.style.display = 'none'; showToast(t('voice_recognition_fail_toast')); }
+    return;
+  }
   if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
     showToast(t('browser_no_voice_toast')); return;
   }
