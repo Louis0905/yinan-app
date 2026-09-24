@@ -1167,6 +1167,11 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
           <span class="fc-icon">📅</span><div class="fc-t" data-i18n="respite">喘息計畫</div>
           <div class="fc-s" id="home-respite-sub">明日：日照</div>
         </button>
+        <button class="fcard" onclick="navTo('p-talk','fwd')">
+          <div class="fc-bar" style="background:var(--purple)"></div>
+          <span class="fc-icon">💬</span><div class="fc-t" data-i18n="talk_card_title">雙語溝通</div>
+          <div class="fc-s" data-i18n="talk_card_sub">看護 ↔ 家屬翻譯</div>
+        </button>
       </div>
     </div>
 
@@ -1898,6 +1903,65 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
         <div style="margin-top:14px;padding:12px 14px;background:var(--g50);border-radius:12px;font-size:12px;color:var(--g500);line-height:1.7;border-left:3px solid var(--blue-m);" data-i18n="ltc_disclaimer2">
           💡 機構資訊來自 Google Maps，建議致電確認服務內容與費用後再前往。
         </div>
+      </div>
+    </div>
+
+    <!-- TALK PAGE：雙語溝通小幫手 -->
+    <!-- 給外籍看護跟語言不通的長輩/家屬即時溝通用。兩種模式：
+         1) 12句「常用句子」中/印尼/越南文完全內建在 JS 裡，不用網路，現場展示最穩定不會失敗；
+         2) 自由輸入文字或語音，則呼叫免費的 MyMemory 翻譯 API（不需金鑰），需要網路連線才能用。 -->
+    <div class="page" id="p-talk" style="background:linear-gradient(170deg,#faf5ff,#f0e6ff 40%,#f7f8fc 100%)">
+      <div class="hero-block" style="background:linear-gradient(135deg,#553C9A,#6B46C1 60%,#9F7AEA);min-height:150px;">
+        <div class="hb-row">
+          <button class="back-btn" onclick="goBack()">←</button>
+          <div><div class="hb-title" data-i18n="talk_hero_title">💬 雙語溝通小幫手</div><div class="hb-sub" data-i18n="talk_hero_sub">看護 ↔ 家屬即時翻譯</div></div>
+        </div>
+      </div>
+
+      <div style="flex:1;overflow-y:auto;padding:16px 20px 100px;">
+
+        <!-- 語言方向列 -->
+        <div style="display:flex;align-items:center;justify-content:center;gap:14px;background:white;border-radius:16px;box-shadow:var(--sh);padding:14px;margin-bottom:14px;">
+          <div style="text-align:center;flex:1;">
+            <div style="font-size:11px;color:var(--g500);font-weight:700;" data-i18n="talk_from_label">說話方</div>
+            <div id="talk-from-lang" style="font-size:14px;font-weight:800;margin-top:2px;">🇮🇩 Bahasa Indonesia</div>
+          </div>
+          <button onclick="swapTalkDirection()" style="width:44px;height:44px;border-radius:50%;background:var(--purple-l);border:none;font-size:20px;cursor:pointer;color:var(--purple);flex-shrink:0;">⇄</button>
+          <div style="text-align:center;flex:1;">
+            <div style="font-size:11px;color:var(--g500);font-weight:700;" data-i18n="talk_to_label">翻譯成</div>
+            <div id="talk-to-lang" style="font-size:14px;font-weight:800;margin-top:2px;">🇹🇼 繁體中文</div>
+          </div>
+        </div>
+
+        <!-- 外籍看護語言選擇 -->
+        <div style="display:flex;gap:8px;margin-bottom:14px;">
+          <button class="talk-lang-chip" data-lang="id" onclick="selectTalkForeignLang('id')" style="flex:1;padding:9px;border-radius:12px;border:2px solid var(--purple);background:var(--purple-l);color:var(--purple);font-size:13px;font-weight:800;cursor:pointer;font-family:var(--font);">🇮🇩 Indonesia</button>
+          <button class="talk-lang-chip" data-lang="vi" onclick="selectTalkForeignLang('vi')" style="flex:1;padding:9px;border-radius:12px;border:2px solid var(--g200);background:white;color:var(--g500);font-size:13px;font-weight:800;cursor:pointer;font-family:var(--font);">🇻🇳 Việt Nam</button>
+        </div>
+
+        <!-- 輸入框 -->
+        <div class="card" style="padding:14px;margin-bottom:14px;">
+          <textarea id="talk-input" data-i18n-ph="talk_input_ph" placeholder="輸入文字，或按下方麥克風說話…" style="width:100%;min-height:70px;border:none;resize:none;font-size:15px;font-family:var(--font);outline:none;box-sizing:border-box;"></textarea>
+          <div style="display:flex;gap:10px;margin-top:8px;">
+            <button id="talk-voice-btn" onclick="toggleTalkVoice()" style="flex:1;padding:11px;border-radius:12px;background:var(--g100);border:none;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:6px;">
+              <span data-i18n="voice_btn">🎙️ 語音輸入</span>
+            </button>
+            <button onclick="translateTalk()" style="flex:1;padding:11px;border-radius:12px;background:linear-gradient(135deg,#6B46C1,#9F7AEA);color:white;border:none;font-size:14px;font-weight:800;cursor:pointer;font-family:var(--font);" data-i18n="talk_translate_btn">🌐 翻譯</button>
+          </div>
+          <div id="talk-voice-status" style="font-size:11px;color:var(--red);text-align:center;margin-top:6px;display:none;" data-i18n="recording_hint">🔴 錄音中…說完後再按一次停止</div>
+        </div>
+
+        <!-- 翻譯結果 -->
+        <div class="card" id="talk-result-card" style="padding:16px;margin-bottom:18px;display:none;border-left:4px solid var(--purple);">
+          <div style="font-size:11px;color:var(--g500);font-weight:700;margin-bottom:6px;" data-i18n="talk_result_label">翻譯結果</div>
+          <div id="talk-result-text" style="font-size:21px;font-weight:800;color:var(--g900);line-height:1.5;"></div>
+          <button id="talk-speak-btn" onclick="speakTalkResult()" style="margin-top:10px;padding:9px 16px;border-radius:10px;background:var(--purple-l);color:var(--purple);border:none;font-size:13px;font-weight:800;cursor:pointer;font-family:var(--font);" data-i18n="talk_speak_btn">🔊 唸出來</button>
+        </div>
+
+        <!-- 常用句子：不用網路，示範最穩 -->
+        <div class="sec-t" data-i18n="talk_phrases_title">💬 常用句子（不用網路也能用）</div>
+        <div id="talk-phrases" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;"></div>
+
       </div>
     </div>
 
@@ -4287,6 +4351,229 @@ function toggleVoice() {
   voiceRecognition.start();
 }
 
+// ══════════════════════════════════════════════════════════
+// 雙語溝通小幫手（p-talk）：外籍看護 ↔ 語言不通的長輩/家屬 即時翻譯
+// 兩種使用方式：
+//  1) 常用句子（TALK_PHRASES）：中文／印尼文／越南文都直接寫死在陣列裡，
+//     完全不用打 API，現場示範或網路不好時都能穩定使用。
+//  2) 自由輸入文字或語音：呼叫免費、不需金鑰的 MyMemory 翻譯 API，
+//     這個需要裝置本身有網路連線才能成功（在手機上測試，不是在開發環境）。
+// ══════════════════════════════════════════════════════════
+let talkDirection   = 'toChinese'; // 'toChinese'：看護語言→中文／'toForeign'：中文→看護語言
+let talkForeignLang = 'id';        // 'id' | 'vi'
+let talkVoiceRecognition = null;
+let talkIsRecording = false;
+
+const TALK_FOREIGN_NAMES = { id: '🇮🇩 Bahasa Indonesia', vi: '🇻🇳 Việt Nam' };
+const TALK_FOREIGN_FLAG  = { id: '🇮🇩', vi: '🇻🇳' };
+const TALK_FOREIGN_STT   = { id: 'id-ID', vi: 'vi-VN' }; // 語音辨識/語音合成用的語言代碼
+
+const TALK_PHRASES = [
+  { icon:'🍚', zhTW:'吃飯了嗎？',     zhCN:'吃饭了吗？',   id:'Sudah makan?',                 vi:'Đã ăn cơm chưa?' },
+  { icon:'🤕', zhTW:'這裡會痛嗎？',   zhCN:'这里会痛吗？', id:'Apakah sakit di sini?',        vi:'Có đau ở đây không?' },
+  { icon:'🚻', zhTW:'要上廁所嗎？',   zhCN:'要上厕所吗？', id:'Mau ke toilet?',               vi:'Có muốn đi vệ sinh không?' },
+  { icon:'💊', zhTW:'該吃藥了',       zhCN:'该吃药了',     id:'Sudah waktunya minum obat',    vi:'Đến giờ uống thuốc rồi' },
+  { icon:'😴', zhTW:'想睡覺嗎？',     zhCN:'想睡觉吗？',   id:'Mau tidur?',                    vi:'Có muốn ngủ không?' },
+  { icon:'💧', zhTW:'要喝水嗎？',     zhCN:'要喝水吗？',   id:'Mau minum air?',                vi:'Có muốn uống nước không?' },
+  { icon:'🥶', zhTW:'會冷嗎？',       zhCN:'会冷吗？',     id:'Apakah kedinginan?',           vi:'Có lạnh không?' },
+  { icon:'🙏', zhTW:'需要幫忙嗎？',   zhCN:'需要帮忙吗？', id:'Perlu bantuan?',               vi:'Có cần giúp đỡ không?' },
+  { icon:'👍', zhTW:'我明白了',       zhCN:'我明白了',     id:'Saya mengerti',                vi:'Tôi hiểu rồi' },
+  { icon:'⏳', zhTW:'稍等一下',       zhCN:'稍等一下',     id:'Tunggu sebentar',              vi:'Đợi một chút' },
+  { icon:'💐', zhTW:'謝謝你',         zhCN:'谢谢你',       id:'Terima kasih',                 vi:'Cảm ơn bạn' },
+  { icon:'✅', zhTW:'沒問題',         zhCN:'没问题',       id:'Tidak masalah',                vi:'Không sao đâu' },
+];
+
+function talkZhLabel() {
+  return (currentLang === 'zh-CN') ? '🇨🇳 简体中文' : '🇹🇼 繁體中文';
+}
+function talkZhCode() {
+  return (currentLang === 'zh-CN') ? 'zh-CN' : 'zh-TW';
+}
+function talkZhText(p) {
+  return (currentLang === 'zh-CN') ? p.zhCN : p.zhTW;
+}
+
+function selectTalkForeignLang(lang) {
+  talkForeignLang = lang;
+  document.querySelectorAll('.talk-lang-chip').forEach(btn => {
+    const on = btn.dataset.lang === lang;
+    btn.style.borderColor = on ? 'var(--purple)' : 'var(--g200)';
+    btn.style.background  = on ? 'var(--purple-l)' : 'white';
+    btn.style.color       = on ? 'var(--purple)' : 'var(--g500)';
+  });
+  updateTalkLangLabels();
+  renderTalkPhrases();
+}
+
+function updateTalkLangLabels() {
+  const fromEl = document.getElementById('talk-from-lang');
+  const toEl   = document.getElementById('talk-to-lang');
+  if (!fromEl || !toEl) return;
+  const zhLabel = talkZhLabel();
+  const foreignLabel = TALK_FOREIGN_NAMES[talkForeignLang];
+  if (talkDirection === 'toChinese') { fromEl.textContent = foreignLabel; toEl.textContent = zhLabel; }
+  else { fromEl.textContent = zhLabel; toEl.textContent = foreignLabel; }
+  const input = document.getElementById('talk-input');
+  if (input) input.placeholder = t('talk_input_ph');
+}
+
+function swapTalkDirection() {
+  talkDirection = (talkDirection === 'toChinese') ? 'toForeign' : 'toChinese';
+  updateTalkLangLabels();
+  const card = document.getElementById('talk-result-card');
+  if (card) card.style.display = 'none';
+  const input = document.getElementById('talk-input');
+  if (input) input.value = '';
+}
+
+function renderTalkPhrases() {
+  const wrap = document.getElementById('talk-phrases');
+  if (!wrap) return;
+  wrap.innerHTML = TALK_PHRASES.map((p, i) => `
+    <button onclick="playTalkPhrase(${i})" style="background:white;border-radius:12px;box-shadow:var(--sh);border:none;padding:10px 8px;cursor:pointer;font-family:var(--font);text-align:center;">
+      <div style="font-size:20px;">${p.icon}</div>
+      <div style="font-size:12px;font-weight:700;color:var(--g700);margin-top:4px;">${talkZhText(p)}</div>
+      <div style="font-size:11px;color:var(--g400);margin-top:2px;">${p[talkForeignLang]}</div>
+    </button>
+  `).join('');
+}
+
+// 常用句子一次顯示中文＋看護語言兩行，「唸出來」按鈕直接放在對應那一行旁邊，
+// 不猜方向：要對長輩說就按中文那顆、要唸給看護聽/練習發音就按看護語言那顆，
+// 兩顆都在，不會再有「按了卻唸出聽不懂的語言」的狀況。
+function playTalkPhrase(i) {
+  const p = TALK_PHRASES[i];
+  const zh = talkZhText(p);
+  const foreign = p[talkForeignLang];
+  const card = document.getElementById('talk-result-card');
+  const textEl = document.getElementById('talk-result-text');
+  const speakBtn = document.getElementById('talk-speak-btn');
+  if (!card || !textEl) return;
+  card.style.display = 'block';
+  if (speakBtn) speakBtn.style.display = 'none'; // 常用句子用下面的雙語各自按鈕，不用這顆共用按鈕
+  textEl.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+      <div>${zh}</div>
+      <button onclick="playTalkPhraseSide(${i},'zh')" style="flex-shrink:0;background:var(--purple-l);color:var(--purple);border:none;border-radius:10px;padding:7px 12px;font-size:13px;font-weight:800;cursor:pointer;font-family:var(--font);">🔊 中文</button>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;">
+      <div style="font-size:16px;color:var(--purple);font-weight:700;">${foreign}</div>
+      <button onclick="playTalkPhraseSide(${i},'foreign')" style="flex-shrink:0;background:var(--purple-l);color:var(--purple);border:none;border-radius:10px;padding:7px 12px;font-size:13px;font-weight:800;cursor:pointer;font-family:var(--font);">🔊 ${TALK_FOREIGN_FLAG[talkForeignLang]}</button>
+    </div>`;
+}
+
+function playTalkPhraseSide(i, side) {
+  const p = TALK_PHRASES[i];
+  if (side === 'zh') speakTalkText(talkZhText(p), talkZhCode());
+  else speakTalkText(p[talkForeignLang], TALK_FOREIGN_STT[talkForeignLang]);
+}
+
+// 自由輸入翻譯的結果只會有一種語言（"翻譯成" 標籤指到哪一種，結果就是那一種），
+// 所以唸出來要用「目標語言」，不是輸入語言——之前這裡寫反了，會唸出聽不懂的語音。
+function speakTalkResult() {
+  const textEl = document.getElementById('talk-result-text');
+  if (!textEl) return;
+  const text = textEl.textContent.trim();
+  if (!text) return;
+  const lang = talkDirection === 'toChinese' ? talkZhCode() : TALK_FOREIGN_STT[talkForeignLang];
+  speakTalkText(text, lang);
+}
+
+function speakTalkText(text, lang) {
+  if (!text) return;
+  if (!('speechSynthesis' in window)) { showToast(t('talk_tts_unsupported_toast')); return; }
+  try {
+    speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = lang;
+    speechSynthesis.speak(utter);
+  } catch (e) { showToast(t('talk_tts_unsupported_toast')); }
+}
+
+// 自由輸入的文字/語音翻譯：呼叫免費、不需金鑰的 MyMemory API（需要網路）
+async function translateTalk() {
+  const inputEl = document.getElementById('talk-input');
+  const input = inputEl ? inputEl.value.trim() : '';
+  if (!input) return;
+  const card = document.getElementById('talk-result-card');
+  const textEl = document.getElementById('talk-result-text');
+  const speakBtn = document.getElementById('talk-speak-btn');
+  if (!card || !textEl) return;
+  card.style.display = 'block';
+  if (speakBtn) speakBtn.style.display = 'block';
+  textEl.textContent = t('talk_translating');
+  const srcCode = talkDirection === 'toChinese' ? talkForeignLang : talkZhCode();
+  const tgtCode = talkDirection === 'toChinese' ? talkZhCode() : talkForeignLang;
+  const pair = `${srcCode}|${tgtCode}`;
+  try {
+    const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(input)}&langpair=${encodeURIComponent(pair)}`);
+    const data = await res.json();
+    const translated = data && data.responseData && data.responseData.translatedText;
+    if (!translated) throw new Error('empty');
+    textEl.textContent = translated;
+  } catch (e) {
+    textEl.textContent = t('talk_translate_fail');
+  }
+}
+
+function toggleTalkVoice() {
+  const lang = talkDirection === 'toChinese' ? TALK_FOREIGN_STT[talkForeignLang] : talkZhCode();
+  // 銀安APP 安裝版（APK）：改用手機系統內建的原生語音辨識視窗
+  if (window.AndroidVoice && typeof window.AndroidVoice.startVoiceInput === 'function') {
+    const textarea = document.getElementById('talk-input');
+    const status = document.getElementById('talk-voice-status');
+    window.__androidVoiceDone = function(text) {
+      if (status) status.style.display = 'none';
+      if (!text) return;
+      textarea.value = text;
+    };
+    if (status) status.style.display = 'block';
+    try { window.AndroidVoice.startVoiceInput(lang); }
+    catch (e) { if (status) status.style.display = 'none'; showToast(t('voice_recognition_fail_toast')); }
+    return;
+  }
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    showToast(isIOS ? t('ios_no_voice_toast') : t('browser_no_voice_toast'));
+    return;
+  }
+  if (talkIsRecording) { talkVoiceRecognition?.stop(); return; }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  talkVoiceRecognition = new SR();
+  talkVoiceRecognition.lang = lang; talkVoiceRecognition.continuous = true; talkVoiceRecognition.interimResults = true;
+  const textarea = document.getElementById('talk-input');
+  const btn = document.getElementById('talk-voice-btn');
+  const status = document.getElementById('talk-voice-status');
+  let finalText = '';
+  talkVoiceRecognition.onstart = () => {
+    talkIsRecording = true; btn.style.background = 'var(--red-l)'; btn.style.color = 'var(--red-d)';
+    btn.innerHTML = t('voice_stop_btn') || '⏹️'; if (status) status.style.display = 'block';
+  };
+  talkVoiceRecognition.onresult = (e) => {
+    let interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) finalText += e.results[i][0].transcript;
+      else interim = e.results[i][0].transcript;
+    }
+    textarea.value = finalText + interim;
+  };
+  talkVoiceRecognition.onend = () => {
+    talkIsRecording = false; btn.style.background = ''; btn.style.color = '';
+    btn.innerHTML = `<span data-i18n="voice_btn">${t('voice_btn')}</span>`; if (status) status.style.display = 'none';
+    textarea.value = finalText;
+  };
+  talkVoiceRecognition.onerror = () => {
+    talkIsRecording = false; btn.innerHTML = `<span data-i18n="voice_btn">${t('voice_btn')}</span>`; if (status) status.style.display = 'none';
+    showToast(t('voice_recognition_fail_toast'));
+  };
+  talkVoiceRecognition.start();
+}
+
+function initTalkPage() {
+  selectTalkForeignLang(talkForeignLang);
+}
+
 let careProfiles    = [];
 let activeProfileIdx = 0;
 
@@ -5587,6 +5874,15 @@ const LANGS = {
     browser_no_voice_toast: '⚠️ 此瀏覽器不支援語音輸入，請改用 Chrome', voice_recognition_fail_toast: '⚠️ 語音識別失敗，請再試一次',
     'ios_no_voice_toast': '⚠️ iPhone 上請改用鍵盤內建的「聽寫」麥克風按鈕輸入語音',
     voice_stop_btn: '⏹️ 停止錄音',
+    talk_card_title: '雙語溝通', talk_card_sub: '看護 ↔ 家屬翻譯',
+    talk_hero_title: '💬 雙語溝通小幫手', talk_hero_sub: '看護 ↔ 家屬即時翻譯',
+    talk_from_label: '說話方', talk_to_label: '翻譯成',
+    talk_input_ph: '輸入文字，或按下方麥克風說話…',
+    talk_translate_btn: '🌐 翻譯', talk_result_label: '翻譯結果', talk_speak_btn: '🔊 唸出來',
+    talk_phrases_title: '💬 常用句子（不用網路也能用）',
+    talk_translating: '翻譯中…',
+    talk_translate_fail: '⚠️ 翻譯失敗，請確認網路連線，或改用下方常用句子',
+    talk_tts_unsupported_toast: '⚠️ 此裝置不支援語音朗讀',
 
     privacy_required_toast: '⚠️ 須同意隱私政策才能使用', remind_later_toast: '⏰ 30分鐘後再提醒',
     pdf_exporting_toast: '📄 PDF 匯出中…', share_line_toast: '💬 分享至 LINE',
@@ -5814,6 +6110,15 @@ const LANGS = {
     browser_no_voice_toast: '⚠️ 此浏览器不支持语音输入，请改用 Chrome', voice_recognition_fail_toast: '⚠️ 语音识别失败，请再试一次',
     'ios_no_voice_toast': '⚠️ iPhone 上请改用键盘内建的"听写"麦克风按钮输入语音',
     voice_stop_btn: '⏹️ 停止录音',
+    talk_card_title: '双语沟通', talk_card_sub: '看护 ↔ 家属翻译',
+    talk_hero_title: '💬 双语沟通小助手', talk_hero_sub: '看护 ↔ 家属即时翻译',
+    talk_from_label: '说话方', talk_to_label: '翻译成',
+    talk_input_ph: '输入文字，或按下方麦克风说话…',
+    talk_translate_btn: '🌐 翻译', talk_result_label: '翻译结果', talk_speak_btn: '🔊 念出来',
+    talk_phrases_title: '💬 常用句子（不用网络也能用）',
+    talk_translating: '翻译中…',
+    talk_translate_fail: '⚠️ 翻译失败，请确认网络连线，或改用下方常用句子',
+    talk_tts_unsupported_toast: '⚠️ 此装置不支持语音朗读',
 
     privacy_required_toast: '⚠️ 须同意隐私政策才能使用', remind_later_toast: '⏰ 30分钟后再提醒',
     pdf_exporting_toast: '📄 PDF 汇出中…', share_line_toast: '💬 分享至 LINE',
@@ -6473,6 +6778,15 @@ const LANGS = {
     browser_no_voice_toast: '⚠️ Browser ini tidak mendukung input suara, gunakan Chrome', voice_recognition_fail_toast: '⚠️ Pengenalan suara gagal, coba lagi',
     'ios_no_voice_toast': '⚠️ Di iPhone, gunakan tombol mikrofon "Dikte" pada keyboard untuk input suara',
     voice_stop_btn: '⏹️ Hentikan Rekaman',
+    talk_card_title: 'Komunikasi Dwibahasa', talk_card_sub: 'Terjemahan Perawat ↔ Keluarga',
+    talk_hero_title: '💬 Bantuan Komunikasi Dwibahasa', talk_hero_sub: 'Terjemahan Perawat ↔ Keluarga Real-time',
+    talk_from_label: 'Yang Berbicara', talk_to_label: 'Terjemahkan ke',
+    talk_input_ph: 'Ketik teks, atau tekan mikrofon di bawah untuk bicara…',
+    talk_translate_btn: '🌐 Terjemahkan', talk_result_label: 'Hasil Terjemahan', talk_speak_btn: '🔊 Ucapkan',
+    talk_phrases_title: '💬 Kalimat Umum (Bisa Tanpa Internet)',
+    talk_translating: 'Menerjemahkan…',
+    talk_translate_fail: '⚠️ Terjemahan gagal, periksa koneksi internet, atau gunakan kalimat umum di bawah',
+    talk_tts_unsupported_toast: '⚠️ Perangkat ini tidak mendukung suara',
 
     privacy_required_toast: '⚠️ Harus menyetujui kebijakan privasi untuk menggunakan', remind_later_toast: '⏰ Ingatkan lagi 30 menit lagi',
     pdf_exporting_toast: '📄 Mengekspor PDF…', share_line_toast: '💬 Bagikan ke LINE',
@@ -6836,6 +7150,15 @@ const LANGS = {
     browser_no_voice_toast: '⚠️ Trình duyệt này không hỗ trợ nhập giọng nói, vui lòng dùng Chrome', voice_recognition_fail_toast: '⚠️ Nhận dạng giọng nói thất bại, vui lòng thử lại',
     'ios_no_voice_toast': '⚠️ Trên iPhone, vui lòng dùng nút micro "Đọc chính tả" trên bàn phím để nhập giọng nói',
     voice_stop_btn: '⏹️ Dừng ghi âm',
+    talk_card_title: 'Giao tiếp song ngữ', talk_card_sub: 'Dịch Người chăm sóc ↔ Gia đình',
+    talk_hero_title: '💬 Trợ lý giao tiếp song ngữ', talk_hero_sub: 'Dịch trực tiếp Người chăm sóc ↔ Gia đình',
+    talk_from_label: 'Người nói', talk_to_label: 'Dịch sang',
+    talk_input_ph: 'Nhập văn bản, hoặc nhấn micro bên dưới để nói…',
+    talk_translate_btn: '🌐 Dịch', talk_result_label: 'Kết quả dịch', talk_speak_btn: '🔊 Đọc to',
+    talk_phrases_title: '💬 Câu thường dùng (không cần internet)',
+    talk_translating: 'Đang dịch…',
+    talk_translate_fail: '⚠️ Dịch thất bại, vui lòng kiểm tra kết nối internet, hoặc dùng câu thường dùng bên dưới',
+    talk_tts_unsupported_toast: '⚠️ Thiết bị này không hỗ trợ đọc giọng nói',
 
     privacy_required_toast: '⚠️ Phải đồng ý chính sách bảo mật để sử dụng', remind_later_toast: '⏰ Nhắc lại sau 30 phút',
     pdf_exporting_toast: '📄 Đang xuất PDF…', share_line_toast: '💬 Chia sẻ qua LINE',
@@ -7066,6 +7389,15 @@ const LANGS = {
     browser_no_voice_toast: '⚠️ Hindi sinusuportahan ng browser na ito ang voice input, gamitin ang Chrome', voice_recognition_fail_toast: '⚠️ Nabigo ang voice recognition, subukang muli',
     'ios_no_voice_toast': '⚠️ Sa iPhone, gamitin ang microphone button na "Dictation" sa keyboard para sa voice input',
     voice_stop_btn: '⏹️ Ihinto ang Pag-record',
+    talk_card_title: 'Bilingual na Komunikasyon', talk_card_sub: 'Pagsasalin Caregiver ↔ Pamilya',
+    talk_hero_title: '💬 Katulong sa Bilingual na Komunikasyon', talk_hero_sub: 'Real-time na Pagsasalin Caregiver ↔ Pamilya',
+    talk_from_label: 'Nagsasalita', talk_to_label: 'Isalin sa',
+    talk_input_ph: 'Mag-type ng teksto, o pindutin ang mikropono sa ibaba para magsalita…',
+    talk_translate_btn: '🌐 Isalin', talk_result_label: 'Resulta ng Pagsasalin', talk_speak_btn: '🔊 Basahin nang malakas',
+    talk_phrases_title: '💬 Karaniwang Pangungusap (Walang Internet)',
+    talk_translating: 'Isinasalin…',
+    talk_translate_fail: '⚠️ Nabigo ang pagsasalin, pakisuri ang koneksyon sa internet, o gamitin ang mga karaniwang pangungusap sa ibaba',
+    talk_tts_unsupported_toast: '⚠️ Hindi sinusuportahan ng device na ito ang boses',
 
     privacy_required_toast: '⚠️ Dapat sumang-ayon sa patakaran sa privacy para magamit', remind_later_toast: '⏰ Ipaalala ulit pagkalipas ng 30 minuto',
     pdf_exporting_toast: '📄 Ine-export ang PDF…', share_line_toast: '💬 I-share sa LINE',
@@ -7328,6 +7660,9 @@ function setLang(lang) {
   applyLang();
   closeAcctMenu();
   showToast(`🌐 ${LANGS[lang].flag} ${LANGS[lang].name}`);
+  // 雙語溝通頁的中文標籤／常用句子是動態組出來的，不是 data-i18n，
+  // 切換語言時要另外重新渲染一次，不然中文那一側不會跟著切繁簡體。
+  if (document.getElementById('talk-phrases')) { updateTalkLangLabels(); renderTalkPhrases(); }
 }
 
 let currentRole = 'caregiver';
@@ -7590,6 +7925,7 @@ function onPageEnter(id) {
   if (id === 'p-contacts') { renderContactsList(); }
   if (id === 'p-journal')  { loadJournalHistory(); }
   if (id === 'p-respite')  { renderRespite(); }
+  if (id === 'p-talk')     { initTalkPage(); }
   if (id === 'p-med')      { renderMedPage(); }
 }
 
