@@ -905,6 +905,13 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
 
     <!-- 新增按鈕 -->
     <div style="position:absolute;bottom:0;left:0;right:0;padding:16px 20px 28px;background:linear-gradient(to top,#f7f8fc 80%,transparent);">
+      <!-- 引導提示：新增照護對象只是第一步，家屬通知還需要另外去「設定」加 LINE 好友、
+           填緊急聯絡人，這兩件事不設定的話 SOS／異常警示都不會有人收到。放在新增按鈕正上方，
+           讓使用者在按下去之前就先知道後面還有這一步，減少「設定完才發現沒收到通知」的狀況。 -->
+      <div style="background:#FFF5F5;border:1px solid #FEB2B2;border-radius:12px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:#C53030;line-height:1.5;display:flex;gap:6px;align-items:flex-start;">
+        <span style="flex-shrink:0;">⚠️</span>
+        <span data-i18n="add_profile_hint">新增照護對象後，記得到「設定」加入 LINE 好友、新增緊急聯絡人，才能收到 SOS 與異常警示通知</span>
+      </div>
       <button onclick="addNewProfile()" style="width:100%;padding:15px;border-radius:16px;background:linear-gradient(135deg,#2b6cb0,#3182CE);color:white;border:none;font-size:16px;font-weight:900;cursor:pointer;font-family:var(--font);box-shadow:0 6px 20px rgba(49,130,206,0.35);display:flex;align-items:center;justify-content:center;gap:8px;">
         ＋ <span data-i18n="add_care">新增照護對象</span>
       </button>
@@ -4238,7 +4245,15 @@ function toggleVoice() {
     return;
   }
   if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-    showToast(t('browser_no_voice_toast')); return;
+    // iOS（含 iPadOS）上不管用 Safari 還是「加入主畫面」的 PWA，底層都是同一個 WebKit 引擎，
+    // 完全沒有實作 Web Speech API，所以原本「請改用 Chrome」這句提示在 iPhone 上是錯的——
+    // iOS 上的 Chrome 一樣是套殼 WebKit，換瀏覽器也不會好。這裡偵測到 iOS 時改成提示使用
+    // iPhone 鍵盤內建的「聽寫」麥克風按鈕（Apple 自己的語音輸入，本來就有，不需要額外開發），
+    // 才是真正能用的替代方案；只有在其他確實可以換 Chrome 解決的情況（例如桌機 Firefox）才維持原本提示。
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    showToast(isIOS ? t('ios_no_voice_toast') : t('browser_no_voice_toast'));
+    return;
   }
   if (isRecording) { voiceRecognition?.stop(); return; }
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -5527,6 +5542,7 @@ const LANGS = {
     'risk_high': '高度關注',
     // 2026-09-17 補齊缺漏的翻譯 key
     add_care: '新增照護對象', care_report: '📋 照護報表', confirm_med: '確認服藥',
+    'add_profile_hint': '新增照護對象後，記得到「設定」加入 LINE 好友、新增緊急聯絡人，才能收到 SOS 與異常警示通知',
     fill_assessment: '點此填寫初評資料', from_staff: '交班人員', handover_info: '🔄 交接班資訊',
     history_journal: '📚 歷史日誌', journal_content: '🎙️ 照護記錄內容', not_yet: '尚未服用',
     quick_insert: '快速插入：', respite_sub: '本週照護安排', shift_label: '班別時段',
@@ -5569,6 +5585,7 @@ const LANGS = {
     fill_handover_name_toast: '⚠️ 請填寫接班人姓名', sending_handover_toast: '傳送交接報表中…',
     journal_sent_handover_toast: '✅ 交接報表已傳給',
     browser_no_voice_toast: '⚠️ 此瀏覽器不支援語音輸入，請改用 Chrome', voice_recognition_fail_toast: '⚠️ 語音識別失敗，請再試一次',
+    'ios_no_voice_toast': '⚠️ iPhone 上請改用鍵盤內建的「聽寫」麥克風按鈕輸入語音',
     voice_stop_btn: '⏹️ 停止錄音',
 
     privacy_required_toast: '⚠️ 須同意隱私政策才能使用', remind_later_toast: '⏰ 30分鐘後再提醒',
@@ -5752,6 +5769,7 @@ const LANGS = {
     'risk_high': '高度关注',
     // 2026-09-17 补齐缺漏的翻译 key
     add_care: '新增照护对象', care_report: '📋 照护报表', confirm_med: '确认服药',
+    'add_profile_hint': '新增照护对象后，记得到"设置"加入 LINE 好友、新增紧急联系人，才能收到 SOS 与异常警示通知',
     fill_assessment: '点此填写初评资料', from_staff: '交班人员', handover_info: '🔄 交接班资讯',
     history_journal: '📚 历史日志', journal_content: '🎙️ 照护记录内容', not_yet: '尚未服用',
     quick_insert: '快速插入：', respite_sub: '本周照护安排', shift_label: '班别时段',
@@ -5794,6 +5812,7 @@ const LANGS = {
     fill_handover_name_toast: '⚠️ 请填写接班人姓名', sending_handover_toast: '传送交接报表中…',
     journal_sent_handover_toast: '✅ 交接报表已传给',
     browser_no_voice_toast: '⚠️ 此浏览器不支持语音输入，请改用 Chrome', voice_recognition_fail_toast: '⚠️ 语音识别失败，请再试一次',
+    'ios_no_voice_toast': '⚠️ iPhone 上请改用键盘内建的"听写"麦克风按钮输入语音',
     voice_stop_btn: '⏹️ 停止录音',
 
     privacy_required_toast: '⚠️ 须同意隐私政策才能使用', remind_later_toast: '⏰ 30分钟后再提醒',
@@ -6409,6 +6428,7 @@ const LANGS = {
     'risk_high': 'Perhatian Tinggi',
     // 2026-09-17 tambahan key terjemahan yang sebelumnya belum ada
     add_care: 'Tambah Penerima Perawatan', care_report: '📋 Laporan Perawatan', confirm_med: 'Konfirmasi Minum Obat',
+    'add_profile_hint': 'Setelah menambah penerima perawatan, jangan lupa buka "Pengaturan" untuk menambah teman LINE dan kontak darurat, agar bisa menerima notifikasi SOS dan peringatan',
     fill_assessment: 'Ketuk untuk isi data evaluasi awal', from_staff: 'Staf Serah', handover_info: '🔄 Info Serah Terima',
     history_journal: '📚 Riwayat Jurnal', journal_content: '🎙️ Isi Catatan Perawatan', not_yet: 'Belum',
     quick_insert: 'Sisipan cepat:', respite_sub: 'Jadwal perawatan minggu ini', shift_label: 'Shift Kerja',
@@ -6451,6 +6471,7 @@ const LANGS = {
     fill_handover_name_toast: '⚠️ Mohon isi nama penerima shift', sending_handover_toast: 'Mengirim laporan serah terima…',
     journal_sent_handover_toast: '✅ Laporan serah terima telah dikirim ke',
     browser_no_voice_toast: '⚠️ Browser ini tidak mendukung input suara, gunakan Chrome', voice_recognition_fail_toast: '⚠️ Pengenalan suara gagal, coba lagi',
+    'ios_no_voice_toast': '⚠️ Di iPhone, gunakan tombol mikrofon "Dikte" pada keyboard untuk input suara',
     voice_stop_btn: '⏹️ Hentikan Rekaman',
 
     privacy_required_toast: '⚠️ Harus menyetujui kebijakan privasi untuk menggunakan', remind_later_toast: '⏰ Ingatkan lagi 30 menit lagi',
@@ -6770,6 +6791,7 @@ const LANGS = {
     'risk_high': 'Cần chú ý cao',
     // 2026-09-17 bổ sung các key dịch còn thiếu
     add_care: 'Thêm người được chăm sóc', care_report: '📋 Báo cáo chăm sóc', confirm_med: 'Xác nhận đã uống thuốc',
+    'add_profile_hint': 'Sau khi thêm người được chăm sóc, đừng quên vào "Cài đặt" để thêm bạn LINE và liên hệ khẩn cấp, để nhận được thông báo SOS và cảnh báo',
     fill_assessment: 'Nhấn để điền đánh giá ban đầu', from_staff: 'Nhân viên giao ca', handover_info: '🔄 Thông tin giao ca',
     history_journal: '📚 Nhật ký lịch sử', journal_content: '🎙️ Nội dung ghi chép chăm sóc', not_yet: 'Chưa uống',
     quick_insert: 'Chèn nhanh:', respite_sub: 'Lịch chăm sóc tuần này', shift_label: 'Ca làm việc',
@@ -6812,6 +6834,7 @@ const LANGS = {
     fill_handover_name_toast: '⚠️ Vui lòng điền tên người nhận ca', sending_handover_toast: 'Đang gửi báo cáo bàn giao…',
     journal_sent_handover_toast: '✅ Báo cáo bàn giao đã gửi cho',
     browser_no_voice_toast: '⚠️ Trình duyệt này không hỗ trợ nhập giọng nói, vui lòng dùng Chrome', voice_recognition_fail_toast: '⚠️ Nhận dạng giọng nói thất bại, vui lòng thử lại',
+    'ios_no_voice_toast': '⚠️ Trên iPhone, vui lòng dùng nút micro "Đọc chính tả" trên bàn phím để nhập giọng nói',
     voice_stop_btn: '⏹️ Dừng ghi âm',
 
     privacy_required_toast: '⚠️ Phải đồng ý chính sách bảo mật để sử dụng', remind_later_toast: '⏰ Nhắc lại sau 30 phút',
@@ -6998,6 +7021,7 @@ const LANGS = {
     'risk_high': 'Mataas na Alerto',
     // 2026-09-17 dinagdag na mga key ng pagsasalin na kulang dati
     add_care: 'Magdagdag ng Inaalagaan', care_report: '📋 Ulat ng Pangangalaga', confirm_med: 'Kumpirmahin ang Pag-inom',
+    'add_profile_hint': 'Pagkatapos magdagdag ng inaalagaan, huwag kalimutang pumunta sa "Settings" para magdagdag ng LINE friend at emergency contact, para makatanggap ng SOS at abiso ng babala',
     fill_assessment: 'Pindutin para punan ang paunang pagtatasa', from_staff: 'Kawani na Lilipat', handover_info: '🔄 Impormasyon sa Paglipat',
     history_journal: '📚 Kasaysayan ng Journal', journal_content: '🎙️ Nilalaman ng Tala ng Pangangalaga', not_yet: 'Hindi pa',
     quick_insert: 'Mabilis na ipasok:', respite_sub: 'Iskedyul ng pangangalaga ngayong linggo', shift_label: 'Oras ng Shift',
@@ -7040,6 +7064,7 @@ const LANGS = {
     fill_handover_name_toast: '⚠️ Pakilagay ang pangalan ng susunod na staff', sending_handover_toast: 'Ipinapadala ang handover report…',
     journal_sent_handover_toast: '✅ Naipadala na ang handover report kay',
     browser_no_voice_toast: '⚠️ Hindi sinusuportahan ng browser na ito ang voice input, gamitin ang Chrome', voice_recognition_fail_toast: '⚠️ Nabigo ang voice recognition, subukang muli',
+    'ios_no_voice_toast': '⚠️ Sa iPhone, gamitin ang microphone button na "Dictation" sa keyboard para sa voice input',
     voice_stop_btn: '⏹️ Ihinto ang Pag-record',
 
     privacy_required_toast: '⚠️ Dapat sumang-ayon sa patakaran sa privacy para magamit', remind_later_toast: '⏰ Ipaalala ulit pagkalipas ng 30 minuto',
