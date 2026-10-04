@@ -5015,6 +5015,7 @@ function setJournalMode(mode) {
   const textarea    = document.getElementById('journal-input');
 
   if (mode === 'history') {
+    resetJournalInput();
     if (inputPanel)   inputPanel.style.display   = 'none';
     if (historyPanel) historyPanel.style.display = 'block';
     renderJournalHistory();
@@ -5024,7 +5025,7 @@ function setJournalMode(mode) {
   if (inputPanel)   inputPanel.style.display   = 'block';
   if (historyPanel) historyPanel.style.display = 'none';
   if (result)       result.style.display       = 'none';
-  if (textarea)     { textarea.value = ''; updateJournalCount(); }
+  resetJournalInput();
 
   if (mode === 'daily') {
     if (handoverInfo) handoverInfo.style.display = 'none';
@@ -5077,11 +5078,24 @@ function updateJournalCount() {
   if (counter) counter.textContent = (textarea.value.length) + ' ' + t('char_count');
 }
 
-function clearJournal() {
-  document.getElementById('journal-input').value = '';
-  document.getElementById('journal-result').style.display = 'none';
+// 只清空「照護記錄內容」輸入框（不動下方已產生的報表）。
+// 產出 AI 報表後、切換每日／交接班／歷史分頁、離開再回到日誌頁時都會呼叫，
+// 避免上一次寫的內容一直留在輸入框，下一次不小心接著寫或又送出一次。
+function resetJournalInput() {
+  // 如果正在錄音，先中止並拔掉回呼，否則 onend 會把錄音當下的文字又寫回輸入框
+  if (typeof isRecording !== 'undefined' && isRecording && voiceRecognition) {
+    voiceRecognition.onresult = null; voiceRecognition.onend = null; voiceRecognition.onerror = null;
+    try { voiceRecognition.abort(); } catch (e) {}
+    isRecording = false;
+    const vb = document.getElementById('voice-btn');
+    if (vb) { vb.style.background = ''; vb.style.color = ''; vb.innerHTML = `<span data-i18n="voice_btn">${t('voice_btn')}</span>`; }
+    const vs = document.getElementById('voice-status');
+    if (vs) vs.style.display = 'none';
+  }
+  const ta = document.getElementById('journal-input');
+  if (ta) ta.value = '';
   updateJournalCount();
-  // 重置插入按鈕
+  // 重置「插入今日數據」按鈕，下一篇才能再插入
   const btn = document.querySelector('[onclick="insertAutoData()"]');
   if (btn) {
     btn.dataset.inserted = 'false';
@@ -5090,6 +5104,11 @@ function clearJournal() {
     btn.style.borderColor = 'var(--blue-m)';
     btn.style.pointerEvents = 'auto';
   }
+}
+
+function clearJournal() {
+  resetJournalInput();
+  document.getElementById('journal-result').style.display = 'none';
 }
 
 function renderJournalHistory() {
@@ -5221,6 +5240,7 @@ async function generateJournal() {
     });
     saveJournalHistory();
     renderJournalHistory();
+    resetJournalInput(); // 原文已存進歷史紀錄，輸入框清空，避免下次接著舊內容
     showToast(t('report_generated_toast'));
   } catch(e) {
     showToast(t('ai_fail_toast') + e.message);
@@ -7923,7 +7943,7 @@ function onPageEnter(id) {
   if (id === 'p-stress') { renderWeeklyTrend(); renderStressCalendar(); }
   if (id === 'p-report')   { renderBPChart(); loadAlertLog(); }
   if (id === 'p-contacts') { renderContactsList(); }
-  if (id === 'p-journal')  { loadJournalHistory(); }
+  if (id === 'p-journal')  { loadJournalHistory(); resetJournalInput(); document.getElementById('journal-result').style.display = 'none'; }
   if (id === 'p-respite')  { renderRespite(); }
   if (id === 'p-talk')     { initTalkPage(); }
   if (id === 'p-med')      { renderMedPage(); }
