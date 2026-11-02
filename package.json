@@ -1,8 +1,0 @@
-{
-  "name": "yinan-app",
-  "version": "1.5.2",
-  "main": "server.js",
-  "scripts": {
-    "start": "node server.js"
-  }
-}
