@@ -1677,6 +1677,21 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
           <span style="font-size:18px;color:var(--g300);">›</span>
         </div>
 
+        <!-- 家庭密語（連線後端用） -->
+        <div class="dark-card" style="background:white;border-radius:14px;padding:16px;box-shadow:var(--sh);">
+          <div style="font-size:15px;font-weight:800;color:var(--g700);" data-i18n="token_title">🔑 家庭密語</div>
+          <div style="font-size:12px;color:var(--g500);margin-top:2px;line-height:1.6;" data-i18n="token_sub">輸入家人提供的密語，App 才能連到後端同步資料與發送通知。只會存在這支手機上。</div>
+          <input class="ff-input" id="app-token-input" type="password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
+                 placeholder="貼上或輸入密語" data-i18n-ph="token_placeholder" style="margin-top:10px;">
+          <div style="display:flex;gap:8px;margin-top:10px;">
+            <button onclick="saveAppToken()" data-i18n="token_save"
+                    style="flex:2;padding:10px;border-radius:11px;background:var(--blue-m);color:white;border:none;font-size:13px;font-weight:800;cursor:pointer;font-family:var(--font);">儲存並測試</button>
+            <button onclick="clearAppToken()" data-i18n="token_clear"
+                    style="flex:1;padding:10px;border-radius:11px;background:white;color:var(--g700);border:2px solid var(--g200);font-size:13px;font-weight:800;cursor:pointer;font-family:var(--font);">清除</button>
+          </div>
+          <div id="app-token-status" style="font-size:12px;font-weight:700;color:var(--g500);margin-top:10px;"></div>
+        </div>
+
         <!-- 版本 -->
         <div style="text-align:center;padding:16px 0;color:var(--g400);font-size:12px;" data-i18n="app_version">
           銀安APP v1.0 · 讓照護更安心
@@ -2587,7 +2602,7 @@ function renderWeekStrip() {
         <div class="wd-e ${icoClass}" style="${icoStyle}">${ico}</div>
         ${badge}
       </div>
-      <div class="wd-t" style="${hasPlan?'':'color:var(--g400)'}">${hasPlan ? trSeed(dayPlans[0].name) : t('free_day_label')}</div>`;
+      <div class="wd-t" style="${hasPlan?'':'color:var(--g400)'}">${hasPlan ? esc(trSeed(dayPlans[0].name)) : t('free_day_label')}</div>`;
     strip.appendChild(cell);
   });
 }
@@ -2630,8 +2645,8 @@ function renderPlanList() {
       el.innerHTML = `
         <div class="pi-ico">${p.icon}</div>
         <div style="flex:1">
-          <div class="pi-n">${trSeed(p.name)}</div>
-          <div class="pi-d">${t('week_day_prefix')}${DAY_LABELS[p.day]}　${trSeed(p.time)}</div>
+          <div class="pi-n">${esc(trSeed(p.name))}</div>
+          <div class="pi-d">${t('week_day_prefix')}${DAY_LABELS[p.day]}　${esc(trSeed(p.time))}</div>
         </div>
         <button class="pi-del" onclick="deletePlan(${p.id},event)" title="${t('delete_word')}">✕</button>`;
       list.appendChild(el);
@@ -3093,12 +3108,45 @@ function dismissWarnBox() {
 const DB_KEY     = 'yinan_db';
 const SERVER_URL = 'https://yinan-app-production.up.railway.app'; // Node.js 本機伺服器
 let   serverOnline = false;
+let   serverAuthFail = false;   // 伺服器回 401/503：密語沒設或不正確
+
+// 家庭密語（APP_TOKEN）：只存在這支手機的 localStorage，不寫在程式碼裡
+const TOKEN_KEY = 'yinan_app_token';
+function getAppToken() {
+  try { return (localStorage.getItem(TOKEN_KEY) || '').trim(); } catch(e) { return ''; }
+}
+// 所有對後端的請求都走這裡，自動帶上 X-App-Token
+function apiFetch(path, opts) {
+  const o = Object.assign({}, opts || {});
+  const headers = Object.assign({}, o.headers || {});
+  const tok = getAppToken();
+  if (tok) headers['X-App-Token'] = tok;
+  o.headers = headers;
+  return fetch(SERVER_URL + path, o);
+}
+
+// 把使用者輸入放進 innerHTML 前先跳脫，避免被注入程式碼
+function esc(v) {
+  return String(v == null ? '' : v).replace(/[&<>"']/g, ch => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]
+  ));
+}
+// 放在 onclick="fn(${escJs(x)})" 這種「HTML 屬性裡的 JS 字串」專用
+function escJs(v) { return esc(JSON.stringify(String(v == null ? '' : v))); }
 
 // 偵測伺服器是否在線
 async function checkServer() {
   try {
-    const r = await fetch(SERVER_URL + '/data', { signal: AbortSignal.timeout(1500) });
+    // 多了 X-App-Token，瀏覽器會先送一次預檢請求，所以逾時由 1.5 秒放寬到 4 秒
+    const r = await apiFetch('/data', { signal: AbortSignal.timeout(4000) });
+    if (r.status === 401 || r.status === 403 || r.status === 503) {
+      serverOnline = false;
+      serverAuthFail = true;
+      updateServerBadge(false);
+      return;
+    }
     if (r.ok) {
+      serverAuthFail = false;
       serverOnline = true;
       updateServerBadge(true);
       // 從 server 同步最新資料
@@ -3107,6 +3155,9 @@ async function checkServer() {
         localStorage.setItem(DB_KEY, JSON.stringify(json.data));
         console.log('✅ 已從伺服器同步資料');
       }
+    } else {
+      serverOnline = false;
+      updateServerBadge(false);
     }
   } catch(e) {
     serverOnline = false;
@@ -3116,22 +3167,50 @@ async function checkServer() {
 
 function updateServerBadge(online) {
   const badge = document.getElementById('server-badge');
-  if (!badge) return;
-  badge.textContent = online ? '🟢 伺服器連線中' : '🔴 離線模式';
-  badge.style.background = online ? 'rgba(56,161,105,0.2)' : 'rgba(229,62,62,0.15)';
-  badge.style.color = online ? '#276749' : '#742A2A';
+  if (badge) {
+    if (online) {
+      badge.textContent = '🟢 伺服器連線中';
+      badge.style.background = 'rgba(56,161,105,0.2)';
+      badge.style.color = '#276749';
+    } else if (serverAuthFail || !getAppToken()) {
+      badge.textContent = '🔑 請設定家庭密語';
+      badge.style.background = 'rgba(214,158,46,0.2)';
+      badge.style.color = '#975A16';
+    } else {
+      badge.textContent = '🔴 離線模式';
+      badge.style.background = 'rgba(229,62,62,0.15)';
+      badge.style.color = '#742A2A';
+    }
+  }
+  if (typeof refreshTokenStatus === 'function') refreshTokenStatus();
 }
 
 // 傳送資料到 server（失敗不影響 APP）
+let tokenWarned = false;
 async function postToServer(endpoint, data) {
-  if (!serverOnline) return;
+  if (!getAppToken()) {
+    // 沒設密語就送不出去；SOS 每次都提醒，其他只提醒一次
+    if (!tokenWarned || endpoint === '/sos') {
+      tokenWarned = true;
+      try { showToast(t('token_need_toast')); } catch(e) {}
+    }
+    return;
+  }
+  // SOS 不看「連線偵測」結果，一律嘗試送出（偵測可能只是剛好逾時）
+  if (!serverOnline && endpoint !== '/sos') return;
   try {
-    await fetch(SERVER_URL + endpoint, {
+    const r = await apiFetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
-      signal: AbortSignal.timeout(3000)
+      signal: AbortSignal.timeout(8000)
     });
+    if (r.status === 401 || r.status === 403 || r.status === 503) {
+      serverOnline = false;
+      serverAuthFail = true;
+      updateServerBadge(false);
+      try { showToast(t('token_wrong_toast')); } catch(e) {}
+    }
   } catch(e) {
     console.warn('Server post failed, data saved locally:', endpoint);
   }
@@ -3348,12 +3427,12 @@ function renderDB() {
     const rowsHtml = rows.slice(-5).reverse().map(row => {
       const ts = row._ts ? `<span style="font-size:10px;color:var(--g400);float:right;">${new Date(row._ts).toLocaleString('zh-TW',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})}</span>` : '';
       let detail = '';
-      if (table==='profile') detail=`<b>${row.name}</b> · ${row.age||''} · ${riskLabel[row.risk]||row.risk} · ${row.score}分`;
+      if (table==='profile') detail=`<b>${esc(row.name)}</b> · ${esc(row.age||'')} · ${esc(riskLabel[row.risk]||row.risk)} · ${esc(row.score)}分`;
       else if (table==='sos_logs') detail=`${row.user} 求助 · 📍${row.location}`;
-      else if (table==='med_logs') detail=`💊 ${row.name} ${row.dose} · ${row.timing}`;
+      else if (table==='med_logs') detail=`💊 ${esc(row.name)} ${esc(row.dose)} · ${esc(row.timing)}`;
       else if (table==='stress_logs') detail=`${row.emoji} ${row.level==='green'?'良好':row.level==='yellow'?'普通':'偏高'}`;
-      else if (table==='plans') detail=`${row.icon} ${row.name} · 週${DAY_LABELS[row.day]} ${row.time}`;
-      else if (table==='assessment_logs') detail=`${row.event==='completed'?'初次':' 更新'} · ${row.name} · ${riskLabel[row.risk]||''}`;
+      else if (table==='plans') detail=`${esc(row.icon)} ${esc(row.name)} · 週${esc(DAY_LABELS[row.day])} ${esc(row.time)}`;
+      else if (table==='assessment_logs') detail=`${row.event==='completed'?'初次':' 更新'} · ${esc(row.name)} · ${esc(riskLabel[row.risk]||'')}`;
       return `<div style="padding:10px 12px;border-radius:10px;background:var(--g50);margin-bottom:6px;font-size:12px;color:var(--g700);">${ts}${detail}</div>`;
     }).join('');
     return `<div style="margin-bottom:20px;"><div style="font-size:13px;font-weight:800;color:var(--g700);margin-bottom:8px;display:flex;justify-content:space-between;"><span>${tableLabels[table]||table}</span><span style="font-size:11px;font-weight:600;color:var(--g400);">${rows.length} 筆</span></div>${rowsHtml}</div>`;
@@ -3471,10 +3550,10 @@ function renderMedPage() {
     const onclick = med.taken ? '' : isPast ? `onclick="openMedById(${med.id})"` : '';
     const nowBadge = isNow ? `<span style="background:var(--red);color:white;font-size:9px;font-weight:800;padding:1px 6px;border-radius:8px;margin-left:6px;">${t('time_now')}</span>` : '';
     return `<div class="time-grp">
-      <div class="time-lbl">⏰ ${med.time}${nowBadge}</div>
+      <div class="time-lbl">⏰ ${esc(med.time)}${nowBadge}</div>
       <div class="med-row" ${onclick} style="${med.taken?'opacity:0.6':''}${isNow?';border-left:3px solid var(--red);':''}">
         <div class="med-ico ${icoCls}">💊</div>
-        <div style="flex:1;min-width:0;"><div class="med-n">${trSeed(med.name)}</div><div class="med-d">${trSeed(med.dose)}</div></div>
+        <div style="flex:1;min-width:0;"><div class="med-n">${esc(trSeed(med.name))}</div><div class="med-d">${esc(trSeed(med.dose))}</div></div>
         <div style="display:flex;gap:6px;align-items:center;">
           <button class="med-tag ${tagCls}" ${onclick} style="pointer-events:${med.taken?'none':'auto'}">${tagTxt}</button>
           <button onclick="deleteMed(${med.id},event)" style="width:24px;height:24px;border-radius:50%;background:var(--red-l);border:none;color:var(--red);font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
@@ -3544,7 +3623,7 @@ function toggleMedHistory() {
   box.innerHTML = logs.map(l => {
     const ts = new Date(l._ts).toLocaleString(localeCode(),{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
     return `<div style="padding:10px 12px;border-radius:10px;background:var(--g50);margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;">
-      <span style="font-size:13px;color:var(--g700);font-weight:600;">💊 ${trSeed(l.name)} ${trSeed(l.dose)}</span>
+      <span style="font-size:13px;color:var(--g700);font-weight:600;">💊 ${esc(trSeed(l.name))} ${esc(trSeed(l.dose))}</span>
       <span style="font-size:10px;color:var(--g400);">${ts}</span>
     </div>`;
   }).join('');
@@ -3766,7 +3845,7 @@ function renderStressCalendar() {
     const isToday = today.getFullYear()===stressCalYear && today.getMonth()===stressCalMonth && today.getDate()===d;
     const bgMap = { green:'var(--green-l)', yellow:'#FFFFF0', red:'var(--red-l)' };
     const bg = log ? bgMap[log.level] : 'var(--g100)';
-    const onclick = log && log.note ? `onclick="showToast('${log.emoji} ${log.note.slice(0,20)}')"` : '';
+    const onclick = log && log.note ? `onclick="showToast(${escJs(log.emoji + ' ' + log.note.slice(0,20))})"` : '';
     const cursor = log && log.note ? 'cursor:pointer;' : '';
     grid.innerHTML += `<div ${onclick} style="aspect-ratio:1;border-radius:8px;background:${bg};display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:${log?'14':'10'}px;font-weight:${isToday?'900':'600'};color:${log?'inherit':'var(--g400)'};border:${isToday?'2px solid var(--purple)':'none'};${cursor}">
       ${log ? log.emoji : d}
@@ -4153,12 +4232,12 @@ function renderContactsList() {
         </div>
         <div style="flex:1;min-width:0;">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">
-            <div style="font-size:15px;font-weight:900;color:var(--g700);">${c.name}</div>
-            <span style="background:#FAF5FF;color:#6B46C1;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:700;">${(relationKey[c.relation] ? t(relationKey[c.relation]) : c.relation) || ''}</span>
+            <div style="font-size:15px;font-weight:900;color:var(--g700);">${esc(c.name)}</div>
+            <span style="background:#FAF5FF;color:#6B46C1;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:700;">${esc((relationKey[c.relation] ? t(relationKey[c.relation]) : c.relation) || '')}</span>
           </div>
-          <div style="font-size:11px;color:var(--g400);margin-bottom:4px;font-family:monospace;">${c.userId ? 'User ID: ' + c.userId.slice(0,16)+'…' : c.lineId ? 'LINE ID: @'+c.lineId : t('no_contact_method')}</div>
+          <div style="font-size:11px;color:var(--g400);margin-bottom:4px;font-family:monospace;">${c.userId ? 'User ID: ' + esc(c.userId.slice(0,16)) + '…' : c.lineId ? 'LINE ID: @' + esc(c.lineId) : t('no_contact_method')}</div>
           <div style="display:flex;flex-wrap:wrap;gap:4px;">
-            ${(c.notifyTypes||['sos']).map(t=>`<span style="background:var(--g100);color:var(--g600);padding:1px 7px;border-radius:8px;font-size:10px;font-weight:700;">${notifyLabels[t]||t}</span>`).join('')}
+            ${(c.notifyTypes||['sos']).map(t=>`<span style="background:var(--g100);color:var(--g600);padding:1px 7px;border-radius:8px;font-size:10px;font-weight:700;">${esc(notifyLabels[t]||t)}</span>`).join('')}
           </div>
         </div>
         <div style="display:flex;flex-direction:column;gap:6px;">
@@ -4265,7 +4344,7 @@ async function testLINE() {
   if (emergencyContacts.length === 0) { showToast(t('no_contact_set_toast')); return; }
   showToast(t('sending_test_msg_toast'));
   try {
-    const r = await fetch(SERVER_URL + '/line-test', {
+    const r = await apiFetch('/line-test', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -4274,6 +4353,7 @@ async function testLINE() {
       }),
       signal: AbortSignal.timeout(8000)
     });
+    if (r.status === 401 || r.status === 403 || r.status === 503) { showToast(t('token_need_toast')); return; }
     const data = await r.json();
     if (data.ok) showToast(t('test_msg_sent_toast'));
     else showToast(t('send_fail_userid_toast'));
@@ -4614,7 +4694,7 @@ function renderProfilesList() {
         <div style="width:48px;height:48px;border-radius:50%;background:${isActive?'#EBF8FF':'var(--g100)'};display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">${av}</div>
         <div style="flex:1;min-width:0;">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
-            <div style="font-size:17px;font-weight:900;color:var(--g700);">${trName(p.name)}</div>
+            <div style="font-size:17px;font-weight:900;color:var(--g700);">${esc(trName(p.name))}</div>
             <span style="font-size:11px;font-weight:700;color:${riskColor[p.risk]||'#38A169'};">${riskLabel[p.risk]||''}</span>
           </div>
           <div style="display:flex;flex-wrap:wrap;gap:4px;">
@@ -4757,10 +4837,10 @@ function findNearbyLTC() {
       { name:'居家服務（松山）',   dist:'2.1 km', type:t('facility_type_homecare'),     area:'松山區' },
     ];
     list.innerHTML = `<div style="font-size:13px;font-weight:800;color:var(--g500);margin-bottom:10px;">${t('nearby_facilities_header')}</div>` +
-      centers.map(f => `<div class="ltc-card" onclick="openLink('https://maps.google.com/maps?q=${encodeURIComponent(f.name)}&near=${lat},${lng}')">
+      centers.map(f => `<div class="ltc-card" onclick="openLink('https://maps.google.com/maps?q=${encodeURIComponent(f.name).replace(/'/g,'%27')}&near=${lat},${lng}')">
         <div class="ltc-card-icon" style="background:var(--green-l);">🏥</div>
         <div class="ltc-card-body">
-          <div class="ltc-card-title">${f.name}</div>
+          <div class="ltc-card-title">${esc(f.name)}</div>
           <div class="ltc-card-sub">${f.area} · ${f.dist}</div>
           <div class="ltc-card-tag">${f.type}</div>
         </div><span class="ltc-arrow">›</span></div>`).join('') +
@@ -4832,7 +4912,7 @@ function renderFamilyDashboard() {
       <div style="font-size:12px;color:var(--g500);">${riskMap[p?.risk]||t('not_assessed_label')}</div></div></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         ${lastStress?`<span style="background:var(--green-l);color:var(--green);padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700;">${t('recent_mood_label')} ${lastStress.emoji}</span>`:''}
-        ${lastMed?`<span style="background:var(--blue-l);color:var(--blue-m);padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700;">${t('recent_med_label')} ${trSeed(lastMed.name)}</span>`:''}
+        ${lastMed?`<span style="background:var(--blue-l);color:var(--blue-m);padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700;">${t('recent_med_label')} ${esc(trSeed(lastMed.name))}</span>`:''}
         ${lastSOS?`<span style="background:var(--red-l);color:var(--red-d);padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700;">⚠️ ${t('has_sos_record')}</span>`:`<span style="background:var(--green-l);color:var(--green);padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700;">✅ ${t('no_emergency_events')}</span>`}
       </div>`;
   }
@@ -4848,7 +4928,7 @@ function renderFamilyDashboard() {
     ].sort((a,b)=>new Date(b.ts)-new Date(a.ts)).slice(0,8);
     timeline.innerHTML = events.length ? events.map(e=>{
       const tt=new Date(e.ts).toLocaleString(localeCode(),{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
-      return `<div class="fam-event"><div class="fam-event-t">${tt}</div><div class="fam-event-d"><span style="font-size:16px;margin-right:6px;">${e.icon}</span>${e.text}</div></div>`;
+      return `<div class="fam-event"><div class="fam-event-t">${tt}</div><div class="fam-event-d"><span style="font-size:16px;margin-right:6px;">${esc(e.icon)}</span>${esc(e.text)}</div></div>`;
     }).join('') : `<div style="font-size:13px;color:var(--g400);padding:12px 0 0;">${t('no_activity_record')}</div>`;
   }
 
@@ -4901,8 +4981,8 @@ function renderFamilyDashboard() {
         return `<div style="background:white;border-radius:12px;padding:12px 14px;box-shadow:var(--sh);display:flex;align-items:center;gap:10px;${isToday?'border-left:3px solid var(--blue-m);':''}">
           <div style="font-size:20px;">${p.icon||'📅'}</div>
           <div style="flex:1;">
-            <div style="font-size:13px;font-weight:800;color:var(--g700);">${trSeed(p.name)} ${badge}</div>
-            <div style="font-size:11px;color:var(--g500);margin-top:2px;">${t('week_day_prefix')}${DAY_LABELS[p.day]} ${trSeed(p.time)}</div>
+            <div style="font-size:13px;font-weight:800;color:var(--g700);">${esc(trSeed(p.name))} ${badge}</div>
+            <div style="font-size:11px;color:var(--g500);margin-top:2px;">${t('week_day_prefix')}${DAY_LABELS[p.day]} ${esc(trSeed(p.time))}</div>
           </div>
         </div>`;
       }).join('');
@@ -5186,7 +5266,7 @@ async function generateJournal() {
   }
 
   try {
-    const r = await fetch(SERVER_URL + '/ai-journal', {
+    const r = await apiFetch('/ai-journal', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -5206,6 +5286,7 @@ async function generateJournal() {
       // 30 秒常常來不及，容易誤判成失敗；放寬到 75 秒給它足夠時間。
       signal: AbortSignal.timeout(75000)
     });
+    if (r.status === 401 || r.status === 403 || r.status === 503) throw new Error(t('token_need_toast'));
     const data = await r.json();
     if (!data.ok) throw new Error(data.message);
 
@@ -5264,15 +5345,15 @@ function sendJournalLINE() {
   const contacts = emergencyContacts.filter(c => c.userId);
   if (contacts.length === 0) { showToast(t('no_line_userid_toast')); return; }
   showToast('📲 ' + t('sending'));
-  fetch(SERVER_URL + '/send-journal', {
+  apiFetch('/send-journal', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ report, contacts, profileName: window.userProfile?.name }),
     signal: AbortSignal.timeout(10000)
-  }).then(r => r.json()).then(data => {
+  }).then(r => { if (r.status === 401 || r.status === 403 || r.status === 503) { showToast(t('token_need_toast')); throw new Error('auth'); } return r.json(); }).then(data => {
     if (data.ok) showToast(`✅ ${t('journal_sent_family_toast')} ${contacts.length} ${t('contact_unit')}`);
     else showToast(t('send_fail_toast'));
-  }).catch(() => showToast(t('connection_fail_toast')));
+  }).catch(e => { if (!e || e.message !== 'auth') showToast(t('connection_fail_toast')); });
 }
 
 function sendJournalHandover() {
@@ -5285,15 +5366,15 @@ function sendJournalHandover() {
   const contact = emergencyContacts.find(c => c.name.includes(toName) || toName.includes(c.name));
   if (!contact?.userId) { showToast(t('no_line_confirm_toast').replace('{name}', toName)); return; }
   showToast('📲 ' + t('sending_handover_toast'));
-  fetch(SERVER_URL + '/send-journal', {
+  apiFetch('/send-journal', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ report, contacts: [contact], profileName: window.userProfile?.name }),
     signal: AbortSignal.timeout(10000)
-  }).then(r => r.json()).then(data => {
+  }).then(r => { if (r.status === 401 || r.status === 403 || r.status === 503) { showToast(t('token_need_toast')); throw new Error('auth'); } return r.json(); }).then(data => {
     if (data.ok) showToast(`✅ ${t('journal_sent_handover_toast')} ${toName}`);
     else showToast(t('send_fail_toast'));
-  }).catch(() => showToast(t('connection_fail_toast')));
+  }).catch(e => { if (!e || e.message !== 'auth') showToast(t('connection_fail_toast')); });
 }
 
 // ════════════════════════════════════════
@@ -5344,7 +5425,7 @@ function renderAlertLog() {
       : `<span style="font-size:10px;background:var(--g100);color:var(--g400);padding:1px 7px;border-radius:6px;font-weight:700;">${t('not_notified_word')}</span>`;
     return `<div style="background:${bg};border-radius:10px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;">
       <div>
-        <div style="font-size:12px;font-weight:800;color:var(--g700);">${a.type ? t('alert_label_' + a.type) : a.label}</div>
+        <div style="font-size:12px;font-weight:800;color:var(--g700);">${a.type ? t('alert_label_' + a.type) : esc(a.label)}</div>
         <div style="font-size:11px;color:var(--g500);margin-top:2px;">${a.value || ''}</div>
       </div>
       <div style="text-align:right;">
@@ -5410,7 +5491,7 @@ async function autoAlertAI(triggerType, data) {
 
   try {
     // 呼叫 AI 生成分析摘要
-    const r = await fetch(SERVER_URL + '/ai-journal', {
+    const r = await apiFetch('/ai-journal', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -5426,7 +5507,7 @@ async function autoAlertAI(triggerType, data) {
     const report = result.ok ? result.report : `${trigger.label}\n數值：${valueStr}\n\n建議持續監測並告知醫師。`;
 
     // 傳送給所有有 userId 的聯絡人
-    await fetch(SERVER_URL + '/send-journal', {
+    await apiFetch('/send-journal', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -5448,6 +5529,21 @@ async function autoAlertAI(triggerType, data) {
 const LANGS = {
   'zh-TW': {
     name: '繁體中文', flag: '🇹🇼',
+    token_title: "🔑 家庭密語",
+    token_sub: "輸入家人提供的密語，App 才能連到後端同步資料與發送通知。只會存在這支手機上。",
+    token_placeholder: "貼上或輸入密語",
+    token_save: "儲存並測試",
+    token_clear: "清除",
+    token_status_none: "尚未設定密語",
+    token_status_ok: "✅ 已連線",
+    token_status_wrong: "❌ 密語錯誤，或伺服器尚未設定",
+    token_status_offline: "⚠️ 已設定密語，但目前連不上伺服器",
+    token_empty_toast: "請先輸入密語",
+    token_save_fail_toast: "無法儲存，請檢查瀏覽器設定",
+    token_ok_toast: "✅ 密語正確，已連線",
+    token_wrong_toast: "❌ 密語不正確，請再確認",
+    token_cleared_toast: "已清除密語",
+    token_need_toast: "請先到「設定」輸入家庭密語，否則無法發送通知",
     greet_morning: '☀️ 早安', greet_noon: '🌤️ 午安', greet_evening: '🌙 晚安', greet_night: '🌛 深夜了',
     home: '首頁', settings: '設定', journal: '日誌',
     sos_label: 'SOS', sos_sub: '緊急求助',
@@ -6006,6 +6102,21 @@ const LANGS = {
   },
   'zh-CN': {
     name: '简体中文', flag: '🇨🇳',
+    token_title: "🔑 家庭密语",
+    token_sub: "输入家人提供的密语，App 才能连接后端同步数据和发送通知。只会保存在这部手机上。",
+    token_placeholder: "粘贴或输入密语",
+    token_save: "保存并测试",
+    token_clear: "清除",
+    token_status_none: "尚未设置密语",
+    token_status_ok: "✅ 已连接",
+    token_status_wrong: "❌ 密语错误，或服务器尚未设置",
+    token_status_offline: "⚠️ 已设置密语，但目前连不上服务器",
+    token_empty_toast: "请先输入密语",
+    token_save_fail_toast: "无法保存，请检查浏览器设置",
+    token_ok_toast: "✅ 密语正确，已连接",
+    token_wrong_toast: "❌ 密语不正确，请再确认",
+    token_cleared_toast: "已清除密语",
+    token_need_toast: "请先到“设置”输入家庭密语，否则无法发送通知",
     greet_morning: '☀️ 早安', greet_noon: '🌤️ 午安', greet_evening: '🌙 晚安', greet_night: '🌛 深夜了',
     home: '首页', settings: '设置', journal: '日志',
     sos_label: 'SOS', sos_sub: '紧急求助',
@@ -6376,6 +6487,21 @@ const LANGS = {
   },
   'id': {
     name: 'Bahasa Indonesia', flag: '🇮🇩',
+    token_title: "🔑 Kode Rahasia Keluarga",
+    token_sub: "Masukkan kode rahasia dari keluarga agar aplikasi dapat terhubung ke server untuk sinkronisasi data dan mengirim notifikasi. Hanya disimpan di ponsel ini.",
+    token_placeholder: "Tempel atau ketik kode rahasia",
+    token_save: "Simpan & Uji",
+    token_clear: "Hapus",
+    token_status_none: "Kode rahasia belum diatur",
+    token_status_ok: "✅ Terhubung",
+    token_status_wrong: "❌ Kode salah atau server belum dikonfigurasi",
+    token_status_offline: "⚠️ Kode sudah diatur, tetapi server tidak terjangkau",
+    token_empty_toast: "Masukkan kode rahasia dulu",
+    token_save_fail_toast: "Gagal menyimpan, periksa pengaturan browser",
+    token_ok_toast: "✅ Kode benar, terhubung",
+    token_wrong_toast: "❌ Kode salah, periksa kembali",
+    token_cleared_toast: "Kode rahasia dihapus",
+    token_need_toast: "Masukkan kode rahasia keluarga di “Pengaturan” dulu, jika tidak notifikasi tidak bisa dikirim",
     greet_morning: '☀️ Selamat Pagi', greet_noon: '🌤️ Selamat Siang', greet_evening: '🌙 Selamat Malam', greet_night: '🌛 Malam larut',
     home: 'Beranda', settings: 'Pengaturan', journal: 'Jurnal',
     sos_label: 'SOS', sos_sub: 'Bantuan Darurat',
@@ -6913,6 +7039,21 @@ const LANGS = {
   },
   'vi': {
     name: 'Tiếng Việt', flag: '🇻🇳',
+    token_title: "🔑 Mật mã gia đình",
+    token_sub: "Nhập mật mã do người nhà cung cấp để ứng dụng kết nối máy chủ, đồng bộ dữ liệu và gửi thông báo. Chỉ lưu trên điện thoại này.",
+    token_placeholder: "Dán hoặc nhập mật mã",
+    token_save: "Lưu và kiểm tra",
+    token_clear: "Xóa",
+    token_status_none: "Chưa đặt mật mã",
+    token_status_ok: "✅ Đã kết nối",
+    token_status_wrong: "❌ Mật mã sai hoặc máy chủ chưa được cấu hình",
+    token_status_offline: "⚠️ Đã đặt mật mã nhưng chưa kết nối được máy chủ",
+    token_empty_toast: "Vui lòng nhập mật mã trước",
+    token_save_fail_toast: "Không thể lưu, hãy kiểm tra cài đặt trình duyệt",
+    token_ok_toast: "✅ Mật mã đúng, đã kết nối",
+    token_wrong_toast: "❌ Mật mã không đúng, vui lòng kiểm tra lại",
+    token_cleared_toast: "Đã xóa mật mã",
+    token_need_toast: "Hãy vào “Cài đặt” nhập mật mã gia đình trước, nếu không sẽ không gửi được thông báo",
     greet_morning: '☀️ Chào buổi sáng', greet_noon: '🌤️ Chào buổi trưa', greet_evening: '🌙 Chào buổi tối', greet_night: '🌛 Đêm khuya rồi',
     home: 'Trang chủ', settings: 'Cài đặt', journal: 'Nhật ký',
     sos_label: 'SOS', sos_sub: 'Khẩn cấp',
@@ -7731,12 +7872,12 @@ function renderFamilyView() {
     const lastMed    = (db.med_logs||[]).slice(-1)[0];
     subj.innerHTML = `<div style="display:flex;align-items:center;gap:12px;">
       <div style="width:48px;height:48px;border-radius:50%;background:var(--blue-l);display:flex;align-items:center;justify-content:center;font-size:26px;">${av}</div>
-      <div><div style="font-size:17px;font-weight:900;color:var(--g700);">${trName(p.name)}</div>
+      <div><div style="font-size:17px;font-weight:900;color:var(--g700);">${esc(trName(p.name))}</div>
       <div style="font-size:12px;color:var(--g500);margin-top:2px;">${riskLabel[p.risk]||''}</div></div>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
       ${lastStress?`<span style="background:var(--green-l);color:var(--green);padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;">${t('recent_mood_label')} ${lastStress.emoji}</span>`:''}
-      ${lastMed?`<span style="background:var(--blue-l);color:var(--blue-m);padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;">${t('recent_med_label')} ${trSeed(lastMed.name)}</span>`:''}
+      ${lastMed?`<span style="background:var(--blue-l);color:var(--blue-m);padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;">${t('recent_med_label')} ${esc(trSeed(lastMed.name))}</span>`:''}
       ${sosToday>0?`<span style="background:var(--red-l);color:var(--red-d);padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;">⚠️ ${t('today_sos_count').replace('{n}', sosToday)}</span>`:`<span style="background:var(--green-l);color:var(--green);padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;">✅ ${t('no_emergency_events')}</span>`}
     </div>`;
   }
@@ -7757,7 +7898,7 @@ function renderFamilyView() {
           return `<div style="position:relative;padding:0 0 12px 20px;">
             <div style="position:absolute;left:-5px;top:3px;width:10px;height:10px;border-radius:50%;background:var(--blue-m);border:2px solid white;"></div>
             <div style="font-size:10px;color:var(--g400);font-weight:700;">${tt}</div>
-            <div style="font-size:13px;color:var(--g700);font-weight:600;"><span style="margin-right:6px;">${e.icon}</span>${e.text}</div>
+            <div style="font-size:13px;color:var(--g700);font-weight:600;"><span style="margin-right:6px;">${esc(e.icon)}</span>${esc(e.text)}</div>
           </div>`;
         }).join('')
       : `<div style="font-size:13px;color:var(--g400);text-align:center;padding:12px;">${t('no_activity_record')}</div>`;
@@ -7800,8 +7941,8 @@ function renderFamilyView() {
                     isTomorrow ? `<span style="background:var(--green-l);color:var(--green);padding:1px 7px;border-radius:8px;font-size:10px;font-weight:800;">${t('tomorrow_badge')}</span>` : '';
       return `<div style="background:white;border-radius:12px;padding:12px 14px;box-shadow:0 2px 8px rgba(0,0,0,0.06);display:flex;align-items:center;gap:10px;${isToday?'border-left:3px solid var(--blue-m);':''}">
         <div style="font-size:20px;">${p.icon||'📅'}</div>
-        <div style="flex:1;"><div style="font-size:13px;font-weight:800;color:var(--g700);">${trSeed(p.name)} ${badge}</div>
-        <div style="font-size:11px;color:var(--g500);">${t('week_day_prefix')}${DAY_LABELS[p.day]} ${trSeed(p.time)}</div></div>
+        <div style="flex:1;"><div style="font-size:13px;font-weight:800;color:var(--g700);">${esc(trSeed(p.name))} ${badge}</div>
+        <div style="font-size:11px;color:var(--g500);">${t('week_day_prefix')}${DAY_LABELS[p.day]} ${esc(trSeed(p.time))}</div></div>
       </div>`;
     }).join('') : `<div style="font-size:13px;color:var(--g400);text-align:center;padding:12px;">${t('no_respite_this_week')}</div>`;
   }
@@ -7842,12 +7983,12 @@ function renderSOSContacts() {
     return `<div class="cc" id="sos-cc-${i}">
       <span class="cc-av">${av}</span>
       <div style="flex:1">
-        <div class="cc-n">${c.name}</div>
-        <div class="cc-r" id="sos-cc-${i}-status">${c.relation ? c.relation + '・' : ''}${statusTxt}</div>
+        <div class="cc-n">${esc(c.name)}</div>
+        <div class="cc-r" id="sos-cc-${i}-status">${c.relation ? esc(c.relation) + '・' : ''}${statusTxt}</div>
       </div>
       <div class="cc-actions">
-        ${hasLINE ? `<button class="cc-act-btn cc-line" onclick="openLINEChat('${c.lineId||''}','sos-cc-${i}')" title="${t('open_line_chat_title')}">💬</button>` : ''}
-        ${hasPhone ? `<button class="cc-act-btn cc-call" onclick="startCallDirect('${c.name}','${av}','${c.phone}')" title="${t('call_phone_title')}">📞</button>` : ''}
+        ${hasLINE ? `<button class="cc-act-btn cc-line" onclick="openLINEChat(${escJs(c.lineId||'')},'sos-cc-${i}')" title="${t('open_line_chat_title')}">💬</button>` : ''}
+        ${hasPhone ? `<button class="cc-act-btn cc-call" onclick="startCallDirect(${escJs(c.name)},${escJs(av)},${escJs(c.phone)})" title="${t('call_phone_title')}">📞</button>` : ''}
       </div>
     </div>`;
   }).join('');
@@ -7855,7 +7996,7 @@ function renderSOSContacts() {
 
 function openLINEChat(lineId, ccId) {
   if (lineId) {
-    window.open(`https://line.me/R/ti/p/~${lineId}`, '_blank');
+    window.open(`https://line.me/R/ti/p/~${encodeURIComponent(lineId)}`, '_blank');
   } else {
     window.open(`https://line.me/R/ti/p/@862swulo`, '_blank');
   }
@@ -7950,6 +8091,40 @@ function onPageEnter(id) {
 }
 
 let toastTimer;
+// ── 家庭密語：儲存 / 清除 / 狀態 ─────────────────
+function refreshTokenStatus() {
+  const el = document.getElementById('app-token-status');
+  if (!el) return;
+  let key = 'token_status_none', color = 'var(--g500)';
+  if (getAppToken()) {
+    if (serverOnline)        { key = 'token_status_ok';      color = 'var(--green)'; }
+    else if (serverAuthFail) { key = 'token_status_wrong';   color = '#C53030'; }
+    else                     { key = 'token_status_offline'; color = '#975A16'; }
+  }
+  el.textContent = t(key);
+  el.style.color = color;
+}
+
+async function saveAppToken() {
+  const inp = document.getElementById('app-token-input');
+  const v = ((inp && inp.value) || '').trim();
+  if (!v) { showToast(t('token_empty_toast')); return; }
+  try { localStorage.setItem(TOKEN_KEY, v); }
+  catch(e) { showToast(t('token_save_fail_toast')); return; }
+  inp.value = '';
+  tokenWarned = false;
+  await checkServer();
+  showToast(serverOnline ? t('token_ok_toast') : t('token_wrong_toast'));
+}
+
+function clearAppToken() {
+  try { localStorage.removeItem(TOKEN_KEY); } catch(e) {}
+  serverOnline = false;
+  serverAuthFail = false;
+  updateServerBadge(false);
+  showToast(t('token_cleared_toast'));
+}
+
 function showToast(msg) {
   const t = document.getElementById('toast');
   if (!t) return;
