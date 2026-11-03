@@ -3208,10 +3208,10 @@ async function checkServer() {
       const sd = json.data;
       const serverEmpty = !sd || (!sd.profile && ['sos_logs','med_logs','stress_logs','bp_logs','plans'].every(k => !(sd[k] || []).length));
       const localHas = Object.keys(dbLoad()).length > 0;
-      // 本機的個人檔案：優先用 yinan_db，其次用目前選取的照護對象，最後用照護對象清單第一位
+      // 本機的個人檔案：優先用 yinan_db，其次用目前選取的照護對象，最後（清單只有一位時）用那一位；有多位又沒選定時不補傳，避免傳到別的家庭
       let localProfile = dbLoad().profile || window.userProfile || null;
       if (!localProfile) {
-        try { const ps = JSON.parse(localStorage.getItem('yinan_profiles') || '[]'); localProfile = ps[0] || null; } catch(e) {}
+        try { const ps = JSON.parse(localStorage.getItem('yinan_profiles') || '[]'); localProfile = ps.length === 1 ? ps[0] : null; } catch(e) {}
       }
       if (sd && !(serverEmpty && localHas)) {
         localStorage.setItem(DB_KEY, JSON.stringify(sd));
