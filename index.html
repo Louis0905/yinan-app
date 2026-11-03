@@ -2203,6 +2203,7 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
           <div style="font-size:12px;color:rgba(255,255,255,0.7);font-weight:700;letter-spacing:1px;" data-i18n="family_view">家屬視角</div>
           <div style="font-size:20px;font-weight:900;color:white;margin-top:2px;" id="fv-title" data-i18n="care_overview">照護總覽</div>
         </div>
+        <button id="fv-logout-btn" onclick="familyLogout()" style="display:none;background:rgba(255,255,255,0.2);border:none;color:white;border-radius:20px;padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;font-family:var(--font);">🚪 登出</button>
         <button id="fv-switch-btn" onclick="toggleRoleView()" style="background:rgba(255,255,255,0.2);border:none;color:white;border-radius:20px;padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;font-family:var(--font);" data-i18n="caregiver_view">
           🏠 照顧者視角
         </button>
@@ -7921,10 +7922,19 @@ function startFamilyMode() {
     if (id === 'assessment') el.classList.add('done'); else el.style.display = 'none';
   });
   const sw = document.getElementById('fv-switch-btn'); if (sw) sw.style.display = 'none';
+  const lo = document.getElementById('fv-logout-btn'); if (lo) lo.style.display = 'inline-block';
   const ed = document.getElementById('fv-respite-edit'); if (ed) ed.style.display = 'none';
   if (!getAppToken()) { showFamilyGate(''); return; }
   refreshFamily(true);
   familyTimer = setInterval(() => refreshFamily(false), 30000);
+}
+function familyLogout() {
+  if (!confirm('登出後需要重新輸入家庭密語才能查看，確定登出嗎？')) return;
+  try { localStorage.removeItem(TOKEN_KEY); } catch(e) {}
+  if (familyTimer) { clearInterval(familyTimer); familyTimer = null; }
+  serverOnline = false; serverAuthFail = false; window.userProfile = null;
+  const ov = document.getElementById('family-view-overlay'); if (ov) ov.style.display = 'none';
+  showFamilyGate('已登出');
 }
 function showFamilyGate(msg) {
   const g = document.getElementById('family-gate'); if (g) g.style.display = 'flex';
