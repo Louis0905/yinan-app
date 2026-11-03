@@ -3207,7 +3207,11 @@ async function checkServer() {
       const sd = json.data;
       const serverEmpty = !sd || (!sd.profile && ['sos_logs','med_logs','stress_logs','bp_logs','plans'].every(k => !(sd[k] || []).length));
       const localHas = Object.keys(dbLoad()).length > 0;
-      const localProfile = dbLoad().profile;
+      // 本機的個人檔案：優先用 yinan_db，其次用目前選取的照護對象，最後用照護對象清單第一位
+      let localProfile = dbLoad().profile || window.userProfile || null;
+      if (!localProfile) {
+        try { const ps = JSON.parse(localStorage.getItem('yinan_profiles') || '[]'); localProfile = ps[0] || null; } catch(e) {}
+      }
       if (sd && !(serverEmpty && localHas)) {
         localStorage.setItem(DB_KEY, JSON.stringify(sd));
         console.log('✅ 已從伺服器同步資料');
