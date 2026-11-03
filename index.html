@@ -1606,7 +1606,7 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
         <div id="family-silence-alert" style="display:none;background:var(--red-l);border-radius:14px;padding:14px 16px;border-left:4px solid var(--red);margin-bottom:10px;">
           <div style="font-size:14px;font-weight:800;color:var(--red-d);" data-i18n="silence_alert_title">⚠️ 異常沉默警示</div>
           <div style="font-size:12px;color:var(--g500);margin-top:4px;" id="family-silence-msg" data-i18n="silence_msg">超過 4 小時無任何操作</div>
-          <button onclick="showToast(t('caregiver_notified_toast'))" style="margin-top:10px;width:100%;padding:10px;border-radius:10px;background:var(--red);color:white;border:none;font-size:13px;font-weight:800;cursor:pointer;font-family:var(--font);" data-i18n="contact_now_btn">🆘 立即聯繫查看</button>
+          <button onclick="contactNowSilence()" style="margin-top:10px;width:100%;padding:10px;border-radius:10px;background:var(--red);color:white;border:none;font-size:13px;font-weight:800;cursor:pointer;font-family:var(--font);" data-i18n="contact_now_btn">🆘 立即聯繫查看</button>
         </div>
       </div>
 
@@ -2202,7 +2202,7 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
       <div id="fv-alert" style="display:none;background:var(--red-l);border-radius:14px;padding:14px 16px;border-left:4px solid var(--red);margin-bottom:14px;">
         <div style="font-size:14px;font-weight:800;color:var(--red-d);" data-i18n="silence_alert_title">⚠️ 異常沉默警示</div>
         <div style="font-size:12px;color:var(--g500);margin-top:4px;" id="fv-alert-msg"></div>
-        <button onclick="showToast(t('caregiver_notified_toast'))" style="margin-top:10px;width:100%;padding:10px;border-radius:10px;background:var(--red);color:white;border:none;font-size:13px;font-weight:800;cursor:pointer;font-family:var(--font);" data-i18n="contact_now_short_btn">🆘 立即聯繫</button>
+        <button onclick="contactNowSilence()" style="margin-top:10px;width:100%;padding:10px;border-radius:10px;background:var(--red);color:white;border:none;font-size:13px;font-weight:800;cursor:pointer;font-family:var(--font);" data-i18n="contact_now_short_btn">🆘 立即聯繫</button>
       </div>
 
       <!-- 本週摘要 -->
@@ -3133,6 +3133,36 @@ function esc(v) {
 }
 // 放在 onclick="fn(${escJs(x)})" 這種「HTML 屬性裡的 JS 字串」專用
 function escJs(v) { return esc(JSON.stringify(String(v == null ? '' : v))); }
+
+// 沉默時間（小時）：扣除 22:00–07:00 睡眠時段，與後端自動通知的算法一致
+function awakeSilentHours(lastAct) {
+  const from = +lastAct, end = Math.min(Date.now(), from + 72 * 3600 * 1000);
+  let mins = 0;
+  for (let t = from; t < end; t += 60000) {
+    const h = new Date(t).getHours();
+    if (h >= 7 && h < 22) mins++;
+  }
+  return mins / 60;
+}
+
+// 「立即聯繫」：真的透過後端以 LINE 通知緊急聯絡人
+async function contactNowSilence() {
+  const db = dbLoad();
+  const all = [...(db.sos_logs||[]),...(db.med_logs||[]),...(db.stress_logs||[]),...(db.bp_logs||[])].map(l => new Date(l._ts));
+  const last = all.length ? new Date(Math.max(...all)) : null;
+  if (!getAppToken()) { showToast(t('token_need_toast')); return; }
+  try {
+    const r = await apiFetch('/silence-contact', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user: window.userProfile?.name || '', hours: last ? Math.floor(awakeSilentHours(last)) : 0,
+        last: last ? last.toISOString() : '', contacts: emergencyContacts }),
+      signal: AbortSignal.timeout(10000)
+    });
+    const j = await r.json().catch(() => ({}));
+    showToast(r.ok && j.ok ? t('caregiver_notified_toast') : t('contact_failed_toast'));
+  } catch (e) { showToast(t('contact_failed_toast')); }
+}
 
 // 偵測伺服器是否在線
 async function checkServer() {
@@ -4154,7 +4184,7 @@ function calcTodayStatus() {
   if (allTs.length > 0) {
     const lastAct   = new Date(Math.max(...allTs));
     const threshold = p?.risk === 'high' ? 2 : p?.risk === 'mid' ? 3 : 4;
-    const silentH   = (Date.now() - lastAct) / 3600000;
+    const silentH   = awakeSilentHours(lastAct);
     if (silentH >= threshold) score += 2;
   }
 
@@ -4957,7 +4987,7 @@ function renderFamilyDashboard() {
   if(sa && lastAct){
     const risk = window.userProfile?.risk || 'low';
     const threshold = risk === 'high' ? 2 : risk === 'mid' ? 3 : 4;
-    const h=(Date.now()-lastAct)/3600000;
+    const h=awakeSilentHours(lastAct);
     sa.style.display=h>=threshold?'block':'none';
     if(h>=threshold&&sm) sm.textContent=t('silence_alert_msg').replace('{h}', Math.floor(h)).replace('{risk}', risk==='high'?t('high_risk_word'):t('mid_risk_word')).replace('{threshold}', threshold).replace('{time}', lastAct.toLocaleString(localeCode(),{hour:'2-digit',minute:'2-digit'}));
   } else if(sa) sa.style.display='none';
@@ -6002,7 +6032,7 @@ const LANGS = {
 
     privacy_required_toast: '⚠️ 須同意隱私政策才能使用', remind_later_toast: '⏰ 30分鐘後再提醒',
     pdf_exporting_toast: '📄 PDF 匯出中…', share_line_toast: '💬 分享至 LINE',
-    caregiver_notified_toast: '📞 已通知照護人員', call_1966_toast: '📞 請撥打 1966 長照服務專線',
+    contact_failed_toast: '⚠️ 通知未送出，請直接電話聯繫', caregiver_notified_toast: '📞 已通知照護人員', call_1966_toast: '📞 請撥打 1966 長照服務專線',
     select_status_first_toast: '⚠️ 請先選擇今天的狀態！', stress_recorded_toast: '✅ 今日壓力狀態已記錄！',
     plan_deleted_toast: '🗑️ 已刪除計畫', enter_activity_name_toast: '⚠️ 請輸入活動名稱',
     select_weekday_toast: '⚠️ 請選擇星期', added_to_week_toast: '✅ 已新增「{name}」到週',
@@ -6253,7 +6283,7 @@ const LANGS = {
 
     privacy_required_toast: '⚠️ 须同意隐私政策才能使用', remind_later_toast: '⏰ 30分钟后再提醒',
     pdf_exporting_toast: '📄 PDF 汇出中…', share_line_toast: '💬 分享至 LINE',
-    caregiver_notified_toast: '📞 已通知护理人员', call_1966_toast: '📞 请拨打 1966 长照服务专线',
+    contact_failed_toast: '⚠️ 通知未送出，请直接电话联系', caregiver_notified_toast: '📞 已通知护理人员', call_1966_toast: '📞 请拨打 1966 长照服务专线',
     select_status_first_toast: '⚠️ 请先选择今天的状态！', stress_recorded_toast: '✅ 今日压力状态已记录！',
     plan_deleted_toast: '🗑️ 已删除计划', enter_activity_name_toast: '⚠️ 请输入活动名称',
     select_weekday_toast: '⚠️ 请选择星期', added_to_week_toast: '✅ 已新增「{name}」到周',
@@ -6936,7 +6966,7 @@ const LANGS = {
 
     privacy_required_toast: '⚠️ Harus menyetujui kebijakan privasi untuk menggunakan', remind_later_toast: '⏰ Ingatkan lagi 30 menit lagi',
     pdf_exporting_toast: '📄 Mengekspor PDF…', share_line_toast: '💬 Bagikan ke LINE',
-    caregiver_notified_toast: '📞 Petugas perawatan telah diberi tahu', call_1966_toast: '📞 Silakan hubungi hotline layanan LTC 1966',
+    contact_failed_toast: '⚠️ Notifikasi gagal terkirim, silakan hubungi langsung lewat telepon', caregiver_notified_toast: '📞 Petugas perawatan telah diberi tahu', call_1966_toast: '📞 Silakan hubungi hotline layanan LTC 1966',
     select_status_first_toast: '⚠️ Silakan pilih status hari ini terlebih dahulu!', stress_recorded_toast: '✅ Status stres hari ini telah dicatat!',
     plan_deleted_toast: '🗑️ Rencana telah dihapus', enter_activity_name_toast: '⚠️ Silakan masukkan nama aktivitas',
     select_weekday_toast: '⚠️ Silakan pilih hari', added_to_week_toast: '✅ "{name}" ditambahkan ke minggu ',
@@ -7323,7 +7353,7 @@ const LANGS = {
 
     privacy_required_toast: '⚠️ Phải đồng ý chính sách bảo mật để sử dụng', remind_later_toast: '⏰ Nhắc lại sau 30 phút',
     pdf_exporting_toast: '📄 Đang xuất PDF…', share_line_toast: '💬 Chia sẻ qua LINE',
-    caregiver_notified_toast: '📞 Đã thông báo cho nhân viên chăm sóc', call_1966_toast: '📞 Vui lòng gọi đường dây nóng chăm sóc dài hạn 1966',
+    contact_failed_toast: '⚠️ Chưa gửi được thông báo, vui lòng gọi điện trực tiếp', caregiver_notified_toast: '📞 Đã thông báo cho nhân viên chăm sóc', call_1966_toast: '📞 Vui lòng gọi đường dây nóng chăm sóc dài hạn 1966',
     select_status_first_toast: '⚠️ Vui lòng chọn trạng thái hôm nay trước!', stress_recorded_toast: '✅ Trạng thái căng thẳng hôm nay đã được ghi lại!',
     plan_deleted_toast: '🗑️ Đã xóa kế hoạch', enter_activity_name_toast: '⚠️ Vui lòng nhập tên hoạt động',
     select_weekday_toast: '⚠️ Vui lòng chọn thứ trong tuần', added_to_week_toast: '✅ Đã thêm "{name}" vào tuần ',
@@ -7562,7 +7592,7 @@ const LANGS = {
 
     privacy_required_toast: '⚠️ Dapat sumang-ayon sa patakaran sa privacy para magamit', remind_later_toast: '⏰ Ipaalala ulit pagkalipas ng 30 minuto',
     pdf_exporting_toast: '📄 Ine-export ang PDF…', share_line_toast: '💬 I-share sa LINE',
-    caregiver_notified_toast: '📞 Naabisuhan na ang caregiver', call_1966_toast: '📞 Pakitawagan ang 1966 LTC service hotline',
+    contact_failed_toast: '⚠️ Hindi naipadala ang abiso, tumawag nang direkta', caregiver_notified_toast: '📞 Naabisuhan na ang caregiver', call_1966_toast: '📞 Pakitawagan ang 1966 LTC service hotline',
     select_status_first_toast: '⚠️ Piliin muna ang status ngayong araw!', stress_recorded_toast: '✅ Naitala na ang stress status ngayong araw!',
     plan_deleted_toast: '🗑️ Naburang plano', enter_activity_name_toast: '⚠️ Pakilagay ang pangalan ng aktibidad',
     select_weekday_toast: '⚠️ Pumili ng araw', added_to_week_toast: '✅ Naidagdag ang "{name}" sa linggo ng ',
@@ -7829,17 +7859,20 @@ function setLang(lang) {
 let currentRole = 'caregiver';
 
 function toggleRoleView() {
+  // role-switch-icon / role-switch-label 不一定存在於選單中，用 setText 做防呆，避免拋出例外
+  const setText = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  const overlay = document.getElementById('family-view-overlay');
   if (currentRole === 'caregiver') {
     currentRole = 'family';
     renderFamilyView();
-    document.getElementById('family-view-overlay').style.display = 'flex';
-    document.getElementById('role-switch-icon').textContent = '🏠';
-    document.getElementById('role-switch-label').textContent = t('caregiver_view_plain');
+    if (overlay) overlay.style.display = 'flex';
+    setText('role-switch-icon', '🏠');
+    setText('role-switch-label', t('caregiver_view_plain'));
   } else {
     currentRole = 'caregiver';
-    document.getElementById('family-view-overlay').style.display = 'none';
-    document.getElementById('role-switch-icon').textContent = '👨‍👩‍👧';
-    document.getElementById('role-switch-label').textContent = t('family_view');
+    if (overlay) overlay.style.display = 'none';
+    setText('role-switch-icon', '👨‍👩‍👧');
+    setText('role-switch-label', t('family_view'));
   }
 }
 
@@ -7954,7 +7987,7 @@ function renderFamilyView() {
   const fvAlertMsg = document.getElementById('fv-alert-msg');
   if (fvAlert && lastAct) {
     const threshold = p?.risk === 'high' ? 2 : p?.risk === 'mid' ? 3 : 4;
-    const h = (Date.now() - lastAct) / 3600000;
+    const h = awakeSilentHours(lastAct);
     fvAlert.style.display = h >= threshold ? 'block' : 'none';
     if (h >= threshold && fvAlertMsg) fvAlertMsg.textContent = t('silence_alert_msg_short').replace('{h}', Math.floor(h)).replace('{time}', lastAct.toLocaleString(localeCode(),{hour:'2-digit',minute:'2-digit'}));
   } else if (fvAlert) fvAlert.style.display = 'none';
