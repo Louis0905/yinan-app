@@ -68,7 +68,7 @@ html,body{height:100%;width:100%;font-family:var(--font);background:#0f1117;disp
      但這幾層自己的圓角沒有一起改，所以看起來還是「這一塊藍色區塊角是圓的、沒有貼滿」。
      這裡用 id 選擇器 + !important 統一蓋掉，inline style 只有在覆蓋規則沒加 !important
      時才會贏，加了 !important 的 stylesheet 規則可以蓋過 plain inline style。 */
-  #assessment,#privacy-screen,#login-screen,#profiles-screen,#family-view-overlay{
+  #assessment,#privacy-screen,#login-screen,#profiles-screen,#family-view-overlay,#family-gate{
     border-radius:0!important;
   }
 }
@@ -1692,6 +1692,17 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
           <div id="app-token-status" style="font-size:12px;font-weight:700;color:var(--g500);margin-top:10px;"></div>
         </div>
 
+        <!-- 家屬專用連結 -->
+        <div class="dark-card" style="background:white;border-radius:14px;padding:16px;box-shadow:var(--sh);">
+          <div style="font-size:15px;font-weight:800;color:var(--g700);">👨‍👩‍👧 家屬專用連結</div>
+          <div style="font-size:12px;color:var(--g500);margin-top:2px;line-height:1.6;">家人用自己的手機開啟此連結，輸入家庭密語後即可直接看到照護總覽與警示，不會看到長輩的操作介面。連結本身不含密語。</div>
+          <div style="display:flex;gap:8px;margin-top:10px;">
+            <button onclick="copyFamilyLink()" style="flex:2;padding:10px;border-radius:11px;background:var(--blue-m);color:white;border:none;font-size:13px;font-weight:800;cursor:pointer;font-family:var(--font);">複製連結</button>
+            <button onclick="showFamilyQR()" style="flex:1;padding:10px;border-radius:11px;background:white;color:var(--g700);border:2px solid var(--g200);font-size:13px;font-weight:800;cursor:pointer;font-family:var(--font);">QR Code</button>
+          </div>
+          <div id="family-qr-area" style="display:none;text-align:center;margin-top:12px;"><img id="family-qr-img" alt="家屬連結 QR Code" style="width:160px;height:160px;border-radius:10px;"></div>
+        </div>
+
         <!-- 版本 -->
         <div style="text-align:center;padding:16px 0;color:var(--g400);font-size:12px;" data-i18n="app_version">
           銀安APP v1.0 · 讓照護更安心
@@ -2174,6 +2185,16 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
 
   <div class="toast" id="toast"></div>
 
+  <!-- ── 家屬登入（?role=family 專用） ── -->
+  <div id="family-gate" style="position:absolute;inset:0;z-index:900;display:none;flex-direction:column;justify-content:center;background:linear-gradient(160deg,#1a365d,#2b6cb0 60%,#4299e1);padding:32px 28px;overflow:hidden;">
+    <div style="font-size:42px;text-align:center;">👨‍👩‍👧</div>
+    <div style="font-size:22px;font-weight:900;color:white;text-align:center;margin-top:8px;">銀安 家屬端</div>
+    <div style="font-size:13px;color:rgba(255,255,255,0.8);text-align:center;margin:6px 0 22px;line-height:1.7;">輸入家人提供的家庭密語，<br>即可查看照護總覽與異常警示。</div>
+    <input class="ff-input" id="fg-token" type="password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="家庭密語" style="width:100%;box-sizing:border-box;">
+    <button onclick="familyGateSubmit()" style="margin-top:12px;width:100%;padding:14px;border-radius:14px;background:white;color:#2b6cb0;border:none;font-size:15px;font-weight:900;cursor:pointer;font-family:var(--font);">進入</button>
+    <div id="fg-msg" style="font-size:13px;font-weight:700;color:#FED7D7;text-align:center;margin-top:14px;min-height:20px;line-height:1.6;"></div>
+  </div>
+
   <!-- ── 家屬視角 Overlay ── -->
   <div id="family-view-overlay" style="position:absolute;inset:0;z-index:800;display:none;flex-direction:column;background:#f0f4ff;border-radius:44px;overflow:hidden;">
     <div style="background:linear-gradient(135deg,#1a365d,#2b6cb0 60%,#4299e1);padding:52px 22px 20px;">
@@ -2182,7 +2203,7 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
           <div style="font-size:12px;color:rgba(255,255,255,0.7);font-weight:700;letter-spacing:1px;" data-i18n="family_view">家屬視角</div>
           <div style="font-size:20px;font-weight:900;color:white;margin-top:2px;" id="fv-title" data-i18n="care_overview">照護總覽</div>
         </div>
-        <button onclick="toggleRoleView()" style="background:rgba(255,255,255,0.2);border:none;color:white;border-radius:20px;padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;font-family:var(--font);" data-i18n="caregiver_view">
+        <button id="fv-switch-btn" onclick="toggleRoleView()" style="background:rgba(255,255,255,0.2);border:none;color:white;border-radius:20px;padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;font-family:var(--font);" data-i18n="caregiver_view">
           🏠 照顧者視角
         </button>
       </div>
@@ -2212,7 +2233,7 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
       <!-- 喘息計畫 -->
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
         <div style="font-size:13px;font-weight:800;color:var(--g500);" data-i18n="week_respite">📅 本週喘息計畫</div>
-        <button onclick="openRespiteFromFamily()" style="font-size:11px;font-weight:700;color:var(--blue-m);background:var(--blue-l);border:none;padding:3px 10px;border-radius:8px;cursor:pointer;font-family:var(--font);">＋ <span data-i18n="edit_link">編輯 ›</span></button>
+        <button id="fv-respite-edit" onclick="openRespiteFromFamily()" style="font-size:11px;font-weight:700;color:var(--blue-m);background:var(--blue-l);border:none;padding:3px 10px;border-radius:8px;cursor:pointer;font-family:var(--font);">＋ <span data-i18n="edit_link">編輯 ›</span></button>
       </div>
       <div id="fv-respite" style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;"></div>
 
@@ -2260,6 +2281,7 @@ document.addEventListener('DOMContentLoaded', () => {
   applyLang(); // 套用語言設定
   // 啟動時顯示照護對象列表
   loadCareProfiles();
+  if (FAMILY_MODE) { startFamilyMode(); return; }
   if (careProfiles.length > 0) {
     renderProfilesList();
     document.getElementById('profiles-screen').style.display = 'flex';
@@ -7862,7 +7884,68 @@ function setLang(lang) {
 
 let currentRole = 'caregiver';
 
+// ── 家屬專用入口：網址加 ?role=family ─────────────
+const FAMILY_MODE = (() => { try { return new URLSearchParams(location.search).get('role') === 'family'; } catch(e) { return false; } })();
+let familyTimer = null;
+
+function familyLinkUrl() { return location.origin + location.pathname + '?role=family'; }
+async function copyFamilyLink() {
+  const u = familyLinkUrl();
+  try { await navigator.clipboard.writeText(u); showToast('已複製家屬連結'); }
+  catch(e) { window.prompt('請複製這個連結：', u); }
+}
+function showFamilyQR() {
+  const area = document.getElementById('family-qr-area'), img = document.getElementById('family-qr-img');
+  if (!area || !img) return;
+  img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=' + encodeURIComponent(familyLinkUrl());
+  area.style.display = 'block';
+}
+
+function startFamilyMode() {
+  currentRole = 'family';
+  ['assessment','privacy-screen','login-screen','profiles-screen'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (id === 'assessment') el.classList.add('done'); else el.style.display = 'none';
+  });
+  const sw = document.getElementById('fv-switch-btn'); if (sw) sw.style.display = 'none';
+  const ed = document.getElementById('fv-respite-edit'); if (ed) ed.style.display = 'none';
+  if (!getAppToken()) { showFamilyGate(''); return; }
+  refreshFamily(true);
+  familyTimer = setInterval(() => refreshFamily(false), 30000);
+}
+function showFamilyGate(msg) {
+  const g = document.getElementById('family-gate'); if (g) g.style.display = 'flex';
+  const m = document.getElementById('fg-msg'); if (m) m.textContent = msg || '';
+}
+async function familyGateSubmit() {
+  const inp = document.getElementById('fg-token');
+  const v = ((inp && inp.value) || '').trim();
+  if (!v) { showFamilyGate('請輸入家庭密語'); return; }
+  try { localStorage.setItem(TOKEN_KEY, v); } catch(e) { showFamilyGate('無法儲存，請關閉無痕模式後再試'); return; }
+  inp.value = '';
+  showFamilyGate('連線中…');
+  await refreshFamily(true);
+  if (!familyTimer && !serverAuthFail && serverOnline) familyTimer = setInterval(() => refreshFamily(false), 30000);
+}
+async function refreshFamily(first) {
+  await checkServer();
+  if (serverAuthFail) {
+    try { localStorage.removeItem(TOKEN_KEY); } catch(e) {}
+    showFamilyGate('密語不正確或已失效，請向家人確認');
+    return;
+  }
+  const p = dbLoad().profile;
+  if (!serverOnline && !p) { showFamilyGate('目前連不上伺服器，請稍後再試'); return; }
+  if (!p) { showFamilyGate('這個家庭還沒有資料，請先請長輩端完成建立'); return; }
+  window.userProfile = p;
+  const g = document.getElementById('family-gate'); if (g) g.style.display = 'none';
+  renderFamilyView();
+  const ov = document.getElementById('family-view-overlay'); if (ov) ov.style.display = 'flex';
+}
+
 function toggleRoleView() {
+  if (FAMILY_MODE) return;
   // role-switch-icon / role-switch-label 不一定存在於選單中，用 setText 做防呆，避免拋出例外
   const setText = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
   const overlay = document.getElementById('family-view-overlay');
