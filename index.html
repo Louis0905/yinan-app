@@ -3207,9 +3207,17 @@ async function checkServer() {
       const sd = json.data;
       const serverEmpty = !sd || (!sd.profile && ['sos_logs','med_logs','stress_logs','bp_logs','plans'].every(k => !(sd[k] || []).length));
       const localHas = Object.keys(dbLoad()).length > 0;
+      const localProfile = dbLoad().profile;
       if (sd && !(serverEmpty && localHas)) {
         localStorage.setItem(DB_KEY, JSON.stringify(sd));
         console.log('✅ 已從伺服器同步資料');
+      }
+      // 伺服器上沒有個人檔案（例如建立檔案時還沒設定密語），但本機有 → 補傳上去，家屬端才看得到。
+      // 用 synced 事件，不會像 completed 那樣清掉伺服器上的紀錄。
+      if (!FAMILY_MODE && localProfile && !(sd && sd.profile)) {
+        if (sd) { const cur = dbLoad(); cur.profile = localProfile; localStorage.setItem(DB_KEY, JSON.stringify(cur)); }
+        postToServer('/profile', { ...localProfile, event: 'synced' });
+        console.log('⬆️ 已把本機個人檔案補傳到伺服器');
       }
     } else {
       serverOnline = false;
@@ -7937,7 +7945,7 @@ async function refreshFamily(first) {
   }
   const p = dbLoad().profile;
   if (!serverOnline && !p) { showFamilyGate('目前連不上伺服器，請稍後再試'); return; }
-  if (!p) { showFamilyGate('這個家庭還沒有資料，請先請長輩端完成建立'); return; }
+  if (!p) { showFamilyGate('伺服器上還沒有這位長輩的個人檔案。請請長輩（或照顧者）用自己的手機開啟銀安APP一次，會自動補傳，然後再重新整理這個頁面'); return; }
   window.userProfile = p;
   const g = document.getElementById('family-gate'); if (g) g.style.display = 'none';
   renderFamilyView();
