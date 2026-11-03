@@ -3181,8 +3181,12 @@ async function checkServer() {
       updateServerBadge(true);
       // 從 server 同步最新資料
       const json = await r.json();
-      if (json.data) {
-        localStorage.setItem(DB_KEY, JSON.stringify(json.data));
+      // 伺服器上該家庭還沒有任何資料（例如剛建立的新家庭、或後端剛重置）時，不要用空資料蓋掉本機資料
+      const sd = json.data;
+      const serverEmpty = !sd || (!sd.profile && ['sos_logs','med_logs','stress_logs','bp_logs','plans'].every(k => !(sd[k] || []).length));
+      const localHas = Object.keys(dbLoad()).length > 0;
+      if (sd && !(serverEmpty && localHas)) {
+        localStorage.setItem(DB_KEY, JSON.stringify(sd));
         console.log('✅ 已從伺服器同步資料');
       }
     } else {
