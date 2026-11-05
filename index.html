@@ -7900,6 +7900,12 @@ let currentRole = 'caregiver';
 // ── 家屬專用入口：網址加 ?role=family ─────────────
 const FAMILY_MODE = (() => { try { return new URLSearchParams(location.search).get('role') === 'family'; } catch(e) { return false; } })();
 let familyTimer = null;
+const FAMILY_POLL_MS = 10000;   // 家屬端每 10 秒向伺服器更新一次
+let familyBusy = false;
+// 手機切回前景、網路恢復時立刻更新（背景分頁的計時器常被瀏覽器暫停）
+['visibilitychange','focus','online'].forEach(ev => window.addEventListener(ev, () => {
+  if (FAMILY_MODE && getAppToken() && !document.hidden) refreshFamily(false);
+}));
 
 function familyLinkUrl() { return location.origin + location.pathname + '?role=family'; }
 async function copyFamilyLink() {
@@ -7926,7 +7932,7 @@ function startFamilyMode() {
   const ed = document.getElementById('fv-respite-edit'); if (ed) ed.style.display = 'none';
   if (!getAppToken()) { showFamilyGate(''); return; }
   refreshFamily(true);
-  familyTimer = setInterval(() => refreshFamily(false), 30000);
+  familyTimer = setInterval(() => refreshFamily(false), FAMILY_POLL_MS);
 }
 function familyLogout() {
   if (!confirm('登出後需要重新輸入家庭密語才能查看，確定登出嗎？')) return;
@@ -7948,9 +7954,14 @@ async function familyGateSubmit() {
   inp.value = '';
   showFamilyGate('連線中…');
   await refreshFamily(true);
-  if (!familyTimer && !serverAuthFail && serverOnline) familyTimer = setInterval(() => refreshFamily(false), 30000);
+  if (!familyTimer && !serverAuthFail && serverOnline) familyTimer = setInterval(() => refreshFamily(false), FAMILY_POLL_MS);
 }
 async function refreshFamily(first) {
+  if (familyBusy) return;
+  familyBusy = true;
+  try { await refreshFamilyInner(first); } finally { familyBusy = false; }
+}
+async function refreshFamilyInner(first) {
   await checkServer();
   if (serverAuthFail) {
     try { localStorage.removeItem(TOKEN_KEY); } catch(e) {}
