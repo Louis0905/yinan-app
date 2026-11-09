@@ -1189,6 +1189,7 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
           <span class="ring-text">SOS</span>
           <span class="ring-sub" data-i18n="sos_press">按下求助</span>
         </button>
+        <a href="tel:119" class="call119-btn" data-i18n="call_119_btn" style="display:block;margin:14px auto 4px;max-width:260px;text-align:center;padding:12px 16px;border-radius:14px;background:white;color:var(--red-d);border:2px solid var(--red-d);font-size:15px;font-weight:900;text-decoration:none;">📞 撥打 119 求救</a>
         <div class="contact-list" id="sos-contacts-list">
           <div style="font-size:12px;font-weight:800;color:#742A2A;margin-bottom:4px;" data-i18n="sos_contacts_hint">📋 點擊聯絡人直接聯繫</div>
           <!-- 動態渲染 by renderSOSContacts() -->
@@ -1203,6 +1204,7 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
         <span class="done-ico">✅</span>
         <div class="done-t" style="color:white;" data-i18n="sos_done">已通知家人！</div>
         <div class="st-s" id="sos-done-msg" style="color:rgba(255,255,255,0.85);" data-i18n="sos_sent">👨‍👩‍👧 LINE 已送出<br>📍 位置已分享</div>
+        <a href="tel:119" data-i18n="call_119_btn" style="display:block;margin:10px auto 4px;max-width:260px;text-align:center;padding:12px 16px;border-radius:14px;background:white;color:var(--red-d);font-size:15px;font-weight:900;text-decoration:none;">📞 撥打 119 求救</a>
         <div class="row-btns">
           <button class="btn-o" style="border-color:rgba(255,255,255,0.6);color:white;background:rgba(255,255,255,0.15);" onclick="openSOSMap()" data-i18n="view_location">📍 查看位置</button>
           <button class="btn-s" style="background:white;color:var(--red-d);" onclick="resetSOS();goBack()" data-i18n="back_home">返回首頁</button>
@@ -2419,7 +2421,7 @@ function triggerSOS() {
     navigator.geolocation.getCurrentPosition(
       pos => sendSOS(pos.coords.latitude.toFixed(6), pos.coords.longitude.toFixed(6), true),
       ()  => sendSOS(null, null, false),
-      { timeout: 8000, enableHighAccuracy: true, maximumAge: 0 }
+      { timeout: 3000, enableHighAccuracy: false, maximumAge: 120000 }
     );
   } else {
     sendSOS(null, null, false);
@@ -3256,6 +3258,50 @@ function updateServerBadge(online) {
 
 // 傳送資料到 server（失敗不影響 APP）
 let tokenWarned = false;
+// 會觸發家屬通知的請求：送不出去時放進「待補發」佇列，網路恢復後自動重送
+const NOTIFY_ENDPOINTS = ['/sos', '/bp', '/stress'];
+const PENDING_KEY = 'yinan_pending_notify';
+const PENDING_MAX_AGE = 24 * 3600 * 1000;   // 超過 24 小時不再補發（避免過時的緊急通知），紀錄仍保留在本機
+const RETRY_SOS_MS = 3000, RETRY_OTHER_MS = 15000;
+function loadPending() { try { return JSON.parse(localStorage.getItem(PENDING_KEY) || '[]'); } catch(e) { return []; } }
+function savePending(list) { try { localStorage.setItem(PENDING_KEY, JSON.stringify(list.slice(-30))); } catch(e) {} }
+function enqueuePending(endpoint, data) {
+  const list = loadPending();
+  if (list.some(x => x.data && x.data.cid === data.cid)) return;
+  list.push({ endpoint, data, nextTry: Date.now() + (endpoint === '/sos' ? RETRY_SOS_MS : RETRY_OTHER_MS) });
+  savePending(list);
+}
+let flushing = false;
+async function flushPending(force) {
+  if (flushing || FAMILY_MODE || !getAppToken()) return;
+  let list = loadPending();
+  if (!list.length) return;
+  flushing = true;
+  try {
+    const nowMs = Date.now(); let resent = 0;
+    list = list.filter(x => nowMs - Date.parse(x.data.at) < PENDING_MAX_AGE);
+    for (const item of list.slice()) {
+      if (!force && item.nextTry > Date.now()) continue;
+      try {
+        const r = await apiFetch(item.endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...item.data, retried: true }),
+          signal: AbortSignal.timeout(8000)
+        });
+        if (r.ok) { list.splice(list.indexOf(item), 1); resent++; }
+        else item.nextTry = Date.now() + (item.endpoint === '/sos' ? RETRY_SOS_MS : RETRY_OTHER_MS);
+      } catch(e) {
+        item.nextTry = Date.now() + (item.endpoint === '/sos' ? RETRY_SOS_MS : RETRY_OTHER_MS);
+      }
+    }
+    savePending(list);
+    if (resent) { try { showToast(t('offline_resent_toast')); } catch(e) {} }
+  } finally { flushing = false; }
+}
+setInterval(() => flushPending(false), 3000);
+window.addEventListener('online', () => flushPending(true));
+
 async function postToServer(endpoint, data) {
   if (!getAppToken()) {
     // 沒設密語就送不出去；SOS 每次都提醒，其他只提醒一次
@@ -3265,8 +3311,11 @@ async function postToServer(endpoint, data) {
     }
     return;
   }
+  // 會通知家屬的請求：附上去重用的 cid 與原發生時間，失敗時進入補發佇列
+  const notify = NOTIFY_ENDPOINTS.includes(endpoint);
+  if (notify) data = { ...data, cid: Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8), at: new Date().toISOString() };
   // SOS 不看「連線偵測」結果，一律嘗試送出（偵測可能只是剛好逾時）
-  if (!serverOnline && endpoint !== '/sos') { warnOfflineSaved(endpoint); return; }
+  if (!serverOnline && endpoint !== '/sos') { if (notify) { enqueuePending(endpoint, data); warnOfflineSaved(endpoint); } return; }
   try {
     const r = await apiFetch(endpoint, {
       method: 'POST',
@@ -3279,18 +3328,20 @@ async function postToServer(endpoint, data) {
       serverAuthFail = true;
       updateServerBadge(false);
       try { showToast(t('token_wrong_toast')); } catch(e) {}
+    } else if (notify && !r.ok) {
+      enqueuePending(endpoint, data); warnOfflineSaved(endpoint);
     }
   } catch(e) {
     console.warn('Server post failed, data saved locally:', endpoint);
-    warnOfflineSaved(endpoint, true);
+    if (notify) { enqueuePending(endpoint, data); warnOfflineSaved(endpoint); }
   }
 }
 
-// 離線或送不出去時，明確告訴使用者「資料已存在本機，但家屬尚未收到通知」。
+// 離線或送不出去時，明確告訴使用者「資料已存在本機，會在恢復網路後自動補發」。
 // 只針對會觸發通知的類型（SOS、血壓、壓力），且 20 秒內最多提示一次，避免連續操作時一直跳。
 let offlineWarnAt = 0;
-function warnOfflineSaved(endpoint, force) {
-  if (!['/sos','/bp','/stress'].includes(endpoint)) return;
+function warnOfflineSaved(endpoint) {
+  if (!NOTIFY_ENDPOINTS.includes(endpoint)) return;
   const now = Date.now();
   if (now - offlineWarnAt < 20000) return;
   offlineWarnAt = now;
@@ -5619,7 +5670,9 @@ const LANGS = {
     token_status_ok: "✅ 已連線",
     token_status_wrong: "❌ 密語錯誤，或伺服器尚未設定",
     token_status_offline: "⚠️ 已設定密語，但目前連不上伺服器",
-    offline_saved_toast: "⚠️ 離線中：已存本機，尚未通知家屬",
+    offline_saved_toast: "⚠️ 離線中：已存本機，恢復網路後自動補發",
+    offline_resent_toast: "✅ 已補發通知給家屬",
+    call_119_btn: "📞 撥打 119 求救",
     token_empty_toast: "請先輸入密語",
     token_save_fail_toast: "無法儲存，請檢查瀏覽器設定",
     token_ok_toast: "✅ 密語正確，已連線",
@@ -6193,7 +6246,9 @@ const LANGS = {
     token_status_ok: "✅ 已连接",
     token_status_wrong: "❌ 密语错误，或服务器尚未设置",
     token_status_offline: "⚠️ 已设置密语，但目前连不上服务器",
-    offline_saved_toast: "⚠️ 离线中：已存本机，尚未通知家属",
+    offline_saved_toast: "⚠️ 离线中：已存本机，恢复网络后自动补发",
+    offline_resent_toast: "✅ 已补发通知给家属",
+    call_119_btn: "📞 拨打 119 求救",
     token_empty_toast: "请先输入密语",
     token_save_fail_toast: "无法保存，请检查浏览器设置",
     token_ok_toast: "✅ 密语正确，已连接",
@@ -6579,7 +6634,9 @@ const LANGS = {
     token_status_ok: "✅ Terhubung",
     token_status_wrong: "❌ Kode salah atau server belum dikonfigurasi",
     token_status_offline: "⚠️ Kode sudah diatur, tetapi server tidak terjangkau",
-    offline_saved_toast: "⚠️ Offline: tersimpan di perangkat, keluarga belum diberi tahu",
+    offline_saved_toast: "⚠️ Offline: tersimpan, akan dikirim otomatis saat online",
+    offline_resent_toast: "✅ Pemberitahuan tertunda telah dikirim",
+    call_119_btn: "📞 Telepon 119",
     token_empty_toast: "Masukkan kode rahasia dulu",
     token_save_fail_toast: "Gagal menyimpan, periksa pengaturan browser",
     token_ok_toast: "✅ Kode benar, terhubung",
@@ -7132,7 +7189,9 @@ const LANGS = {
     token_status_ok: "✅ Đã kết nối",
     token_status_wrong: "❌ Mật mã sai hoặc máy chủ chưa được cấu hình",
     token_status_offline: "⚠️ Đã đặt mật mã nhưng chưa kết nối được máy chủ",
-    offline_saved_toast: "⚠️ Ngoại tuyến: đã lưu trên máy, chưa báo cho người nhà",
+    offline_saved_toast: "⚠️ Ngoại tuyến: đã lưu, sẽ tự gửi khi có mạng",
+    offline_resent_toast: "✅ Đã gửi bù thông báo",
+    call_119_btn: "📞 Gọi 119",
     token_empty_toast: "Vui lòng nhập mật mã trước",
     token_save_fail_toast: "Không thể lưu, hãy kiểm tra cài đặt trình duyệt",
     token_ok_toast: "✅ Mật mã đúng, đã kết nối",
