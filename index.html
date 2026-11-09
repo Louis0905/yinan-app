@@ -137,7 +137,7 @@ html,body{height:100%;width:100%;font-family:var(--font);background:#0f1117;disp
 /* Toast */
 .toast{position:absolute;bottom:96px;left:50%;transform:translateX(-50%) translateY(12px);
   background:#1a202c;color:white;padding:11px 22px;border-radius:22px;
-  font-size:13px;font-weight:700;white-space:nowrap;opacity:0;
+  font-size:13px;font-weight:700;white-space:normal;width:max-content;max-width:calc(100% - 32px);text-align:center;line-height:1.5;opacity:0;
   transition:opacity 0.28s,transform 0.28s;pointer-events:none;z-index:9999;
   box-shadow:0 4px 20px rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.1);}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
@@ -5619,7 +5619,7 @@ const LANGS = {
     token_status_ok: "✅ 已連線",
     token_status_wrong: "❌ 密語錯誤，或伺服器尚未設定",
     token_status_offline: "⚠️ 已設定密語，但目前連不上伺服器",
-    offline_saved_toast: "⚠️ 目前離線：資料已存在本機，但家屬尚未收到通知，請恢復網路後再確認",
+    offline_saved_toast: "⚠️ 離線中：已存本機，尚未通知家屬",
     token_empty_toast: "請先輸入密語",
     token_save_fail_toast: "無法儲存，請檢查瀏覽器設定",
     token_ok_toast: "✅ 密語正確，已連線",
@@ -6193,7 +6193,7 @@ const LANGS = {
     token_status_ok: "✅ 已连接",
     token_status_wrong: "❌ 密语错误，或服务器尚未设置",
     token_status_offline: "⚠️ 已设置密语，但目前连不上服务器",
-    offline_saved_toast: "⚠️ 目前离线：数据已保存在本机，但家属尚未收到通知，请恢复网络后再确认",
+    offline_saved_toast: "⚠️ 离线中：已存本机，尚未通知家属",
     token_empty_toast: "请先输入密语",
     token_save_fail_toast: "无法保存，请检查浏览器设置",
     token_ok_toast: "✅ 密语正确，已连接",
@@ -6579,7 +6579,7 @@ const LANGS = {
     token_status_ok: "✅ Terhubung",
     token_status_wrong: "❌ Kode salah atau server belum dikonfigurasi",
     token_status_offline: "⚠️ Kode sudah diatur, tetapi server tidak terjangkau",
-    offline_saved_toast: "⚠️ Sedang offline: data tersimpan di perangkat, tetapi keluarga belum menerima pemberitahuan. Periksa lagi setelah koneksi pulih",
+    offline_saved_toast: "⚠️ Offline: tersimpan di perangkat, keluarga belum diberi tahu",
     token_empty_toast: "Masukkan kode rahasia dulu",
     token_save_fail_toast: "Gagal menyimpan, periksa pengaturan browser",
     token_ok_toast: "✅ Kode benar, terhubung",
@@ -7132,7 +7132,7 @@ const LANGS = {
     token_status_ok: "✅ Đã kết nối",
     token_status_wrong: "❌ Mật mã sai hoặc máy chủ chưa được cấu hình",
     token_status_offline: "⚠️ Đã đặt mật mã nhưng chưa kết nối được máy chủ",
-    offline_saved_toast: "⚠️ Đang ngoại tuyến: dữ liệu đã lưu trên máy nhưng người nhà chưa nhận được thông báo. Hãy kiểm tra lại khi có mạng",
+    offline_saved_toast: "⚠️ Ngoại tuyến: đã lưu trên máy, chưa báo cho người nhà",
     token_empty_toast: "Vui lòng nhập mật mã trước",
     token_save_fail_toast: "Không thể lưu, hãy kiểm tra cài đặt trình duyệt",
     token_ok_toast: "✅ Mật mã đúng, đã kết nối",
