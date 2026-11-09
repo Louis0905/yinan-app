@@ -3266,7 +3266,7 @@ async function postToServer(endpoint, data) {
     return;
   }
   // SOS 不看「連線偵測」結果，一律嘗試送出（偵測可能只是剛好逾時）
-  if (!serverOnline && endpoint !== '/sos') return;
+  if (!serverOnline && endpoint !== '/sos') { warnOfflineSaved(endpoint); return; }
   try {
     const r = await apiFetch(endpoint, {
       method: 'POST',
@@ -3282,7 +3282,19 @@ async function postToServer(endpoint, data) {
     }
   } catch(e) {
     console.warn('Server post failed, data saved locally:', endpoint);
+    warnOfflineSaved(endpoint, true);
   }
+}
+
+// 離線或送不出去時，明確告訴使用者「資料已存在本機，但家屬尚未收到通知」。
+// 只針對會觸發通知的類型（SOS、血壓、壓力），且 20 秒內最多提示一次，避免連續操作時一直跳。
+let offlineWarnAt = 0;
+function warnOfflineSaved(endpoint, force) {
+  if (!['/sos','/bp','/stress'].includes(endpoint)) return;
+  const now = Date.now();
+  if (now - offlineWarnAt < 20000) return;
+  offlineWarnAt = now;
+  try { showToast(t('offline_saved_toast')); } catch(e) {}
 }
 
 // ── localStorage 輔助 ─────────────────────────────
@@ -5607,6 +5619,7 @@ const LANGS = {
     token_status_ok: "✅ 已連線",
     token_status_wrong: "❌ 密語錯誤，或伺服器尚未設定",
     token_status_offline: "⚠️ 已設定密語，但目前連不上伺服器",
+    offline_saved_toast: "⚠️ 目前離線：資料已存在本機，但家屬尚未收到通知，請恢復網路後再確認",
     token_empty_toast: "請先輸入密語",
     token_save_fail_toast: "無法儲存，請檢查瀏覽器設定",
     token_ok_toast: "✅ 密語正確，已連線",
@@ -6180,6 +6193,7 @@ const LANGS = {
     token_status_ok: "✅ 已连接",
     token_status_wrong: "❌ 密语错误，或服务器尚未设置",
     token_status_offline: "⚠️ 已设置密语，但目前连不上服务器",
+    offline_saved_toast: "⚠️ 目前离线：数据已保存在本机，但家属尚未收到通知，请恢复网络后再确认",
     token_empty_toast: "请先输入密语",
     token_save_fail_toast: "无法保存，请检查浏览器设置",
     token_ok_toast: "✅ 密语正确，已连接",
@@ -6565,6 +6579,7 @@ const LANGS = {
     token_status_ok: "✅ Terhubung",
     token_status_wrong: "❌ Kode salah atau server belum dikonfigurasi",
     token_status_offline: "⚠️ Kode sudah diatur, tetapi server tidak terjangkau",
+    offline_saved_toast: "⚠️ Sedang offline: data tersimpan di perangkat, tetapi keluarga belum menerima pemberitahuan. Periksa lagi setelah koneksi pulih",
     token_empty_toast: "Masukkan kode rahasia dulu",
     token_save_fail_toast: "Gagal menyimpan, periksa pengaturan browser",
     token_ok_toast: "✅ Kode benar, terhubung",
@@ -7117,6 +7132,7 @@ const LANGS = {
     token_status_ok: "✅ Đã kết nối",
     token_status_wrong: "❌ Mật mã sai hoặc máy chủ chưa được cấu hình",
     token_status_offline: "⚠️ Đã đặt mật mã nhưng chưa kết nối được máy chủ",
+    offline_saved_toast: "⚠️ Đang ngoại tuyến: dữ liệu đã lưu trên máy nhưng người nhà chưa nhận được thông báo. Hãy kiểm tra lại khi có mạng",
     token_empty_toast: "Vui lòng nhập mật mã trước",
     token_save_fail_toast: "Không thể lưu, hãy kiểm tra cài đặt trình duyệt",
     token_ok_toast: "✅ Mật mã đúng, đã kết nối",
