@@ -1189,7 +1189,7 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
           <span class="ring-text">SOS</span>
           <span class="ring-sub" data-i18n="sos_press">按下求助</span>
         </button>
-        <a href="tel:119" class="call119-btn" data-i18n="call_119_btn" style="display:block;margin:14px auto 4px;max-width:260px;text-align:center;padding:12px 16px;border-radius:14px;background:white;color:var(--red-d);border:2px solid var(--red-d);font-size:15px;font-weight:900;text-decoration:none;">📞 撥打 119 求救</a>
+        <a href="tel:119" class="call119-btn" onclick="call119('pre')" data-i18n="call_119_btn" style="display:block;margin:14px auto 4px;max-width:260px;text-align:center;padding:12px 16px;border-radius:14px;background:white;color:var(--red-d);border:2px solid var(--red-d);font-size:15px;font-weight:900;text-decoration:none;">📞 撥打 119 求救</a>
         <div class="contact-list" id="sos-contacts-list">
           <div style="font-size:12px;font-weight:800;color:#742A2A;margin-bottom:4px;" data-i18n="sos_contacts_hint">📋 點擊聯絡人直接聯繫</div>
           <!-- 動態渲染 by renderSOSContacts() -->
@@ -1204,7 +1204,7 @@ body.fs-xlarge .sos-sub { font-size: 14px !important; }
         <span class="done-ico">✅</span>
         <div class="done-t" style="color:white;" data-i18n="sos_done">已通知家人！</div>
         <div class="st-s" id="sos-done-msg" style="color:rgba(255,255,255,0.85);" data-i18n="sos_sent">👨‍👩‍👧 LINE 已送出<br>📍 位置已分享</div>
-        <a href="tel:119" data-i18n="call_119_btn" style="display:block;margin:10px auto 4px;max-width:260px;text-align:center;padding:12px 16px;border-radius:14px;background:white;color:var(--red-d);font-size:15px;font-weight:900;text-decoration:none;">📞 撥打 119 求救</a>
+        <a href="tel:119" onclick="call119('after')" data-i18n="call_119_btn" style="display:block;margin:10px auto 4px;max-width:260px;text-align:center;padding:12px 16px;border-radius:14px;background:white;color:var(--red-d);font-size:15px;font-weight:900;text-decoration:none;">📞 撥打 119 求救</a>
         <div class="row-btns">
           <button class="btn-o" style="border-color:rgba(255,255,255,0.6);color:white;background:rgba(255,255,255,0.15);" onclick="openSOSMap()" data-i18n="view_location">📍 查看位置</button>
           <button class="btn-s" style="background:white;color:var(--red-d);" onclick="resetSOS();goBack()" data-i18n="back_home">返回首頁</button>
@@ -2375,6 +2375,16 @@ function onPageEnter(id) {
 
 // ── SOS main ─────────────────────────────────────
 let sosLock = false;
+// 本次求助的通知狀態：sent=已通知家屬；called119=已因 119 按鈕通知過（避免連按重複通知）
+let sosState = { sent: false, called119: false };
+const LAST_GPS_KEY = 'yinan_last_gps';
+function saveLastGps(lat, lng) { try { localStorage.setItem(LAST_GPS_KEY, JSON.stringify({ lat, lng, at: Date.now() })); } catch(e) {} }
+function loadLastGps() {
+  try {
+    const g = JSON.parse(localStorage.getItem(LAST_GPS_KEY) || 'null');
+    return g && Date.now() - g.at < 30 * 60 * 1000 ? g : null;   // 30 分鐘內的定位才沿用
+  } catch(e) { return null; }
+}
 
 function triggerSOS() {
   if (sosLock) return;
@@ -2389,6 +2399,8 @@ function triggerSOS() {
   const sendSOS = (lat, lng, isReal) => {
     if (sent) return;
     sent = true;
+    sosState.sent = true;
+    if (isReal) saveLastGps(lat, lng);
     const payload = {
       user: window.userProfile?.name || '未知',
       location: isReal ? `${lat}, ${lng}` : '位置未開放',
@@ -2427,8 +2439,36 @@ function triggerSOS() {
     sendSOS(null, null, false);
   }
 }
+// 按下「撥打 119」：撥號照常進行（連結本身負責），同時立刻通知家屬，不等 GPS 以搶時效。
+//  pre   = 尚未按 SOS：以一般 SOS 通知家屬並註明已按 119
+//  after = 已按過 SOS：補發「情況升級」通知
+function call119(kind) {
+  if (sosState.called119) return;            // 同一次求助只通知一次
+  sosState.called119 = true;
+  const g = loadLastGps();
+  const payload = {
+    user: window.userProfile?.name || '未知',
+    location: g ? `${g.lat}, ${g.lng}` : '位置未開放',
+    lat: g ? g.lat : null, lng: g ? g.lng : null, gps_real: !!g,
+    contacts: emergencyContacts,
+    via119: (kind === 'after' && sosState.sent) ? 'escalate' : 'direct',
+  };
+  if (payload.via119 === 'direct') {
+    // 尚未按 SOS：視為已發出求助，回到 App 時顯示「已通知家人」，並避免再按 SOS 重複通知
+    sosLock = true; sosState.sent = true;
+    try {
+      document.getElementById('sos-idle').style.display = 'none';
+      document.getElementById('sos-done').classList.add('on');
+      const m = document.getElementById('sos-done-msg');
+      if (m) m.innerHTML = g ? t('sos_location_shared').replace('{lat}', g.lat).replace('{lng}', g.lng) : t('sos_location_unavailable');
+    } catch(e) {}
+  }
+  dbPush('sos_logs', payload);
+  postToServer('/sos', payload);
+}
 function resetSOS() {
   sosLock = false; // 解鎖，下次可以再按
+  sosState = { sent: false, called119: false };
   document.getElementById('sos-idle').style.display = '';
   document.getElementById('sos-sending').classList.remove('on');
   document.getElementById('sos-done').classList.remove('on');
